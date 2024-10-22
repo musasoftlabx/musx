@@ -1,0 +1,38 @@
+<Animatable.Image
+                source={{
+                  uri: item.artwork,
+                }}
+                animation="rotate"
+                easing="linear"
+                useNativeDriver={true}
+                iterationCount="infinite"
+                style={styles.isPlaying}
+                transition={{opacity: 0.9}}
+              />
+
+              {"0": "None", 
+    "1": "Stopped", 
+    "2": "Paused", 
+    "3": "Playing", 
+    "6": "Buffering", 
+    "8": "Connecting", 
+    "Buffering": 6, 
+    "Connecting": 8, 
+    "None": 0, 
+    "Paused": 2, 
+    "Playing": 3, 
+    "Ready": 2, 
+    "Stopped": 1
+    } 
+    
+    {
+      "average": "#A89571",
+      "darkMuted": "#788060",
+      "darkVibrant": "#281000",
+      "dominant": "#F8F8E0",
+      "lightMuted": "#D8D0B0",
+      "lightVibrant": "#F8F8E0",
+      "muted": "#A09878",
+      "platform": "android",
+      "vibrant": "#806838"
+    }
