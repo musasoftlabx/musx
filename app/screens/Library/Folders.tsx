@@ -1,61 +1,47 @@
-import React, {useContext, useState, useEffect, useRef} from 'react';
+import {useQuery, useQueryClient} from '@tanstack/react-query';
+import axios from 'axios';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   Alert,
-  Animated,
-  Easing,
   BackHandler,
   Button,
-  Image,
   Dimensions,
-  View,
+  Image,
   Pressable,
-  Text,
-  SafeAreaView,
-  FlatList,
-  SectionList,
   StyleSheet,
-  ToastAndroid,
+  View,
 } from 'react-native';
-import SwipeableRating from 'react-native-swipeable-rating';
-import Icon from 'react-native-vector-icons/Ionicons';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import BigList from 'react-native-big-list';
+import {Text} from 'react-native-paper';
+import {
+  NavigationProp,
+  ParamListBase,
+  useFocusEffect,
+} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import ActionSheet, {SheetManager} from 'react-native-actions-sheet';
-import {Modalize} from 'react-native-modalize';
-import SvgAnimatedLinearGradient from 'react-native-svg-animated-linear-gradient';
-import Svg, {Circle, Rect} from 'react-native-svg';
-import {useHeaderHeight} from '@react-navigation/elements';
-import LinearGradient from 'react-native-linear-gradient';
-import {usePlaybackState} from 'react-native-track-player';
+import {useConfigStore} from '../../store';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as Animatable from 'react-native-animatable';
+import SwipeableRating from 'react-native-swipeable-rating';
+import {Modalize} from 'react-native-modalize';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
-import {Context} from '../../contexts';
-import Footer from '../../components/Footer';
+const Folders = ({navigation, route}: NavigationProp) => {
+  //const axios = useConfigStore(state => state.axios);
+  //console.log(navigation);
+  const queryClient = useQueryClient();
+  const [path, setPath] = useState('');
+  const [data, setData] = useState([]);
 
-const Folders = ({navigation, route}) => {
-  const [folders, setFolders] = useState(null);
-  const {state, dispatch} = useContext(Context);
+  //const {state, dispatch} = useContext(Context);
   const [actionSheet, setActionSheet] = useState({});
-  const [loading, setLoading] = useState(false);
-  const headerHeight = useHeaderHeight();
-  const playBackState = usePlaybackState();
 
-  /* useTrackPlayerEvents([Event.PlaybackTrackChanged], async event => {
-    if (
-      event.type === Event.PlaybackTrackChanged &&
-      event.nextTrack !== undefined
-    ) {
-      console.log('Track changed to: ', event.nextTrack);
-      navigation.setOptions({
-        headerStyle: {backgroundColor: state.gradient[1]},
-      });
-    }
-  }); */
-
+  // const {data, isFetching, isFetched} = useQuery({
+  //   queryKey: ['directory'],
+  //   queryFn: ({queryKey}) => axios.get(`http://75.119.137.255:3000/${path}`),
+  //   select: data => data.data,
+  // });
   useEffect(() => {
-    //AsyncStorage.setItem('currentPath', ' ');
     navigation.setOptions({
       headerStyle: {backgroundColor: 'rgba(0, 0, 0, 0.3)'},
       headerRight: () => (
@@ -67,122 +53,68 @@ const Folders = ({navigation, route}) => {
             style={{marginRight: 10}}
             onPress={async () => {
               await AsyncStorage.setItem('currentPath', ' ');
-              getData();
+              //getData();
             }}
           />
         </View>
       ),
     });
+  });
 
-    const getData = async () => {
-      try {
-        const path = await AsyncStorage.getItem('currentPath');
-        if (path !== null) {
-          getFolders(path);
-          navigation.setOptions({
-            title:
-              path.split('/').pop() === ' ' ? 'Folders' : path.split('/').pop(),
-          });
-        } else {
-          await AsyncStorage.setItem('currentPath', ' ');
-          getFolders('');
-          navigation.setOptions({title: 'Folders'});
-        }
-      } catch (e) {
-        // error reading value
-      }
-    };
-    getData();
+  useEffect(() => {
+    const getset = async () => {
+      //await AsyncStorage.removeItem('path');
+      let x = '';
+      const value = await AsyncStorage.getItem('path');
+      console.log('value:', value);
 
-    BackHandler.addEventListener('hardwareBackPress', async function () {
-      if (!loading) {
-        const path = await AsyncStorage.getItem('currentPath');
-
-        if (navigation.isFocused()) {
-          if (path === ' ') {
-            navigation.navigate('Home');
-            return true;
-          } else {
-            handleBackAction();
-            return false;
-          }
-        } else {
-          navigation.navigate('Folders');
-          return true;
-        }
+      if (value === null) {
+        await AsyncStorage.setItem('path', '');
+        x = '';
       } else {
-        console.log('back pressed');
-        return false;
+        x = value;
       }
-    });
+      console.log('x:', x);
+
+      const res = await axios.get(`http://75.119.137.255:3000/${x}`);
+      setData(res.data);
+      savePath(x);
+      //navigation.push('LibraryStack');
+      //console.log(res.data);
+
+      // navigation.setOptions({
+      //   //...navigation,
+      //   title: x.split('/').pop() === '' ? 'Folders' : path.split('/').pop(),
+      //   //title: 'yug',
+      // });
+    };
+
+    getset();
   }, []);
 
-  /* useFocusEffect(
-    React.useCallback(() => {
-      const onBackPress = async () => {
-        const path = await AsyncStorage.getItem('currentPath');
-        console.log(path);
-        if (path === '') {
-          return true;
-        } else {
-          handleBackAction();
-          return false;
-        }
-      };
+  useEffect(() => {
+    const heading = path.split('/').slice(-2, -1)[0];
+    navigation.setOptions({title: heading === '' ? 'Folders' : heading});
 
-      BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-      return () =>
-        BackHandler.removeEventListener('hardwareBackPress', onBackPress);
-    }, []),
-  ); */
-
-  const getFolders = dir => {
-    setLoading(true);
-
-    fetch(`${state.NODE_SERVER}GetFolders`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        const p = `${path.split('/').slice(0, -2).join('/')}/`;
+        savePath(p);
+        console.log('pathsplit', p);
+        console.log('path', path);
+        if (path === '/') navigation.push('LibraryStack');
+        else navigation.push('Folders');
+        return true;
       },
-      body: JSON.stringify({
-        activeDirectory: dir.trim() ? dir.trim() : '',
-      }),
-    })
-      .then(res => res.json())
-      .then(data => {
-        setFolders(data);
-        setLoading(false);
-      });
-  };
+    );
 
-  const handleDirectoryChange = async dir => {
-    try {
-      const currentPath = await AsyncStorage.getItem('currentPath');
-      const newPath = currentPath + dir;
-      console.log('newPath:', newPath);
-      await AsyncStorage.setItem('currentPath', newPath);
-      getFolders(newPath);
-      navigation.push('Folders');
-    } catch (e) {
-      // saving error
-    }
-  };
+    return () => backHandler.remove();
+  }, [path]);
 
-  const handleBackAction = async () => {
-    const currentPath = await AsyncStorage.getItem('currentPath');
-    const lastDir = currentPath.split('/').pop();
-    const newPath = currentPath.replace(`/${lastDir}`, '');
-    console.log('newPath:', newPath);
-    await AsyncStorage.setItem('currentPath', newPath);
-    getFolders(newPath);
-    navigation.setOptions({
-      title:
-        newPath.split('/').pop() === ' ' ? 'Folders' : newPath.split('/').pop(),
-    });
-    /* setTimeout(() => {
-      navigation.pop();
-    }, 5000); */
+  const savePath = async (value: string) => {
+    setPath(value);
+    await AsyncStorage.setItem('path', value);
   };
 
   const actionSheetOptions = [
@@ -193,17 +125,17 @@ const Folders = ({navigation, route}) => {
     {
       text: 'Play Next',
       icon: 'queue-play-next',
-      action: track => dispatch({type: 'ADD_NEXT_IN_QUEUE', payload: track}),
+      //action: track => dispatch({type: 'ADD_NEXT_IN_QUEUE', payload: track}),
     },
     {
       text: 'Add to queue',
       icon: 'add-to-queue',
-      action: track => dispatch({type: 'ADD_TO_QUEUE', payload: track}),
+      //action: track => dispatch({type: 'ADD_TO_QUEUE', payload: track}),
     },
     {
       text: 'Add to playlist',
       icon: 'playlist-add',
-      action: track => navigation.navigate('AddToPlaylist', {_id: track._id}),
+      //action: track => navigation.navigate('AddToPlaylist', {_id: track._id}),
     },
     {
       text: 'Go to artist',
@@ -213,43 +145,47 @@ const Folders = ({navigation, route}) => {
       text: 'Delete from library',
       icon: 'delete-forever',
       action: track => {
-        Alert.alert('Are you sure?', 'This will delete the file permanently', [
-          {
-            text: 'Cancel',
-            onPress: () => console.log('Cancel Pressed'),
-            style: 'cancel',
-          },
-          {
-            text: 'OK',
-            onPress: () => {
-              <Animatable.Image
-                source={{
-                  uri: item.artwork,
-                }}
-                animation="rotate"
-                easing="linear"
-                useNativeDriver={true}
-                iterationCount="infinite"
-                style={styles.isPlaying}
-                transition={{opacity: 0.9}}
-              />;
+        Alert.alert(
+          'Are you sure?',
+          'This will delete the file permanently',
+          // [
+          //   {
+          //     text: 'Cancel',
+          //     onPress: () => console.log('Cancel Pressed'),
+          //     style: 'cancel',
+          //   },
+          //   {
+          //     text: 'OK',
+          //     onPress: () => {
+          //       <Animatable.Image
+          //         source={{
+          //           uri: item.artwork,
+          //         }}
+          //         animation="rotate"
+          //         easing="linear"
+          //         useNativeDriver={true}
+          //         iterationCount="infinite"
+          //         style={styles.isPlaying}
+          //         transition={{opacity: 0.9}}
+          //       />;
 
-              /* fetch(`${state.NODE_SERVER}deleteTrack`, {
-                method: 'DELETE',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(track),
-              })
-                .then(res => res.text())
-                .then(() => {
-                  folders.splice(folders.indexOf(track), 1);
-                  dispatch({
-                    type: 'REMOVE_FROM_QUEUE',
-                    payload: {track, playBackState},
-                  });
-                }); */
-            },
-          },
-        ]);
+          //       fetch(`${state.NODE_SERVER}deleteTrack`, {
+          //     method: 'DELETE',
+          //     headers: {'Content-Type': 'application/json'},
+          //     body: JSON.stringify(track),
+          //   })
+          //     .then(res => res.text())
+          //     .then(() => {
+          //       folders.splice(folders.indexOf(track), 1);
+          //       dispatch({
+          //         type: 'REMOVE_FROM_QUEUE',
+          //         payload: {track, playBackState},
+          //       });
+          //     });
+          //     },
+          //   },
+          // ],
+        );
       },
     },
   ];
@@ -264,44 +200,8 @@ const Folders = ({navigation, route}) => {
     }
   };
 
-  const ItemPlaceholder = () => {
-    return Array(10)
-      .fill(0)
-      .map((i, k) => (
-        <SvgAnimatedLinearGradient
-          key={k}
-          primaryColor="#e8f7ff"
-          secondaryColor="#4dadf7"
-          height={80}>
-          <Rect x="0" y="40" rx="4" ry="4" width="40" height="40" />
-          <Rect x="55" y="50" rx="4" ry="4" width="150" height="10" />
-          <Rect x="55" y="65" rx="4" ry="4" width="100" height="8" />
-        </SvgAnimatedLinearGradient>
-      ));
-  };
-
   return (
     <>
-      {/* <Image
-        source={{
-          uri: imageQueue[imageIndex],
-        }}
-        blurRadius={8}
-        style={styles.absolute}
-      /> */}
-      <LinearGradient
-        colors={state.gradient}
-        style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          opacity: 0.8,
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          bottom: 0,
-          right: 0,
-        }}
-      />
-
       <Modalize
         modalHeight={Dimensions.get('window').height * 0.5}
         handlePosition="inside"
@@ -343,7 +243,7 @@ const Folders = ({navigation, route}) => {
           keyExtractor: (item, index) => index.toString(),
           showsVerticalScrollIndicator: false,
         }}
-        HeaderComponent={() => (
+        HeaderComponent={
           <View
             style={{
               flexDirection: 'row',
@@ -352,7 +252,7 @@ const Folders = ({navigation, route}) => {
               marginBottom: 10,
               marginHorizontal: 20,
             }}>
-            <Image
+            {/* <Image
               source={{uri: `${state.NGINX_SERVER}${actionSheet.coverArtURL}`}}
               style={{
                 height: 45,
@@ -360,7 +260,7 @@ const Folders = ({navigation, route}) => {
                 marginRight: 10,
                 borderRadius: 10,
               }}
-            />
+            /> */}
             <View style={{justifyContent: 'center', marginLeft: 5}}>
               <Text style={{fontSize: 18, fontWeight: 'bold'}}>
                 {actionSheet.title || actionSheet.name}
@@ -368,172 +268,149 @@ const Folders = ({navigation, route}) => {
               <Text>{actionSheet.albumArtist}</Text>
             </View>
           </View>
-        )}
+        }
       />
 
-      {loading ? (
-        <View
-          style={{
-            opacity: 0.3,
-            marginHorizontal: 20,
-            marginTop: headerHeight,
-            zIndex: 100,
-          }}>
-          <ItemPlaceholder />
-        </View>
-      ) : (
-        <FlatList
-          data={folders}
-          contentContainerStyle={{
-            minHeight: '100%',
-            marginTop: headerHeight,
-            paddingBottom: 60,
-          }}
-          keyExtractor={(item, index) => index.toString()}
-          initialNumToRender={10}
-          renderItem={({item, index}) => (
-            <>
-              {item.type === 'folder' ? (
-                <Pressable
-                  onPress={() => handleDirectoryChange(`/${item.name}`)}>
-                  <View
+      <BigList
+        data={data}
+        numColumns={1}
+        keyExtractor={item => item.path}
+        sections={[data]}
+        renderItem={({
+          item,
+          index,
+        }: {
+          item: {
+            name: string;
+            path: string;
+            artwork: string;
+            title: string;
+            artists: string;
+            plays: number;
+          };
+          index: number;
+        }) => (
+          <>
+            {item.hasOwnProperty('name') ? (
+              <Pressable
+                onPress={() => {
+                  const stripedSlash = item.path === '/' ? '' : item.path;
+                  savePath(`${stripedSlash}${item.name}/`);
+                  navigation.setOptions({title: item.name});
+                  navigation.push('Folders');
+                }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingVertical: 15,
+                    paddingHorizontal: 15,
+                  }}>
+                  <Image
+                    source={require('../../assets/images/folder.png')}
                     style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      paddingVertical: 15,
-                      paddingHorizontal: 15,
-                    }}>
-                    <Image
-                      style={{
-                        position: 'absolute',
-                        left: 30,
-                        top: 10,
-                        zIndex: 0,
-                        borderRadius: 100,
-                        height: 30,
-                        width: 30,
-                      }}
-                      source={{
-                        uri: `${state.NGINX_SERVER}${item.image}`,
-                      }}
-                    />
-                    <Image
-                      source={require('../../icons/icons8-folder-48.png')}
-                      style={{
-                        marginRight: 20,
-                        height: 40,
-                        width: 40,
-                      }}
-                    />
-                    <View
-                      style={{
-                        justifyContent: 'center',
-                        marginTop: -2,
-                        maxWidth: Dimensions.get('window').width - 150,
-                      }}>
-                      <Text numberOfLines={1} style={styles.title}>
-                        {item.name}
-                      </Text>
-                      <Text numberOfLines={1} style={styles.artists}>
-                        {item.folders > 0 &&
-                          (item.folders === 1
-                            ? `${item.folders} folder`
-                            : `${item.folders} folders`)}
-                        {item.folders > 0 && item.files > 0 && ' / '}
-                        {item.files > 0 &&
-                          (item.files === 1
-                            ? `${item.files} file`
-                            : `${item.files} files`)}
-                      </Text>
-                    </View>
-                    <View style={{flex: 1}} />
-                  </View>
-                </Pressable>
-              ) : (
-                <Pressable
-                  onPress={() => (
-                    dispatch({
-                      type: 'PLAY',
-                      payload: {
-                        currentTrack: item,
-                        nextTracks: folders.slice(index + 1, folders.length),
-                      },
-                    }),
-                    navigation.navigate('NowPlaying')
-                  )}
-                  onLongPress={() => onOpen(item)}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      paddingVertical: 15,
-                      paddingHorizontal: 10,
-                    }}>
-                    <MaterialIcons
+                      marginRight: 20,
+                      height: 40,
+                      width: 40,
+                    }}
+                  />
+                  <Text variant="bodyMedium">{item.name}</Text>
+                </View>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={() =>
+                  // dispatch({
+                  //   type: 'PLAY',
+                  //   payload: {
+                  //     currentTrack: item,
+                  //     nextTracks: folders.slice(index + 1, folders.length),
+                  //   },
+                  // }),
+                  navigation.navigate('NowPlaying')
+                }
+                onLongPress={() => onOpen(item)}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingVertical: 15,
+                    paddingHorizontal: 10,
+                  }}>
+                  {/* <MaterialIcons
                       name="more-vert"
                       size={25}
                       style={{marginRight: 10}}
                       onPress={() => onOpen(item)}
-                    />
-                    <Image
-                      source={{
-                        uri: `${state.NGINX_SERVER}${item.coverArtURL}`,
-                      }}
-                      style={{
-                        height: 45,
-                        width: 45,
-                        marginRight: 10,
-                        borderRadius: 10,
-                      }}
-                    />
-                    <View
-                      style={{
-                        justifyContent: 'center',
-                        marginTop: -2,
-                        maxWidth: Dimensions.get('window').width - 190,
-                      }}>
-                      <Text numberOfLines={1} style={styles.title}>
-                        {item.title || item.name}
-                      </Text>
-                      <Text numberOfLines={1} style={styles.artists}>
-                        {(item.artists && item.artists.join(' / ')) ||
-                          'Unknown Artist'}
-                      </Text>
-                      <Text numberOfLines={1} style={styles.album}>
+                    /> */}
+                  <Image
+                    source={{
+                      uri: `http://75.119.137.255/Artwork/${item.artwork}`,
+                    }}
+                    style={{
+                      height: 45,
+                      width: 45,
+                      marginRight: 10,
+                      borderRadius: 10,
+                    }}
+                  />
+                  {/* <Text variant="bodyMedium">{item.title}</Text> */}
+                  <View
+                    style={{
+                      justifyContent: 'center',
+                      marginTop: -2,
+                      maxWidth: Dimensions.get('window').width - 190,
+                    }}>
+                    <Text numberOfLines={1} style={styles.title}>
+                      {item.title}
+                    </Text>
+                    <Text numberOfLines={1} style={styles.artists}>
+                      {item.artists ?? 'Unknown Artist'}
+                    </Text>
+                    {/*<Text numberOfLines={1} style={styles.album}>
                         {item.album || 'Unknown Album'}
-                      </Text>
-                    </View>
-                    <View style={{flex: 1}} />
-                    <View
-                      style={{
-                        justifyContent: 'center',
-                        alignItems: 'flex-end',
-                      }}>
-                      <SwipeableRating
+                      </Text> */}
+                  </View>
+                  <View style={{flex: 1}} />
+                  <View
+                    style={{
+                      justifyContent: 'center',
+                      alignItems: 'flex-end',
+                    }}>
+                    {/* <SwipeableRating
                         rating={item.rating || 0}
                         size={15}
                         allowHalves={true}
                         color={'#FFD700'}
                         emptyColor={'#FFD700'}
-                      />
-                      <Text
-                        style={{
-                          fontWeight: 'bold',
-                          marginRight: 5,
-                          marginTop: 5,
-                        }}>
-                        {item.plays || 0} plays
-                      </Text>
-                    </View>
+                      /> */}
+                    <Text
+                      style={{
+                        fontWeight: 'bold',
+                        marginRight: 5,
+                        marginTop: 5,
+                      }}>
+                      {item.plays || 0} plays
+                    </Text>
                   </View>
-                </Pressable>
-              )}
-            </>
-          )}
-        />
-      )}
-
-      <Footer />
+                </View>
+              </Pressable>
+            )}
+          </>
+        )}
+        renderEmpty={() => (
+          <View>
+            <Text variant="titleLarge" style={{fontFamily: 'Abel'}}>
+              Empty
+            </Text>
+          </View>
+        )}
+        renderHeader={() => <View />}
+        renderFooter={() => <View />}
+        itemHeight={50}
+        headerHeight={0}
+        footerHeight={0}
+      />
     </>
   );
 };
@@ -581,7 +458,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
     padding: 5,
     paddingHorizontal: 15,
-    backgroundColor: '#000',
   },
 });
 

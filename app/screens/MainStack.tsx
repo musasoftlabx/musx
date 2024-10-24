@@ -51,7 +51,11 @@ const MainStack = ({navigation}) => {
           component={HomeStack}
           //options={{tabBarBadge: 3}}
         /> */}
-        <Tab.Screen name="Library" component={Library} />
+        <Tab.Screen
+          name="Library"
+          component={Library}
+          options={{headerShown: false}}
+        />
         <Tab.Screen name="Downloads" component={Downloads} />
         <Tab.Screen name="Settings" component={Settings} />
         {/*  <Tab.Screen name="Search" component={Search} />*/}

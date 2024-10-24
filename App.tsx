@@ -51,6 +51,8 @@ import {
   getVersion,
 } from 'react-native-device-info';
 
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
+
 type SectionProps = PropsWithChildren<{
   title: string;
 }>;
@@ -82,6 +84,7 @@ function App(): React.JSX.Element {
   const config = useConfigStore((state: {config: any}) => state.config);
 
   useEffect(() => {
+    //console.log(URL());
     // ? Axios
     const Axios = axios.create({
       baseURL: URL(),
@@ -150,22 +153,24 @@ function App(): React.JSX.Element {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <Provider theme={mode === 'dark' ? darkTheme : lightTheme}>
-        <SafeAreaProvider>
-          <NavigationContainer theme={mode === 'dark' ? DarkTheme : LightTheme}>
-            {/* <StatusBar
+    <GestureHandlerRootView style={{flex: 1}}>
+      <QueryClientProvider client={queryClient}>
+        <Provider theme={mode === 'dark' ? darkTheme : lightTheme}>
+          <SafeAreaProvider>
+            <NavigationContainer
+              theme={mode === 'dark' ? DarkTheme : LightTheme}>
+              {/* <StatusBar
             barStyle={isDarkMode ? 'light-content' : 'dark-content'}
             backgroundColor={backgroundStyle.backgroundColor}
           /> */}
-            <Stack.Navigator>
-              <Stack.Screen
-                name="MainStack"
-                component={MainStack}
-                options={{headerShown: false}}
-              />
+              <Stack.Navigator>
+                <Stack.Screen
+                  name="MainStack"
+                  component={MainStack}
+                  options={{headerShown: false}}
+                />
 
-              {/* <Stack.Group screenOptions={{presentation: 'modal'}}>
+                {/* <Stack.Group screenOptions={{presentation: 'modal'}}>
             <Stack.Screen
               name="NowPlaying"
               component={NowPlaying}
@@ -184,11 +189,12 @@ function App(): React.JSX.Element {
               }}
             />
           </Stack.Group> */}
-            </Stack.Navigator>
-          </NavigationContainer>
-        </SafeAreaProvider>
-      </Provider>
-    </QueryClientProvider>
+              </Stack.Navigator>
+            </NavigationContainer>
+          </SafeAreaProvider>
+        </Provider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }
 
