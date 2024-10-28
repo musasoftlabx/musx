@@ -19,15 +19,15 @@ import {
   useFocusEffect,
 } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useConfigStore} from '../../store';
+import {useConfigStore, usePlayerStore} from '../../store';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as Animatable from 'react-native-animatable';
 import SwipeableRating from 'react-native-swipeable-rating';
 import {Modalize} from 'react-native-modalize';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
-const Folders = ({navigation, route}: NavigationProp) => {
-  //const axios = useConfigStore(state => state.axios);
+const Folders = ({navigation, route}: any) => {
+  const play = usePlayerStore(state => state.play);
   //console.log(navigation);
   const queryClient = useQueryClient();
   const [path, setPath] = useState('');
@@ -41,6 +41,7 @@ const Folders = ({navigation, route}: NavigationProp) => {
   //   queryFn: ({queryKey}) => axios.get(`http://75.119.137.255:3000/${path}`),
   //   select: data => data.data,
   // });
+
   useEffect(() => {
     navigation.setOptions({
       headerStyle: {backgroundColor: 'rgba(0, 0, 0, 0.3)'},
@@ -274,8 +275,8 @@ const Folders = ({navigation, route}: NavigationProp) => {
       <BigList
         data={data}
         numColumns={1}
-        keyExtractor={item => item.path}
-        sections={[data]}
+        keyExtractor={(item, index) => index.toString()}
+        //sections={[data]}
         renderItem={({
           item,
           index,
@@ -319,16 +320,13 @@ const Folders = ({navigation, route}: NavigationProp) => {
               </Pressable>
             ) : (
               <Pressable
-                onPress={() =>
-                  // dispatch({
-                  //   type: 'PLAY',
-                  //   payload: {
-                  //     currentTrack: item,
-                  //     nextTracks: folders.slice(index + 1, folders.length),
-                  //   },
-                  // }),
-                  navigation.navigate('NowPlaying')
-                }
+                onPress={() => {
+                  play({
+                    currentTrack: item,
+                    nextTracks: data.slice(index + 1, data.length),
+                  });
+                  navigation.navigate('NowPlaying');
+                }}
                 onLongPress={() => onOpen(item)}>
                 <View
                   style={{
@@ -390,7 +388,7 @@ const Folders = ({navigation, route}: NavigationProp) => {
                         marginRight: 5,
                         marginTop: 5,
                       }}>
-                      {item.plays || 0} plays
+                      {item.plays || 0} play{`${item.plays === 1 ? '' : 's'}`}
                     </Text>
                   </View>
                 </View>

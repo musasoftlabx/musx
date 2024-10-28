@@ -15,8 +15,6 @@ import TrackPlayer from 'react-native-track-player';
 
 import SwipeableRating from 'react-native-swipeable-rating';
 
-import {Context} from '../../contexts';
-
 import * as Animatable from 'react-native-animatable';
 
 /* const spinValue = new Animated.Value(0);
@@ -38,7 +36,7 @@ const spin = spinValue.interpolate({
 }); */
 
 const UpNext = () => {
-  const {state, dispatch} = useContext(Context);
+  const [state, dispatch] = useState({});
   const [queue, setQueue] = useState(null);
 
   const getQueue = async () => {
@@ -168,7 +166,6 @@ const styles = StyleSheet.create({
     fontWeight: '300',
   },
   plays: {
-    backgroundColor: 'grey',
     borderRadius: 10,
     height: 35,
     margin: 10,

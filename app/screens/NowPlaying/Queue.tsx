@@ -15,8 +15,8 @@ import {
   Dimensions,
 } from 'react-native';
 import SwipeableRating from 'react-native-swipeable-rating';
-
-import {Context} from '../../contexts';
+import TrackPlayer, {useActiveTrack} from 'react-native-track-player';
+import {usePlayerStore} from '../../store';
 
 const NODE_SERVER = 'http://musasoft.ddns.net:3000/';
 
@@ -38,39 +38,43 @@ const spin = spinValue.interpolate({
   outputRange: ['0deg', '360deg'],
 });
 
-const BackTo = ({navigation}) => {
-  const {state, dispatch} = useContext(Context);
+const Queue = () => {
+  const [state, dispatch] = useState();
 
   const [recentlyAdded, setRecentlyAdded] = useState([]);
   const [mostPlayed, setMostPlayed] = useState([]);
   const [cp, setCp] = useState(null);
 
-  useEffect(() => {
-    fetch(`${NODE_SERVER}GetRecentlyAdded`).then(res =>
-      res.json().then(data => setRecentlyAdded(data)),
-    );
+  const activeTrack = useActiveTrack();
 
-    fetch(`${NODE_SERVER}GetMostPlayed`).then(res =>
-      res.json().then(data => setMostPlayed(data)),
-    );
+  const queue = usePlayerStore(state => state.queue);
+  const skipTo = usePlayerStore(state => state.skipTo);
+  const currentTrack = usePlayerStore(state => state.currentTrack);
+  const nextTracks = usePlayerStore(state => state.nextTracks);
+
+  useEffect(() => {
+    // fetch(`${NODE_SERVER}GetRecentlyAdded`).then(res =>
+    //   res.json().then(data => setRecentlyAdded(data)),
+    // );
+
+    // fetch(`${NODE_SERVER}GetMostPlayed`).then(res =>
+    //   res.json().then(data => setMostPlayed(data)),
+    // );
+    console.log(queue());
   }, []);
 
   const handlePlay = i => {
     setCp(i);
   };
 
-  const Item = ({item}) => (
-    <Pressable onPress={() => handlePlay(item)}>
+  const Item = ({item, index}) => (
+    <Pressable onPress={() => skipTo(index)}>
       <View style={styles.item}>
         <Animated.Image
           source={{
             uri: item.artwork,
           }}
-          style={
-            state.currentlyPlaying._id === item._id
-              ? styles.isPlaying
-              : styles.image
-          }
+          style={activeTrack?.id === item.id ? styles.isPlaying : styles.image}
         />
         <View
           style={{
@@ -82,7 +86,7 @@ const BackTo = ({navigation}) => {
             {item.title || item.name}
           </Text>
           <Text numberOfLines={1} style={styles.artists}>
-            {(item.artists && item.artists.join(' / ')) || 'Unknown Artist'}
+            {item.artists || 'Unknown Artist'}
           </Text>
           <Text numberOfLines={1} style={styles.album}>
             {item.album || 'Unknown Album'}
@@ -107,9 +111,10 @@ const BackTo = ({navigation}) => {
 
   return (
     <FlatList
-      data={state.previousTracks}
-      renderItem={({item}) => {
-        return <Item item={item} />;
+      data={[currentTrack, ...nextTracks]}
+      renderItem={({item, index}) => {
+        //console.log(index);
+        return <Item item={item} index={index} />;
       }}
       keyExtractor={(item, index) => index.toString()}
       scrollEnabled={false}
@@ -181,8 +186,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
     padding: 5,
     paddingHorizontal: 15,
-    backgroundColor: '#000',
   },
 });
 
-export default BackTo;
+export default Queue;

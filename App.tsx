@@ -5,7 +5,7 @@
  * @format
  */
 
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import type {PropsWithChildren} from 'react';
 import {
   SafeAreaView,
@@ -25,7 +25,12 @@ import {
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 
-import TrackPlayer from 'react-native-track-player';
+// import TrackPlayer, {
+//   Capability,
+//   useTrackPlayerEvents,
+//   Event,
+//   State,
+// } from 'react-native-track-player';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {Provider, adaptNavigationTheme, useTheme} from 'react-native-paper';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
@@ -34,6 +39,7 @@ import {
   DefaultTheme as RNLightTheme,
   DarkTheme as RNDarkTheme,
   NavigationContainer,
+  useNavigation,
 } from '@react-navigation/native';
 
 import MainStack from './app/screens/MainStack';
@@ -41,7 +47,7 @@ import NowPlaying from './app/screens/NowPlaying';
 import AddToPlaylist from './app/screens/AddToPlaylist';
 import {darkTheme, lightTheme} from './app/utils';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
-import {URL, useAuthStore, useConfigStore} from './app/store';
+import {URL, useAuthStore, useConfigStore, usePlayerStore} from './app/store';
 import {
   getBrand,
   getBuildNumber,
@@ -52,6 +58,14 @@ import {
 } from 'react-native-device-info';
 
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import TrackPlayer, {
+  AppKilledPlaybackBehavior,
+  Capability,
+  useTrackPlayerEvents,
+  Event,
+  State,
+} from 'react-native-track-player';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -77,11 +91,16 @@ function App(): React.JSX.Element {
   //const isDarkMode = useColorScheme() === 'dark';
   const mode: string = useColorScheme() || 'light';
 
+  const [root, setRoot] = useState('');
+
   // const backgroundStyle = {
   //   backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   // };
 
   const config = useConfigStore((state: {config: any}) => state.config);
+
+  const trackChange = usePlayerStore(state => state.trackChange);
+  const restoreSavedQueue = usePlayerStore(state => state.restoreSavedQueue);
 
   useEffect(() => {
     //console.log(URL());
@@ -127,30 +146,97 @@ function App(): React.JSX.Element {
     config(Axios);
     //configTheme(mode);
 
-    init();
-
     return () => {};
   }, []);
 
-  async function init() {
-    await TrackPlayer.setupPlayer();
+  useEffect(() => {
+    const setUpTrackPlayer = async () => {
+      try {
+        await TrackPlayer.setupPlayer();
+        await TrackPlayer.updateOptions({
+          android: {
+            appKilledPlaybackBehavior:
+              AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
+          },
+          capabilities: [
+            Capability.Play,
+            Capability.Pause,
+            Capability.SkipToNext,
+            Capability.SkipToPrevious,
+            Capability.Stop,
+          ],
+          compactCapabilities: [
+            Capability.Play,
+            Capability.Pause,
+            Capability.SkipToNext,
+            Capability.SkipToPrevious,
+            Capability.Stop,
+          ],
+          notificationCapabilities: [
+            Capability.Play,
+            Capability.Pause,
+            Capability.SeekTo,
+            Capability.SkipToNext,
+            Capability.SkipToPrevious,
+          ],
+        });
 
-    await TrackPlayer.add([
-      {
-        url: 'http://75.119.137.255/Music/Botswana/Vee%20Mampeezy/U%20Kondelela.mp3', // Load media from the network
-        title: 'U Kondelela',
-        artist: 'Vee Mampeezy',
-        album: 'U Kondelela',
-        genre: 'Progressive House, Electro House',
-        date: '2014-05-20T07:00:00+00:00', // RFC 3339
-        artwork:
-          'http://75.119.137.255/Music/Botswana/Vee%20Mampeezy/artist.jpg', // Load artwork from the network
-        duration: 402,
-      },
-    ]);
+        const savedQueue = await AsyncStorage.getItem('queue');
 
-    //TrackPlayer.play();
-  }
+        if (savedQueue) {
+          const queue = JSON.parse(savedQueue);
+
+          //await TrackPlayer.load(queue[0]);
+          await TrackPlayer.setQueue(queue);
+          //await TrackPlayer.setQueue(queue.slice(1));
+          //console.log(queue.slice(1));
+
+          setRoot('NowPlaying');
+        } else {
+          setRoot('MainStack');
+        }
+
+        //restoreSavedQueue();
+        // await TrackPlayer.getQueue().then(tracks =>
+        //   console.log('lext:', tracks.length),
+        // );
+
+        // const savedQueue = await AsyncStorage.getItem('queue');
+        // if (savedQueue) {
+        //   const queue = JSON.parse(savedQueue);
+        //   await TrackPlayer.add(queue);
+        //   restoreSavedQueue({
+        //     currentTrack: queue[0],
+        //     nextTracks: queue.unshift(),
+        //   });
+        // }
+
+        // restoreSavedQueue({
+        //   currentTrack: queue[0],
+        //   nextTracks: queue.unshift(),
+        // })
+      } catch (e) {
+        console.log(e);
+      }
+    };
+    setUpTrackPlayer();
+  }, []);
+
+  useTrackPlayerEvents(
+    [Event.PlaybackActiveTrackChanged],
+    async event =>
+      event.type === Event.PlaybackActiveTrackChanged && trackChange(event),
+  );
+
+  useTrackPlayerEvents([Event.PlaybackState], async (event: any) => {
+    if (event.type === Event.PlaybackState) {
+      //console.log('PlaybackState', event);
+    }
+  });
+
+  useTrackPlayerEvents([Event.PlaybackQueueEnded], event => {
+    console.log('Queue ended');
+  });
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>
@@ -163,32 +249,42 @@ function App(): React.JSX.Element {
             barStyle={isDarkMode ? 'light-content' : 'dark-content'}
             backgroundColor={backgroundStyle.backgroundColor}
           /> */}
-              <Stack.Navigator>
+              <Stack.Navigator initialRouteName={root}>
                 <Stack.Screen
                   name="MainStack"
                   component={MainStack}
                   options={{headerShown: false}}
                 />
 
-                {/* <Stack.Group screenOptions={{presentation: 'modal'}}>
-            <Stack.Screen
-              name="NowPlaying"
-              component={NowPlaying}
-              options={{
-                headerShown: false,
-                gestureEnabled: true,
-                gestureDirection: 'vertical',
-              }}
-            />
-            <Stack.Screen
-              name="AddToPlaylist"
-              component={AddToPlaylist}
-              options={{
-                title: 'Add to playlist',
-                headerTransparent: true,
-              }}
-            />
-          </Stack.Group> */}
+                {/* <Stack.Screen
+                  name="NowPlaying"
+                  component={NowPlaying}
+                  options={{
+                    headerShown: false,
+                    gestureEnabled: true,
+                    gestureDirection: 'vertical',
+                  }}
+                /> */}
+
+                <Stack.Group screenOptions={{presentation: 'modal'}}>
+                  <Stack.Screen
+                    name="NowPlaying"
+                    component={NowPlaying}
+                    options={{
+                      headerShown: false,
+                      gestureEnabled: true,
+                      gestureDirection: 'vertical',
+                    }}
+                  />
+                </Stack.Group>
+                {/* <Stack.Screen
+                    name="AddToPlaylist"
+                    component={AddToPlaylist}
+                    options={{
+                      title: 'Add to playlist',
+                      headerTransparent: true,
+                    }}
+                  /> */}
               </Stack.Navigator>
             </NavigationContainer>
           </SafeAreaProvider>

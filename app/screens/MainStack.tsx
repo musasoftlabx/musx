@@ -4,11 +4,12 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 //import {createMaterialBottomTabNavigator} from '@react-navigation/material-bottom-tabs';
 
+import HomeStack from './Home/HomeStack';
 import Library from './Library/';
-// import HomeStack from './Home/HomeStack';
 // import Search from './Search';
 import Downloads from './Downloads';
 import Settings from './Settings';
+import Footer from '../components/Footer';
 
 const Tab = createBottomTabNavigator();
 //const Tab = createMaterialBottomTabNavigator();
@@ -46,11 +47,14 @@ const MainStack = ({navigation}) => {
           tabBarActiveTintColor: 'tomato',
           tabBarInactiveTintColor: 'gray',
         })}>
-        {/* <Tab.Screen
+        <Tab.Screen
           name="HomeStack"
           component={HomeStack}
-          //options={{tabBarBadge: 3}}
-        /> */}
+          options={{
+            headerShown: false,
+            //tabBarBadge: 3
+          }}
+        />
         <Tab.Screen
           name="Library"
           component={Library}
@@ -60,6 +64,8 @@ const MainStack = ({navigation}) => {
         <Tab.Screen name="Settings" component={Settings} />
         {/*  <Tab.Screen name="Search" component={Search} />*/}
       </Tab.Navigator>
+
+      <Footer />
     </>
   );
 };

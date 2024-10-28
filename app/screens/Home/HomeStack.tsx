@@ -34,7 +34,7 @@ const HomeStack = ({navigation}) => {
         component={Home}
         options={{headerShown: false}}
       />
-      <Stack.Screen name="RecentlyAdded" component={RecentlyAdded} />
+      {/* <Stack.Screen name="RecentlyAdded" component={RecentlyAdded} />
       <Stack.Screen name="RecentlyPlayed" component={RecentlyPlayed} />
       <Stack.Screen
         name="Folders"
@@ -73,7 +73,7 @@ const HomeStack = ({navigation}) => {
         name="Artist"
         component={Artist}
         options={{headerShown: false}}
-      />
+      /> */}
     </Stack.Navigator>
   );
 };

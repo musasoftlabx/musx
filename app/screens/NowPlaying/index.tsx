@@ -11,6 +11,8 @@ import {
   SectionList,
   StyleSheet,
   Vibration,
+  BackHandler,
+  useWindowDimensions,
 } from 'react-native';
 import SwipeableRating from 'react-native-swipeable-rating';
 import {Rating, AirbnbRating} from 'react-native-ratings';
@@ -20,9 +22,16 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Slider from '@react-native-community/slider';
-import Carousel from 'react-native-snap-carousel';
+import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import LinearGradient from 'react-native-linear-gradient';
 import TextTicker from 'react-native-text-ticker';
+import {GestureDetector, Gesture} from 'react-native-gesture-handler';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import Reanimated, {
+  SharedValue,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
 
 import TrackPlayer, {
   useTrackPlayerEvents,
@@ -30,18 +39,45 @@ import TrackPlayer, {
   useProgress,
   RepeatMode,
   Event,
+  State,
+  RatingType,
+  useActiveTrack,
+  usePlayWhenReady,
 } from 'react-native-track-player';
 
-import BackTo from './BackTo';
-import UpNext from './UpNext';
-import Popular from './Popular';
+// import BackTo from './BackTo';
+// import UpNext from './UpNext';
+// import Popular from './Popular';
 import MaterialTabs from 'react-native-material-tabs';
-import {Context} from '../../contexts';
+import {MD3Colors} from 'react-native-paper';
+import Animated, {useSharedValue} from 'react-native-reanimated';
+//import {getColors} from 'react-native-image-colors';
+import {usePlayerStore} from '../../store';
+import Queue from './Queue';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const NowPlaying = ({navigation}) => {
-  const playBackState = usePlaybackState();
+const NowPlaying = ({navigation}: any) => {
+  //const [nextTracks, setNextTracks] = useState<any>();
+
+  const ref = React.useRef<ICarouselInstance>(null);
+  //const progress = useSharedValue<number>(0);
+  const {state} = usePlaybackState();
+  const activeTrack = useActiveTrack();
+  const playwhenready = usePlayWhenReady();
+
+  const currentTrack = usePlayerStore(state => state.currentTrack);
+  const nextTracks = usePlayerStore(state => state.nextTracks);
+  const pauseplay = usePlayerStore(state => state.pauseplay);
+  const next = usePlayerStore(state => state.next);
+  const previous = usePlayerStore(state => state.previous);
+  const seekTo = usePlayerStore(state => state.seekTo);
+  const skipTo = usePlayerStore(state => state.skipTo);
+  const rate = usePlayerStore(state => state.rate);
+
+  const playerState = usePlaybackState();
+  //const isPlaying = playerState === State.Playing;
+
   const {position, buffered, duration} = useProgress();
-  const {state, dispatch} = useContext(Context);
   const [repeatMode, setRepeatMode] = useState(RepeatMode.Off);
 
   const carousel = useRef(null);
@@ -51,17 +87,21 @@ const NowPlaying = ({navigation}) => {
   const [imageIndex, setImageIndex] = useState(0);
   const [trackMetadata, setTrackMetadata] = useState({});
 
-  SceneMap({
-    first: BackTo,
-    second: UpNext,
-    third: Popular,
-  });
+  const [colors, setColors] = useState(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  const layout = useWindowDimensions();
+  const [index, setIndex] = React.useState(0);
+  const [routes] = React.useState([
+    {key: 'first', title: 'First'},
+    {key: 'second', title: 'Second'},
+  ]);
 
   const handlePlay = () => {
-    carousel.current.firstItem(3);
+    //carousel.current.firstItem(3);
   };
 
-  const __setRepeatMode = async () => {
+  const handleSetRepeatMode = async () => {
     if (repeatMode === RepeatMode.Off) {
       await TrackPlayer.setRepeatMode(RepeatMode.Track);
       setRepeatMode(RepeatMode.Track);
@@ -74,49 +114,73 @@ const NowPlaying = ({navigation}) => {
     }
   };
 
-  const getRepeatMode = async () => {
-    const repeatMode = await TrackPlayer.getRepeatMode();
-    setRepeatMode(repeatMode);
-  };
+  // const getRepeatMode = async () => {
+  //   const repeatMode = await TrackPlayer.getRepeatMode();
+  //   setRepeatMode(repeatMode);
+  // };
 
-  const populate = async () => {
-    const index = await TrackPlayer.getCurrentTrack();
-    const track = await TrackPlayer.getTrack(index);
-    const queue = await TrackPlayer.getQueue();
+  // const populate = async () => {
+  //   const index = await TrackPlayer.getCurrentTrack();
+  //   const track = await TrackPlayer.getTrack(index);
+  //   const queue = await TrackPlayer.getQueue();
 
-    let sliced;
+  //   let sliced;
 
-    if (index === 0) {
-      sliced = queue.slice(0, index + 2);
-    } else if (index === queue.length - 1) {
-      sliced = queue.slice(index - 1, 1);
-    } else {
-      sliced = queue.slice(index - 1, index + 2);
-    }
-    setImageQueue(sliced.map(track => track.artwork));
+  //   if (index === 0) {
+  //     sliced = queue.slice(0, index + 2);
+  //   } else if (index === queue.length - 1) {
+  //     sliced = queue.slice(index - 1, 1);
+  //   } else {
+  //     sliced = queue.slice(index - 1, index + 2);
+  //   }
+  //   setImageQueue(sliced.map(track => track.artwork));
 
-    setImageIndex(
-      sliced.findIndex(__track => __track.artwork === track.artwork),
-    );
+  //   setImageIndex(
+  //     sliced.findIndex(__track => __track.artwork === track.artwork),
+  //   );
 
-    setTrackMetadata(track);
-  };
+  //   setTrackMetadata(track);
+  // };
 
-  useTrackPlayerEvents([Event.PlaybackTrackChanged], async event => {
-    if (
-      event.type === Event.PlaybackTrackChanged &&
-      event.nextTrack !== undefined
-    ) {
-      populate();
-    }
-  });
+  // useTrackPlayerEvents([Event.PlaybackTrackChanged], async event => {
+  //   if (
+  //     event.type === Event.PlaybackTrackChanged &&
+  //     event.nextTrack !== undefined
+  //   ) {
+  //     populate();
+  //   }
+  // });
 
+  //TrackPlayer.getQueue().then(tracks => console.log('len', tracks.length));
   useEffect(() => {
-    getRepeatMode();
-    populate();
+    //if (playwhenready) console.log('ok', playwhenready);
+    //else console.log('no', playwhenready);
+    //TrackPlayer.getQueue().then(tracks => setNextTracks(tracks));
+    //getRepeatMode();
+    //populate();
+    //const a = async () => {
+    // const url = `http://75.119.137.255/Artwork/Botswana_Vee_Mampeezy_U_Kondelela.jpg`;
+    // getColors(url, {fallback: '#228B22', cache: true, key: url}).then(
+    //   (colors: any) => setColors(colors),
+    // );
+    //setState((prev) =>{...prev, gradient})
+    //};
+    console.log(nextTracks.length);
   }, []);
 
-  const formatTrackTime = secs => {
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        navigation.goBack(null);
+        return true;
+      },
+    );
+
+    return () => backHandler.remove();
+  }, []);
+
+  const formatTrackTime = (secs: number) => {
     secs = Math.round(secs);
     let minutes = Math.floor(secs / 60) || 0;
     let seconds = secs - minutes * 60 || 0;
@@ -142,15 +206,9 @@ const NowPlaying = ({navigation}) => {
 
   return (
     <>
-      <Image
-        source={{
-          uri: imageQueue[imageIndex],
-        }}
-        blurRadius={8}
-        style={styles.absolute}
-      />
       <LinearGradient
-        colors={state.gradient}
+        //colors={state.gradient}
+        colors={['#000', '#fff']}
         useAngle={true}
         angle={200}
         style={{
@@ -164,7 +222,6 @@ const NowPlaying = ({navigation}) => {
         }}
       />
 
-        
       <SectionList
         contentContainerStyle={{paddingHorizontal: 10}}
         stickySectionHeadersEnabled={false}
@@ -181,6 +238,7 @@ const NowPlaying = ({navigation}) => {
               }}>
               <MaterialIcons name="cast" size={25} />
             </View>
+
             <View
               style={{
                 flexDirection: 'column',
@@ -188,51 +246,42 @@ const NowPlaying = ({navigation}) => {
                 height: Dimensions.get('window').height,
               }}>
               <Carousel
-                data={imageQueue}
-                renderItem={({item, index}) => (
-                  <View style={{alignItems: 'center'}} key={index}>
-                    <View
-                      style={{
-                        shadowColor: '#000',
-                        shadowOffset: {
-                          width: 0,
-                          height: 12,
-                        },
-                        shadowOpacity: 0.58,
-                        shadowRadius: 16.0,
-                        elevation: 24,
-                      }}>
-                      <Image
-                        source={{
-                          uri: item,
-                        }}
-                        style={{
-                          height: 300,
-                          width: 300,
-                          borderRadius: 12,
-                        }}
-                      />
-                    </View>
-                  </View>
+                ref={ref}
+                width={WIDTH}
+                height={WIDTH}
+                mode="parallax"
+                modeConfig={{
+                  parallaxScrollingScale: 0.9,
+                  parallaxScrollingOffset: 50,
+                }}
+                loop={false}
+                data={[
+                  activeTrack?.artwork,
+                  ...nextTracks.map(({artwork}: {artwork: string}) => artwork),
+                ]}
+                //scrollAnimationDuration={1000}
+                snapEnabled={true}
+                onSnapToItem={index => skipTo(index)}
+                renderItem={({index, item}) => (
+                  <Image
+                    source={{uri: item}}
+                    style={{height: WIDTH, width: WIDTH, borderRadius: 12}}
+                  />
                 )}
-                sliderWidth={sliderWidth}
-                itemWidth={itemWidth}
-                layout="default"
-                /* onPressItem={i =>
-                  dispatch({
-                    type: 'SKIP_TO',
-                    payload: {track: state.nextTracks[i]},
-                  })
-                }
-                onSnapToItem={i =>
-                  dispatch({
-                    type: 'SKIP_TO',
-                    payload: {track: state.nextTracks[i]},
-                  })
-                } */
-                useScrollView={false}
-                firstItem={imageIndex}
-                enableMomentum={false}
+                // renderItem={({index, item}) =>
+                //   imageLoaded ? (
+                //     <Image
+                //       source={{uri: item}}
+                //       style={{height: WIDTH, width: WIDTH, borderRadius: 12}}
+                //     />
+                //   ) : (
+                //     <Image
+                //       source={{uri: '../../../assets/images/404.png'}}
+                //       style={{height: WIDTH, width: WIDTH, borderRadius: 12}}
+                //       onLoadEnd={() => setImageLoaded(true)}
+                //     />
+                //   )
+                // }
               />
 
               <View
@@ -241,31 +290,26 @@ const NowPlaying = ({navigation}) => {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   marginHorizontal: 20,
+                  marginTop: WIDTH * 0.9,
                 }}>
                 <Icon name="disc" size={21} />
-                <Text
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 'bold',
-                    marginLeft: 5,
-                    marginTop: -3,
-                  }}>
-                  {state.currentTrack.plays} plays
+
+                <Text style={{fontSize: 18, fontWeight: 'bold', marginLeft: 5}}>
+                  {activeTrack?.plays || 0} play
+                  {`${activeTrack?.plays === 1 ? '' : 's'}`}
                 </Text>
+
                 <View style={{flex: 1}} />
-                <View style={{flex: 1}} />
-                <Text
-                  style={{
-                    fontSize: 18,
-                    fontWeight: '400',
-                  }}>
-                  {state.currentTrack.year
-                    ? `Year ${state.currentTrack.year}`
-                    : state.currentTrack.sampleRate}
+
+                <Text style={{fontSize: 18, fontWeight: '400'}}>
+                  {activeTrack?.year
+                    ? `Year ${activeTrack?.year}`
+                    : activeTrack?.sampleRate}
                 </Text>
               </View>
+
               <View style={styles.options}>
-                <Pressable style={styles.chip} onPress={__setRepeatMode}>
+                <Pressable style={styles.chip} onPress={handleSetRepeatMode}>
                   {repeatMode === RepeatMode.Off ? (
                     <MaterialCommunityIcons name="repeat-off" size={25} />
                   ) : repeatMode === RepeatMode.Track ? (
@@ -293,98 +337,46 @@ const NowPlaying = ({navigation}) => {
                   <MaterialIcons name="playlist-play" size={28} />
                 </Pressable>
               </View>
-              <View
-                style={{
-                  flexDirection: 'column',
-                  alignItems: 'flex-start',
-                  top: -10,
-                }}>
-                <Image
-                  source={{
-                    uri: state.currentTrack.waveform,
-                  }}
+
+              {/* Waveform */}
+              <View style={{flexDirection: 'column', alignItems: 'flex-start'}}>
+                {/* <View
                   style={{
                     left: '-48%',
-                    top: 0,
-                    height: 100,
-                    width: Dimensions.get('window').width - 40,
-                    position: 'absolute',
-                    resizeMode: 'cover',
-                    tintColor: 'gray',
-                    zIndex: 0,
-                    opacity: 0.5,
-                  }}
-                />
-                <View
-                  style={{
-                    left: '-48%',
-                    height: 100,
-                    width: Dimensions.get('window').width - 40,
-                    maxWidth:
-                      `${Math.floor((buffered / duration) * 100)}%` || `${0}%`,
-                    overflow: 'hidden',
-                    position: 'absolute',
-                    resizeMode: 'cover',
-                    zIndex: 1,
-                  }}>
-                  <Image
-                    source={{
-                      uri: state.currentTrack.waveform,
-                    }}
-                    style={{
-                      height: 100,
-                      width: Dimensions.get('window').width - 40,
-                      position: 'absolute',
-                      resizeMode: 'cover',
-                      tintColor: 'white',
-                      zIndex: 1,
-                    }}
-                  />
-                </View>
-                <View
-                  style={{
-                    left: '-48%',
-                    height: 100,
+                    height: 70,
                     width: Dimensions.get('window').width - 40,
                     maxWidth:
                       `${Math.floor((position / duration) * 100)}%` || `${0}%`,
                     overflow: 'hidden',
                     position: 'absolute',
-                    resizeMode: 'cover',
                     zIndex: 2,
                   }}>
                   <Image
-                    source={{
-                      uri: state.currentTrack.waveform,
-                    }}
+                    source={{uri: currentTrack.waveform}}
                     style={{
-                      height: 100,
+                      height: 70,
                       width: Dimensions.get('window').width - 40,
                       position: 'absolute',
-                      resizeMode: 'cover',
+                      resizeMode: 'stretch',
                       zIndex: 2,
                     }}
                   />
-                </View>
+                </View> */}
+
                 <Slider
                   style={{
                     left: '-49%',
                     position: 'absolute',
-                    width: Dimensions.get('window').width - 40,
-                    top: 41,
+                    width: Dimensions.get('window').width - 30,
+                    top: 25,
                     zIndex: 3,
                   }}
                   value={Math.floor((position / duration) * 100) || 0}
                   thumbTintColor="transparent"
-                  onValueChange={value => {
-                    dispatch({
-                      type: 'SEEK_TO',
-                      position: (value / 100) * duration,
-                    });
-                  }}
+                  onValueChange={value => seekTo((value / 100) * duration)}
                   minimumValue={0}
                   maximumValue={100}
-                  minimumTrackTintColor={state.gradient[2] || '#FFF'}
+                  minimumTrackTintColor={currentTrack.gradient?.[2] || '#FFF'}
                   maximumTrackTintColor="#FFFFFF"
                 />
               </View>
@@ -394,7 +386,7 @@ const NowPlaying = ({navigation}) => {
                   flex: 1,
                   flexDirection: 'row',
                   justifyContent: 'space-between',
-                  marginTop: 65,
+                  marginTop: 50,
                 }}>
                 <Text style={styles.startTime}>
                   {formatTrackTime(position)}
@@ -403,7 +395,7 @@ const NowPlaying = ({navigation}) => {
                 <Text style={styles.endTime}>{formatTrackTime(duration)}</Text>
               </View>
 
-              <View
+              {/* <View
                 style={{
                   borderWidth: 1,
                   paddingHorizontal: 10,
@@ -418,17 +410,21 @@ const NowPlaying = ({navigation}) => {
                 <Text style={{color: 'white', fontWeight: 'bold'}}>
                   <Text style={{color: 'yellow'}}>MP3</Text>
                   &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;
-                  {state.currentTrack.sampleRate / 1000}
+                  {currentTrack.sampleRate / 1000}
                   Khz &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;
                 </Text>
                 <Text style={{fontWeight: 'bold'}}>
-                  {state.currentTrack.bitrate / 1000}kbps
+                  {currentTrack?.bitrate / 1000}kbps
                 </Text>
-              </View>
+              </View> */}
 
               <Text numberOfLines={1} style={styles.artists}>
-                {state.currentTrack.artists.join(' / ') || 'No Artists'}
+                {activeTrack?.artists || 'No Artists'}
               </Text>
+
+              {/* <Text numberOfLines={1} style={styles.artists}>
+                {JSON.stringify(playerState)}
+              </Text> */}
 
               <TextTicker
                 style={styles.title}
@@ -438,23 +434,26 @@ const NowPlaying = ({navigation}) => {
                 bounceSpeed={10}
                 repeatSpacer={50}
                 marqueeDelay={3000}>
-                {state.currentTrack.title || state.currentTrack.name}
+                {activeTrack?.title || activeTrack?.name}
               </TextTicker>
 
               <Text numberOfLines={1} style={styles.album}>
-                {state.currentTrack.album
-                  ? state.currentTrack.album === state.currentTrack.title
-                    ? state.currentTrack.albumArtist + ' Singles'
-                    : state.currentTrack.album
+                {activeTrack?.album
+                  ? activeTrack?.album === activeTrack?.title
+                    ? activeTrack?.albumArtist + ' Singles'
+                    : activeTrack?.album
                   : 'No Album'}
               </Text>
+
               <SwipeableRating
                 style={styles.rating}
-                rating={state.currentTrack.rating || 0}
+                rating={currentTrack?.rating ?? 0}
                 size={28}
                 gap={4}
-                onPress={rating => dispatch({type: 'RATE', rating})}
-                //Vibration.vibrate(50),
+                onPress={rating => {
+                  //Vibration.vibrate(50);
+                  rate(activeTrack, rating);
+                }}
                 minRating={0.5}
                 allowHalves={true}
                 swipeable={true}
@@ -462,6 +461,7 @@ const NowPlaying = ({navigation}) => {
                 color={'#FFD700'}
                 emptyColor={'#FFD700'}
               />
+
               <View style={styles.controls}>
                 <Pressable
                   onPress={handlePlay}
@@ -474,7 +474,7 @@ const NowPlaying = ({navigation}) => {
                   <Icon name="play-back" size={40} />
                 </Pressable>
                 <Pressable
-                  onPress={() => dispatch({type: 'PREVIOUS_TRACK'})}
+                  onPress={() => previous()}
                   android_ripple={{
                     color: 'white',
                     radius: 39,
@@ -484,7 +484,7 @@ const NowPlaying = ({navigation}) => {
                   <Icon name="play-back-circle" size={70} />
                 </Pressable>
                 <Pressable
-                  onPress={() => dispatch({type: 'PLAY_PAUSE'})}
+                  onPress={() => pauseplay()}
                   android_ripple={{
                     color: 'white',
                     radius: 39,
@@ -492,12 +492,12 @@ const NowPlaying = ({navigation}) => {
                     borderless: true,
                   }}>
                   <Icon
-                    name={playBackState === 3 ? 'pause-circle' : 'play-circle'}
+                    name={state === 'playing' ? 'pause-circle' : 'play-circle'}
                     size={100}
                   />
                 </Pressable>
                 <Pressable
-                  onPress={() => dispatch({type: 'NEXT_TRACK'})}
+                  onPress={() => next()}
                   android_ripple={{
                     color: 'white',
                     radius: 39,
@@ -518,21 +518,36 @@ const NowPlaying = ({navigation}) => {
                   <Icon name="play-forward" size={40} />
                 </Pressable>
               </View>
+
               <View style={{flex: 1}}></View>
             </View>
           </>
         )}
         renderItem={() => (
           <>
-            <MaterialTabs
-              items={['LYRICS', 'PLAYLIST', 'POPULAR']}
+            <TabView
+              navigationState={{index, routes}}
+              renderScene={SceneMap({
+                first: Queue,
+                second: () => (
+                  <View
+                    style={{flex: 1, backgroundColor: '#673ab7', height: 100}}>
+                    <Text>wefeww</Text>
+                  </View>
+                ),
+              })}
+              onIndexChange={setIndex}
+              initialLayout={{width: layout.width}}
+            />
+            {/* <MaterialTabs
+              items={['QUEUE', 'LYRICS', 'PLAYLIST']}
               selectedIndex={selectedTab}
               onChange={setSelectedTab}
               barColor="transparent"
               indicatorColor="#fffe94"
               activeTextColor="white"
               textStyle={{fontSize: 18}}
-            />
+            /> */}
             <View
               style={{
                 borderBottomWidth: 0.3,
@@ -540,9 +555,9 @@ const NowPlaying = ({navigation}) => {
                 marginBottom: 5,
               }}
             />
-            {selectedTab === 0 && <BackTo />}
-            {selectedTab === 1 && <UpNext />}
-            {selectedTab === 2 && <Popular />}
+            {/* {selectedTab === 0 && <Queue />} */}
+            {/* {selectedTab === 0 && <Lyrics navigation={undefined} />} */}
+            {/* {selectedTab === 2 && <Playlist navigation={undefined} />} */}
           </>
         )}
       />
@@ -603,12 +618,13 @@ const styles = StyleSheet.create({
     opacity: 0.6,
     padding: 5,
     paddingHorizontal: 15,
-    backgroundColor: '#000',
+    //backgroundColor: '#000',
   },
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 20,
   },
   options: {
     flex: 1,
