@@ -45,3 +45,33 @@ export interface IAxiosError {
     };
   };
 }
+
+export type Track = {
+  album: string;
+  albumArtist: string;
+  artists: string;
+  artwork: string;
+  bitrate: number;
+  channelLayout: string;
+  channels: number;
+  duration: number;
+  encoder: string;
+  format: string;
+  genre: string;
+  id: number;
+  lyrics: string;
+  name?: string;
+  palette: string[];
+  path: string;
+  plays: number;
+  rating: number;
+  sampleRate: number;
+  size: number;
+  syncDate: string;
+  title: string;
+  track: number;
+  waveform: string;
+  year: string;
+};
+
+export type Tracks = Track[];

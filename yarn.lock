@@ -5099,6 +5099,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"colord@npm:2.9.2":
+  version: 2.9.2
+  resolution: "colord@npm:2.9.2"
+  checksum: 2aa6a9b3abbce74ba3c563886cfeb433ea0d7df5ad6f4a560005eddab1ddf7c0fc98f39b09b599767a19c86dd3837b77f66f036e479515d4b17347006dbd6d9f
+  languageName: node
+  linkType: hard
+
 "colorette@npm:^1.0.7":
   version: 1.4.0
   resolution: "colorette@npm:1.4.0"
@@ -9330,7 +9337,9 @@ __metadata:
     react-native-responsive-fontsize: ^0.5.1
     react-native-safe-area-context: ^4.11.1
     react-native-screens: ^3.34.0
+    react-native-shadow-2: ^7.1.1
     react-native-snap-carousel: ^3.9.1
+    react-native-star-rating-widget: ^1.9.1
     react-native-svg: ^15.8.0
     react-native-svg-animated-linear-gradient: ^0.4.0
     react-native-swipeable-rating: ^0.2.1
@@ -10410,6 +10419,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-shadow-2@npm:^7.1.1":
+  version: 7.1.1
+  resolution: "react-native-shadow-2@npm:7.1.1"
+  dependencies:
+    colord: 2.9.2
+  peerDependencies:
+    react-native: "*"
+    react-native-svg: ">=12.1.0"
+  checksum: 3855eff4b28ef239f0c63cae5d7459f5597524853f02ddd6388504ad9e407215c78919a732aa25d888f3cd5f9c15f55d5b2184652e499cf387c9361c2f4f5f53
+  languageName: node
+  linkType: hard
+
 "react-native-snap-carousel@npm:^3.9.1":
   version: 3.9.1
   resolution: "react-native-snap-carousel@npm:3.9.1"
@@ -10420,6 +10441,17 @@ __metadata:
     react: ">=15.0.0"
     react-native: "*"
   checksum: e71f6887ba8e86b4aea6d6a88c304135a7acbb5ef9173b78018fc0e6d9965da9ec1d7c794db31282dc85892c6ca89f398d07145ab3e7d1e28cf12a09c247bb9d
+  languageName: node
+  linkType: hard
+
+"react-native-star-rating-widget@npm:^1.9.1":
+  version: 1.9.1
+  resolution: "react-native-star-rating-widget@npm:1.9.1"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-svg: "*"
+  checksum: c244fb8bd8dadb15f9127d23b6e1296e4db31dd87543d3af9a65d5c7c9533894f5b08fb51d5301662abb78c3d43874122a93c5049d49c1f9455080c55f04a5f5
   languageName: node
   linkType: hard
 

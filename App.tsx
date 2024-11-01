@@ -47,7 +47,14 @@ import NowPlaying from './app/screens/NowPlaying';
 import AddToPlaylist from './app/screens/AddToPlaylist';
 import {darkTheme, lightTheme} from './app/utils';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
-import {URL, useAuthStore, useConfigStore, usePlayerStore} from './app/store';
+import {
+  API_URL,
+  SERVER_URL,
+  URL,
+  useAuthStore,
+  useConfigStore,
+  usePlayerStore,
+} from './app/store';
 import {
   getBrand,
   getBuildNumber,
@@ -97,6 +104,12 @@ function App(): React.JSX.Element {
   //   backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   // };
 
+  // * Axios config
+  axios.defaults.baseURL = API_URL;
+  axios.defaults.timeout = 60000;
+  axios.defaults.headers.post['Content-Type'] = 'application/json';
+  axios.defaults.headers.post['Accept'] = 'application/json';
+
   const config = useConfigStore((state: {config: any}) => state.config);
 
   const trackChange = usePlayerStore(state => state.trackChange);
@@ -106,7 +119,7 @@ function App(): React.JSX.Element {
     //console.log(URL());
     // ? Axios
     const Axios = axios.create({
-      baseURL: URL(),
+      baseURL: API_URL,
       timeout: 10000,
       headers: {
         Accept: 'application/json',
@@ -143,7 +156,7 @@ function App(): React.JSX.Element {
     // );
 
     //restore();
-    config(Axios);
+    //config(Axios);
     //configTheme(mode);
 
     return () => {};

@@ -95,7 +95,7 @@ export const usePlayerStore = create<IPlayerStore>(set => ({
       ...params.currentTrack,
       url: `${AUDIO_URL}${params.currentTrack.path}`,
       artwork: `${ARTWORK_URL}${params.currentTrack.artwork}`,
-      gradient: ['#2e7d32', '#000'],
+      palette: JSON.parse(params.currentTrack.palette),
       //waveform: `${WAVEFORM_URL}${params.currentTrack.waveform}`,
     };
 
@@ -104,7 +104,7 @@ export const usePlayerStore = create<IPlayerStore>(set => ({
         ...track,
         url: `${AUDIO_URL}${track.path}`,
         artwork: `${ARTWORK_URL}${track.artwork}`,
-        gradient: ['#2e7d32', '#000'],
+        palette: JSON.parse(track.palette),
       };
     });
 
@@ -115,10 +115,14 @@ export const usePlayerStore = create<IPlayerStore>(set => ({
       JSON.stringify([currentTrack, ...nextTracks]),
     );
 
-    await TrackPlayer.reset();
-    await TrackPlayer.add(currentTrack);
+    console.warn(currentTrack);
+
+    await TrackPlayer.setQueue([currentTrack, ...nextTracks]);
     await TrackPlayer.play();
-    await TrackPlayer.add(nextTracks);
+    // await TrackPlayer.reset();
+    // await TrackPlayer.add(currentTrack);
+    // await TrackPlayer.play();
+    // await TrackPlayer.add(nextTracks);
   },
   pauseplay: async () => {
     const {state} = await TrackPlayer.getPlaybackState();
@@ -164,12 +168,12 @@ export const usePlayerStore = create<IPlayerStore>(set => ({
       currentTrack: {...state.currentTrack, plays: state.currentTrack + 1},
     }));
 
-    try {
-      const res = await axios.put(`${API_URL}plays`, {id});
-      console.log(res.data);
-    } catch (err: any) {
-      console.error(err.message);
-    }
+    // try {
+    //   const res = await axios.put(`${API_URL}updatePlayCount`, {id});
+    //   console.log(res.data);
+    // } catch (err: any) {
+    //   console.error(err.message);
+    // }
   },
   restoreSavedQueue: async () => {
     const savedQueue = await AsyncStorage.getItem('queue');

@@ -5,6 +5,7 @@ import LibraryStack from './LibraryStack';
 import Artists from './LibraryStack';
 import Folders from './Folders';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Footer from '../../components/Footer';
 
 const Stack = createNativeStackNavigator();
 
@@ -23,23 +24,27 @@ const HomeStack = ({navigation}) => {
   }, []);
 
   return (
-    <Stack.Navigator initialRouteName={initialRoute}>
-      <Stack.Screen
-        name="LibraryStack"
-        component={LibraryStack}
-        options={{headerShown: false}}
-      />
-      <Stack.Screen
-        name="Artists"
-        component={Artists}
-        //options={{headerShown: false}}
-      />
-      <Stack.Screen
-        name="Folders"
-        component={Folders}
-        //options={{headerShown: false}}
-      />
-    </Stack.Navigator>
+    <>
+      <Stack.Navigator initialRouteName={initialRoute}>
+        <Stack.Screen
+          name="LibraryStack"
+          component={LibraryStack}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Artists"
+          component={Artists}
+          //options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Folders"
+          component={Folders}
+          //options={{headerShown: false}}
+        />
+      </Stack.Navigator>
+
+      <Footer />
+    </>
   );
 };
 

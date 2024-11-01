@@ -64,8 +64,6 @@ const MainStack = ({navigation}) => {
         <Tab.Screen name="Settings" component={Settings} />
         {/*  <Tab.Screen name="Search" component={Search} />*/}
       </Tab.Navigator>
-
-      <Footer />
     </>
   );
 };

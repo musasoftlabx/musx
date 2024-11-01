@@ -250,7 +250,7 @@ const Explorer = ({handlePlay, backgroundStyle}) => {
           <ActivityIndicator animating={true} size="large" />
         </View>
       )}
-      <Footer />
+      {/* <Footer /> */}
     </SafeAreaView>
   );
 };

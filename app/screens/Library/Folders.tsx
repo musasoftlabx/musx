@@ -19,12 +19,22 @@ import {
   useFocusEffect,
 } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useConfigStore, usePlayerStore} from '../../store';
+import {
+  API_URL,
+  ARTWORK_URL,
+  AUDIO_URL,
+  useConfigStore,
+  usePlayerStore,
+  WAVEFORM_URL,
+} from '../../store';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as Animatable from 'react-native-animatable';
 import SwipeableRating from 'react-native-swipeable-rating';
 import {Modalize} from 'react-native-modalize';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import TrackPlayer from 'react-native-track-player';
+import {Track} from '../../types';
+import StarRating, {StarRatingDisplay} from 'react-native-star-rating-widget';
 
 const Folders = ({navigation, route}: any) => {
   const play = usePlayerStore(state => state.play);
@@ -77,7 +87,7 @@ const Folders = ({navigation, route}: any) => {
       }
       console.log('x:', x);
 
-      const res = await axios.get(`http://75.119.137.255:3000/${x}`);
+      const res = await axios.get(`${API_URL}${x}`);
       setData(res.data);
       savePath(x);
       //navigation.push('LibraryStack');
@@ -277,20 +287,7 @@ const Folders = ({navigation, route}: any) => {
         numColumns={1}
         keyExtractor={(item, index) => index.toString()}
         //sections={[data]}
-        renderItem={({
-          item,
-          index,
-        }: {
-          item: {
-            name: string;
-            path: string;
-            artwork: string;
-            title: string;
-            artists: string;
-            plays: number;
-          };
-          index: number;
-        }) => (
+        renderItem={({item, index}: {item: Track; index: number}) => (
           <>
             {item.hasOwnProperty('name') ? (
               <Pressable
@@ -320,12 +317,37 @@ const Folders = ({navigation, route}: any) => {
               </Pressable>
             ) : (
               <Pressable
-                onPress={() => {
-                  play({
-                    currentTrack: item,
-                    nextTracks: data.slice(index + 1, data.length),
-                  });
-                  navigation.navigate('NowPlaying');
+                onPress={async () => {
+                  const queue = data.map(
+                    (track: {
+                      path: string;
+                      artwork: string;
+                      waveform: string;
+                      palette: string;
+                    }) =>
+                      track.hasOwnProperty('format') && {
+                        ...track,
+                        url: `${AUDIO_URL}${track.path}`,
+                        artwork: `${ARTWORK_URL}${track.artwork}`,
+                        waveform: `${WAVEFORM_URL}${track.waveform}`,
+                        palette: JSON.parse(track.palette),
+                      },
+                  );
+
+                  const _queue: any = queue.filter(track => track);
+
+                  await AsyncStorage.setItem('queue', JSON.stringify(_queue));
+                  await TrackPlayer.setQueue(_queue);
+                  await TrackPlayer.skip(
+                    _queue.findIndex((track: Track) => track.id === item.id),
+                  );
+                  await TrackPlayer.play();
+
+                  navigation.push('NowPlaying');
+                  // play({
+                  //   currentTrack: item,
+                  //   nextTracks: data.slice(index + 1, data.length),
+                  // });
                 }}
                 onLongPress={() => onOpen(item)}>
                 <View
@@ -342,9 +364,7 @@ const Folders = ({navigation, route}: any) => {
                       onPress={() => onOpen(item)}
                     /> */}
                   <Image
-                    source={{
-                      uri: `http://75.119.137.255/Artwork/${item.artwork}`,
-                    }}
+                    source={{uri: `${ARTWORK_URL}${item.artwork}`}}
                     style={{
                       height: 45,
                       width: 45,
@@ -359,15 +379,36 @@ const Folders = ({navigation, route}: any) => {
                       marginTop: -2,
                       maxWidth: Dimensions.get('window').width - 190,
                     }}>
-                    <Text numberOfLines={1} style={styles.title}>
-                      {item.title}
-                    </Text>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6,
+                        overflow: 'hidden',
+                      }}>
+                      <Text
+                        numberOfLines={1}
+                        style={{
+                          alignSelf: 'flex-start',
+                          backgroundColor: '#ffffff4D',
+                          borderRadius: 5,
+                          marginTop: 1,
+                          maxWidth: 'auto',
+                          paddingVertical: 1,
+                          paddingHorizontal: 5,
+                        }}>
+                        {`${(item.size / 1000000).toFixed(2)} MB`}
+                      </Text>
+
+                      <Text
+                        numberOfLines={1}
+                        style={{fontSize: 17, fontWeight: '600'}}>
+                        {item.title}
+                      </Text>
+                    </View>
                     <Text numberOfLines={1} style={styles.artists}>
                       {item.artists ?? 'Unknown Artist'}
                     </Text>
-                    {/*<Text numberOfLines={1} style={styles.album}>
-                        {item.album || 'Unknown Album'}
-                      </Text> */}
                   </View>
                   <View style={{flex: 1}} />
                   <View
@@ -375,13 +416,12 @@ const Folders = ({navigation, route}: any) => {
                       justifyContent: 'center',
                       alignItems: 'flex-end',
                     }}>
-                    {/* <SwipeableRating
-                        rating={item.rating || 0}
-                        size={15}
-                        allowHalves={true}
-                        color={'#FFD700'}
-                        emptyColor={'#FFD700'}
-                      /> */}
+                    <StarRatingDisplay
+                      rating={item.rating}
+                      starSize={16}
+                      starStyle={{marginHorizontal: 0}}
+                    />
+
                     <Text
                       style={{
                         fontWeight: 'bold',
@@ -405,7 +445,7 @@ const Folders = ({navigation, route}: any) => {
         )}
         renderHeader={() => <View />}
         renderFooter={() => <View />}
-        itemHeight={50}
+        itemHeight={60}
         headerHeight={0}
         footerHeight={0}
       />
@@ -435,16 +475,18 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     //transform: [{rotate: spin}],
   },
-  title: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
+
   artists: {
     fontSize: 14,
     fontWeight: '300',
     fontStyle: 'italic',
   },
   album: {
+    backgroundColor: '#ffffff4D',
+    borderStyle: 'solid',
+    borderWidth: 1,
+    borderColor: '#fff',
+    borderRadius: 5,
     fontSize: 12,
     fontWeight: '300',
   },

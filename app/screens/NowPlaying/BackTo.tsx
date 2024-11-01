@@ -27,8 +27,6 @@ import {Track} from '../../types';
 import BigList from 'react-native-big-list';
 import {StarRatingDisplay} from 'react-native-star-rating-widget';
 
-const NODE_SERVER = 'http://musasoft.ddns.net:3000/';
-
 const spinValue = new Animated.Value(0);
 
 // First set up animation
@@ -158,32 +156,14 @@ const Queue = () => {
 
   return (
     <BigList
-      data={queue.slice(activeTrackIndex, activeTrackIndex! + 10)}
+      data={queue.slice(0, activeTrackIndex).reverse()}
       numColumns={1}
       keyExtractor={(item, index) => index.toString()}
       //sections={[data]}
       renderItem={({item, index}) => (
         <Pressable onPress={() => TrackPlayer.skip(index)}>
-          <View
-            style={[
-              activeTrack?.id === item.id
-                ? {
-                    backgroundColor: '#ffffff4d',
-                    borderRadius: 10,
-                    flexDirection: 'row',
-                    paddingBottom: 6,
-                    paddingTop: 10,
-                    paddingHorizontal: 10,
-                    marginTop: 10,
-                  }
-                : {
-                    flexDirection: 'row',
-                    paddingVertical: 10,
-                    paddingHorizontal: 10,
-                    marginTop: 10,
-                  },
-            ]}>
-            <Image
+          <View style={styles.item}>
+            <Animated.Image
               source={{uri: item.artwork}}
               style={
                 activeTrack?.id === item.id ? styles.isPlaying : styles.image
@@ -212,6 +192,7 @@ const Queue = () => {
                 starSize={16}
                 starStyle={{marginHorizontal: 0}}
               />
+
               <Text style={{fontWeight: 'bold', marginRight: 5}}>
                 {item.plays || 0} play{item.plays === 1 ? '' : 's'}
               </Text>
@@ -246,6 +227,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  item: {
+    flexDirection: 'row',
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+  },
   imageShadow: {
     shadowColor: '#000',
     shadowOffset: {
@@ -262,7 +248,7 @@ const styles = StyleSheet.create({
     width: 45,
     marginRight: 8,
     borderRadius: 100,
-    //transform: [{rotate: spin}],
+    transform: [{rotate: spin}],
   },
   image: {
     height: 45,
