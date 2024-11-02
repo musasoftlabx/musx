@@ -23,17 +23,17 @@ import {
   API_URL,
   ARTWORK_URL,
   AUDIO_URL,
+  SERVER_URL,
   useConfigStore,
   usePlayerStore,
   WAVEFORM_URL,
 } from '../../store';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as Animatable from 'react-native-animatable';
-import SwipeableRating from 'react-native-swipeable-rating';
 import {Modalize} from 'react-native-modalize';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import TrackPlayer from 'react-native-track-player';
-import {Track} from '../../types';
+import {TTrack} from '../../types';
 import StarRating, {StarRatingDisplay} from 'react-native-star-rating-widget';
 
 const Folders = ({navigation, route}: any) => {
@@ -318,32 +318,61 @@ const Folders = ({navigation, route}: any) => {
             ) : (
               <Pressable
                 onPress={async () => {
-                  const queue = data.map(
+                  const tracks = data.map(
                     (track: {
+                      id: number;
                       path: string;
                       artwork: string;
                       waveform: string;
                       palette: string;
-                    }) =>
-                      track.hasOwnProperty('format') && {
-                        ...track,
-                        url: `${AUDIO_URL}${track.path}`,
-                        artwork: `${ARTWORK_URL}${track.artwork}`,
-                        waveform: `${WAVEFORM_URL}${track.waveform}`,
-                        palette: JSON.parse(track.palette),
-                      },
+                    }) => {
+                      if (track.hasOwnProperty('format')) {
+                        return {
+                          ...track,
+                          url: `${AUDIO_URL}${track.path}`,
+                          artwork: `${ARTWORK_URL}${track.artwork}`,
+                          waveform: `${WAVEFORM_URL}${track.waveform}`,
+                          palette: JSON.parse(track.palette),
+                        };
+                      }
+                    },
                   );
 
-                  const _queue: any = queue.filter(track => track);
+                  // ? Remove undefined items (folders)
+                  const queue: any = tracks.filter((track: any) => track);
 
-                  await AsyncStorage.setItem('queue', JSON.stringify(_queue));
-                  await TrackPlayer.setQueue(_queue);
-                  await TrackPlayer.skip(
-                    _queue.findIndex((track: Track) => track.id === item.id),
+                  // ? Find index of currently selected track
+                  const selectedIndex = queue.findIndex(
+                    (track: TTrack) => track.id === item.id,
                   );
+
+                  await TrackPlayer.setQueue(queue);
+                  await TrackPlayer.skip(selectedIndex);
                   await TrackPlayer.play();
-
                   navigation.push('NowPlaying');
+
+                  // const initTrackPlayer = async () => {
+                  //   await TrackPlayer.setQueue(queue);
+                  //   await TrackPlayer.skip(selectedIndex);
+                  //   await TrackPlayer.play();
+                  //   navigation.push('NowPlaying');
+                  // };
+
+                  // // ? Fetch lrc file from server
+                  // try {
+                  //   const {data: lyrics} = await axios.get(
+                  //     `${SERVER_URL}/Music/${queue[selectedIndex].path.replace(
+                  //       '.mp3',
+                  //       '.lrc',
+                  //     )}`,
+                  //   );
+
+                  //   if (lyrics) queue[selectedIndex].lyrics = lyrics;
+                  //   initTrackPlayer();
+                  // } catch (err) {
+                  //   initTrackPlayer();
+                  // }
+
                   // play({
                   //   currentTrack: item,
                   //   nextTracks: data.slice(index + 1, data.length),

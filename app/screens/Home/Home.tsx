@@ -15,7 +15,6 @@ import {
   StyleSheet,
   Text,
 } from 'react-native';
-import SwipeableRating from 'react-native-swipeable-rating';
 import LinearGradient from 'react-native-linear-gradient';
 import SvgAnimatedLinearGradient from 'react-native-svg-animated-linear-gradient';
 import Svg, {Circle, Rect} from 'react-native-svg';
@@ -25,6 +24,7 @@ import {GradientText} from '../../components/TextX';
 //import {Context} from '../../contexts';
 import Footer from '../../components/Footer';
 import {usePlayerStore} from '../../store';
+import {StarRatingDisplay} from 'react-native-star-rating-widget';
 
 const NODE_SERVER = 'http://musasoft.ddns.net:3000/';
 const NGINX_SERVER = 'http://musasoft.ddns.net:8080/';
@@ -249,13 +249,10 @@ const Home = ({navigation}) => {
                           }}
                           resizeMode="cover"
                         />
-                        <SwipeableRating
-                          rating={item.rating || 0}
-                          size={15}
-                          allowHalves={true}
-                          color={'#FFD700'}
-                          emptyColor={'#FFD700'}
-                          style={{marginLeft: -30, marginTop: 10}}
+                        <StarRatingDisplay
+                          rating={item.rating}
+                          starSize={16}
+                          starStyle={{marginHorizontal: 0}}
                         />
                         <Text
                           numberOfLines={1}

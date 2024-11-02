@@ -170,7 +170,9 @@ function App(): React.JSX.Element {
           android: {
             appKilledPlaybackBehavior:
               AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
+            alwaysPauseOnInterruption: true,
           },
+          progressUpdateEventInterval: 10,
           capabilities: [
             Capability.Play,
             Capability.Pause,
@@ -235,21 +237,21 @@ function App(): React.JSX.Element {
     setUpTrackPlayer();
   }, []);
 
-  useTrackPlayerEvents(
-    [Event.PlaybackActiveTrackChanged],
-    async event =>
-      event.type === Event.PlaybackActiveTrackChanged && trackChange(event),
-  );
+  // useTrackPlayerEvents(
+  //   [Event.PlaybackActiveTrackChanged],
+  //   async event =>
+  //     event.type === Event.PlaybackActiveTrackChanged && trackChange(event),
+  // );
 
-  useTrackPlayerEvents([Event.PlaybackState], async (event: any) => {
-    if (event.type === Event.PlaybackState) {
-      //console.log('PlaybackState', event);
-    }
-  });
+  // useTrackPlayerEvents([Event.PlaybackState], async (event: any) => {
+  //   if (event.type === Event.PlaybackState) {
+  //     //console.log('PlaybackState', event);
+  //   }
+  // });
 
-  useTrackPlayerEvents([Event.PlaybackQueueEnded], event => {
-    console.log('Queue ended');
-  });
+  // useTrackPlayerEvents([Event.PlaybackQueueEnded], event => {
+  //   console.log('Queue ended');
+  // });
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>

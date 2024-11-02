@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useLayoutEffect,
-  useMemo,
-} from 'react';
+import React, {useState, useEffect, useMemo, useCallback} from 'react';
 import {
   Image,
   Dimensions,
@@ -18,21 +12,19 @@ import {
   BackHandler,
   useWindowDimensions,
 } from 'react-native';
-import SwipeableRating from 'react-native-swipeable-rating';
-import {Rating, AirbnbRating} from 'react-native-ratings';
+import {Shadow} from 'react-native-shadow-2';
+import {useMutation} from '@tanstack/react-query';
 import {TabView, SceneMap, TabBar} from 'react-native-tab-view';
-import Icon from 'react-native-vector-icons/Ionicons';
+import axios from 'axios';
+import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import LinearGradient from 'react-native-linear-gradient';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Slider from '@react-native-community/slider';
-import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
-import LinearGradient from 'react-native-linear-gradient';
-import TextTicker from 'react-native-text-ticker';
-
 import StarRating from 'react-native-star-rating-widget';
-
-import {Shadow} from 'react-native-shadow-2';
+import TextTicker from 'react-native-text-ticker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import TrackPlayer, {
   useTrackPlayerEvents,
@@ -44,31 +36,32 @@ import TrackPlayer, {
   RatingType,
   useActiveTrack,
   usePlayWhenReady,
-  TrackMetadataBase,
+  Track,
 } from 'react-native-track-player';
 
-// import BackTo from './BackTo';
-// import UpNext from './UpNext';
-// import Popular from './Popular';
-import MaterialTabs from 'react-native-material-tabs';
 import {MD3Colors} from 'react-native-paper';
-import Animated, {useSharedValue} from 'react-native-reanimated';
-//import {getColors} from 'react-native-image-colors';
-import {usePlayerStore} from '../../store';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {SERVER_URL, usePlayerStore} from '../../store';
 
-import {Track} from '../../types';
-import {getActiveTrackIndex} from 'react-native-track-player/lib/src/trackPlayer';
-import {useMutation, useQuery} from '@tanstack/react-query';
-import axios from 'axios';
 import BackTo from './BackTo';
 import UpNext from './UpNext';
+import Lyrics from './Lyrics';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
+import {Lyric} from 'react-native-lyric';
 
 const logoJPG = require('../../assets/images/logo.jpg');
 const imageFiller = require('../../assets/images/image-filler.png');
 
+const duration = 2000;
+const easing = Easing.bezier(0.25, -0.5, 0.25, 1);
+const millisecondsMultiplier = 1001;
+
 const NowPlaying = ({navigation}: any) => {
-  //const [nextTracks, setNextTracks] = useState<any>();
   const {mutate: saveRating} = useMutation({
     mutationFn: (body: {id?: number; rating: number}) =>
       axios.patch('rateTrack', body),
@@ -81,46 +74,29 @@ const NowPlaying = ({navigation}: any) => {
   const ref = React.useRef<ICarouselInstance>(null);
   //const progress = useSharedValue<number>(0);
   const {state} = usePlaybackState();
-  const _activeTrack = useActiveTrack();
+  const activeTrack = useActiveTrack();
   const playwhenready = usePlayWhenReady();
 
-  const currentTrack = usePlayerStore(state => state.currentTrack);
-  const nextTracks = usePlayerStore(state => state.nextTracks);
   const pauseplay = usePlayerStore(state => state.pauseplay);
-  const next = usePlayerStore(state => state.next);
-  const previous = usePlayerStore(state => state.previous);
-  const seekTo = usePlayerStore(state => state.seekTo);
-  const skipTo = usePlayerStore(state => state.skipTo);
-  const rate = usePlayerStore(state => state.rate);
 
-  const playerState = usePlaybackState();
   //const isPlaying = playerState === State.Playing;
 
   const {position, buffered, duration} = useProgress();
   const [repeatMode, setRepeatMode] = useState(RepeatMode.Off);
 
-  const carousel = useRef(null);
-
   const [queue, setQueue] = useState<any>([]);
   const [artworkQueue, setArtworkQueue] = useState<string[]>([]);
-  const [activeArtwork, setActiveArtwork] = useState(0);
-  const [activeTrack, setActiveTrack] = useState<Track>();
+  const [trimmedArtworkQueue, setTrimmedArtworkQueue] = useState<string[]>([]);
   const [activeTrackIndex, setActiveTrackIndex] = useState<number>();
-  const [trackRating, setTrackRating] = useState<number>(0);
+  const [trackRating, setTrackRating] = useState<Track['rating']>(0);
   const [trackPlayCount, setTrackPlayCount] = useState<number>(0);
-  const [upNextCount, setUpNextCount] = useState<number>(0);
   const [playRegistered, setPlayRegistered] = useState<boolean>(false);
-  const [trackMetadata, setTrackMetadata] = useState({});
-
-  const [colors, setColors] = useState(null);
-  const [imageLoaded, setImageLoaded] = useState(false);
+  const [lyrics, setLyrics] = useState(null);
+  const [lyricsVisible, setLyricsVisible] = useState(false);
 
   const layout = useWindowDimensions();
-  const [tabIndex, setTabIndex] = React.useState(1);
 
-  const handlePlay = () => {
-    //carousel.current.firstItem(3);
-  };
+  const [tabIndex, setTabIndex] = useState(2);
 
   const handleSetRepeatMode = async () => {
     if (repeatMode === RepeatMode.Off) {
@@ -134,6 +110,35 @@ const NowPlaying = ({navigation}: any) => {
       setRepeatMode(RepeatMode.Off);
     }
   };
+
+  const sv = useSharedValue<number>(0);
+
+  React.useEffect(() => {
+    sv.value = withRepeat(withTiming(1, {duration, easing}), -1);
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{rotate: `${sv.value * 360}deg`}],
+  }));
+
+  const lineRenderer = useCallback(
+    ({lrcLine: {millisecond, content}, index, active}: any) => (
+      <Text
+        onPress={() => TrackPlayer.seekTo(millisecond / millisecondsMultiplier)}
+        // onLongPress={() =>
+        //   isPlaying ? TrackPlayer.pause() : TrackPlayer.play()
+        // }
+        style={{
+          fontSize: active ? 28 : 22,
+          textAlign: 'center',
+          color: active ? 'yellow' : 'rgba(255,255,255,.5)',
+          fontWeight: active ? 'bold' : '500',
+        }}>
+        {content}
+      </Text>
+    ),
+    [],
+  );
 
   // const getRepeatMode = async () => {
   //   const repeatMode = await TrackPlayer.getRepeatMode();
@@ -172,43 +177,65 @@ const NowPlaying = ({navigation}: any) => {
   //   }
   // });
 
-  useMemo(() => {
-    setPlayRegistered(false);
+  useTrackPlayerEvents(
+    [Event.PlaybackActiveTrackChanged, Event.PlaybackProgressUpdated],
+    async event => {
+      if (event.type === Event.PlaybackActiveTrackChanged) {
+        setPlayRegistered(false);
 
-    TrackPlayer.getQueue().then((queue: any) => setQueue(queue));
+        const _queue = await TrackPlayer.getQueue();
+        const _activeTrackIndex = await TrackPlayer.getActiveTrackIndex();
+        const _artworkQueue = _queue.map((track: Track['']) => track.artwork);
 
-    TrackPlayer.getQueue().then((queue: any) => {
-      setArtworkQueue(queue.map(({artwork}: {artwork: string}) => artwork));
-      setUpNextCount(queue.length - 1 - activeTrackIndex!);
-    });
+        setActiveTrackIndex(_activeTrackIndex);
+        setQueue(_queue);
+        setArtworkQueue(_artworkQueue);
+        // setTrimmedArtworkQueue([
+        //   ..._artworkQueue.slice(
+        //     _activeTrackIndex! - 1,
+        //     _activeTrackIndex! + 2,
+        //   ),
+        // ]);
+        setTrimmedArtworkQueue([
+          ..._artworkQueue.slice(_activeTrackIndex! - 1, _activeTrackIndex),
+          ..._artworkQueue.slice(_activeTrackIndex, _activeTrackIndex! + 2),
+        ]);
 
-    TrackPlayer.getActiveTrackIndex().then((index: any) => {
-      setActiveArtwork(index);
-      setActiveTrackIndex(index);
-    });
+        setTrackRating(activeTrack?.rating);
+        setTrackPlayCount(activeTrack?.plays);
 
-    TrackPlayer.getActiveTrack().then((metadata: any) => {
-      setActiveTrack(metadata);
-      setTrackRating(metadata.rating);
-    });
-  }, [_activeTrack]);
+        axios
+          .get(
+            `${SERVER_URL}/Music/${activeTrack?.path.replace('.mp3', '.lrc')}`,
+          )
+          .then(({data: lyrics}) => {
+            setLyrics(lyrics);
+            setLyricsVisible(true);
+          })
+          .catch(err => {
+            setLyrics(null);
+            setLyricsVisible(false);
+          });
 
-  useEffect(() => {
-    if (position >= 10 && playRegistered === false) {
-      setPlayRegistered(true);
-      setTrackPlayCount(prev => prev + 1);
-      TrackPlayer.updateMetadataForTrack(activeTrackIndex!, {
-        ...activeTrack,
-        plays: activeTrack?.plays! + 1,
-      } as Track);
-      updatePlayCount(
-        {id: activeTrack?.id},
-        {
-          onSuccess: ({data}) => console.log(data),
-        },
-      );
-    }
-  }, [position]);
+        await AsyncStorage.setItem('queue', JSON.stringify(_queue));
+      }
+
+      if (event.type === Event.PlaybackProgressUpdated) {
+        if (position >= 10 && playRegistered === false) {
+          setPlayRegistered(true);
+          setTrackPlayCount(prev => prev + 1);
+          TrackPlayer.updateMetadataForTrack(activeTrackIndex!, {
+            ...activeTrack,
+            plays: activeTrack?.plays! + 1,
+          } as Track);
+          updatePlayCount(
+            {id: activeTrack?.id},
+            {onSuccess: ({data}) => console.log(data)},
+          );
+        }
+      }
+    },
+  );
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
@@ -228,9 +255,6 @@ const NowPlaying = ({navigation}: any) => {
     let seconds = secs - minutes * 60 || 0;
     return minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
   };
-
-  const sliderWidth = Dimensions.get('window').width;
-  const itemWidth = Math.round(sliderWidth * 0.7);
 
   const WIDTH = Dimensions.get('window').width;
   const HEIGHT = Dimensions.get('window').height;
@@ -290,62 +314,150 @@ const NowPlaying = ({navigation}: any) => {
                 alignItems: 'center',
                 height: HEIGHT,
               }}>
-              <Carousel
-                ref={ref}
-                width={WIDTH}
-                height={WIDTH}
-                mode="parallax"
-                modeConfig={{
-                  parallaxScrollingScale: 0.9,
-                  parallaxScrollingOffset: 150,
-                }}
-                loop={false}
-                data={artworkQueue}
-                // data={[
-                //   ...artworkQueue.slice(
-                //     activeTrackIndex! - 1,
-                //     activeTrackIndex,
-                //   ),
-                //   ...artworkQueue.slice(
-                //     activeTrackIndex,
-                //     activeTrackIndex! + 2,
-                //   ),
-                // ]}
-                //defaultIndex={1}
-                // onSnapToItem={index =>
-                //   TrackPlayer.skip(
-                //     artworkQueue.findIndex(
-                //       artwork =>
-                //         artwork ===
-                //         [
-                //           ...artworkQueue.slice(
-                //             activeTrackIndex! - 1,
-                //             activeTrackIndex,
-                //           ),
-                //           ...artworkQueue.slice(
-                //             activeTrackIndex,
-                //             activeTrackIndex! + 2,
-                //           ),
-                //         ][index],
-                //     ),
-                //   )
-                // }
-                onSnapToItem={index => TrackPlayer.skip(index)}
-                defaultIndex={activeTrackIndex}
-                //scrollAnimationDuration={1000}
-                snapEnabled={true}
-                // renderItem={({index, item}) => (
-                //   <Image
-                //     defaultSource={{uri: imageFiller}}
-                //     source={{uri: item}}
-                //     style={{height: WIDTH, width: WIDTH, borderRadius: 40}}
-                //   />
-                // )}
-                renderItem={({index, item}: {index: number; item: string}) => {
-                  //console.log(index, activeTrackIndex);
-                  return (
+              {lyrics && lyricsVisible ? (
+                <Carousel
+                  ref={ref}
+                  width={WIDTH}
+                  height={WIDTH}
+                  mode="parallax"
+                  enabled={false}
+                  snapEnabled={true}
+                  modeConfig={{
+                    parallaxScrollingScale: 0.9,
+                    parallaxScrollingOffset: 100,
+                  }}
+                  loop={false}
+                  data={['lyric']}
+                  defaultIndex={0}
+                  renderItem={() => (
+                    <View
+                      style={{
+                        backgroundColor: activeTrack?.palette[1],
+                        borderRadius: 20,
+                        width: WIDTH,
+                        height: WIDTH,
+                      }}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          paddingVertical: 10,
+                          paddingHorizontal: 10,
+                        }}>
+                        <Animated.Image
+                          source={{uri: activeTrack?.artwork}}
+                          style={[
+                            {
+                              height: 45,
+                              width: 45,
+                              marginRight: 8,
+                              borderRadius: 10,
+                            },
+                            animatedStyle,
+                          ]}
+                        />
+                        <View
+                          style={{
+                            justifyContent: 'center',
+                            marginTop: -2,
+                            maxWidth: Dimensions.get('window').width - 175,
+                          }}>
+                          <Text
+                            numberOfLines={1}
+                            style={{fontSize: 17, fontWeight: '600'}}>
+                            {activeTrack?.title || activeTrack?.name}
+                          </Text>
+                          <Text
+                            numberOfLines={1}
+                            style={{
+                              fontSize: 14,
+                              fontWeight: '300',
+                              fontStyle: 'italic',
+                            }}>
+                            {activeTrack?.artists || 'Unknown Artist'}
+                          </Text>
+                        </View>
+                        <View style={{flex: 1}} />
+                        <View
+                          style={{
+                            justifyContent: 'center',
+                            alignItems: 'flex-end',
+                          }}>
+                          <Text style={{fontWeight: 'bold', marginRight: 5}}>
+                            {activeTrack?.plays || 0} play
+                            {activeTrack?.plays === 1 ? '' : 's'}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <Lyric
+                        style={{marginBottom: 30}}
+                        lrc={lyrics}
+                        autoScroll
+                        autoScrollAfterUserScroll={300}
+                        currentTime={position * millisecondsMultiplier}
+                        lineHeight={60}
+                        height={200}
+                        lineRenderer={lineRenderer}
+                      />
+                    </View>
+                  )}
+                />
+              ) : (
+                <Carousel
+                  ref={ref}
+                  width={WIDTH}
+                  height={WIDTH}
+                  mode="parallax"
+                  enabled={true}
+                  snapEnabled={true}
+                  loop={false}
+                  scrollAnimationDuration={2000}
+                  modeConfig={{
+                    parallaxScrollingScale: 0.9,
+                    parallaxScrollingOffset: 130,
+                  }}
+                  // data={artworkQueue}
+                  // defaultIndex={activeTrackIndex}
+                  // onSnapToItem={index => TrackPlayer.skip(index)}
+                  data={trimmedArtworkQueue}
+                  defaultIndex={
+                    activeTrackIndex === 0
+                      ? 0
+                      : activeTrackIndex === queue.length
+                      ? 2
+                      : 1
+                  }
+                  onSnapToItem={async index => {
+                    if (index < 1) {
+                      TrackPlayer.skipToPrevious();
+                      if (activeTrackIndex != 0) {
+                        ref.current?.next();
+                        setTrimmedArtworkQueue((prev: any) => [
+                          artworkQueue.splice(activeTrackIndex! - 2, 1)[0],
+                          prev[0],
+                          prev[1],
+                        ]);
+                      }
+                    } else if (index > 1) {
+                      TrackPlayer.skipToNext();
+                      if (activeTrackIndex != queue.length) {
+                        ref.current?.prev();
+                        setTrimmedArtworkQueue((prev: any) => [
+                          prev[1],
+                          prev[2],
+                          artworkQueue.splice(activeTrackIndex! + 2, 1)[0],
+                        ]);
+                      }
+                    }
+                  }}
+                  renderItem={({
+                    index,
+                    item,
+                  }: {
+                    index: number;
+                    item: string;
+                  }) => (
                     <Shadow
-                      key={index}
                       startColor={
                         activeTrackIndex! === index ? `#00000066` : '#00000000'
                       }
@@ -355,7 +467,13 @@ const NowPlaying = ({navigation}: any) => {
                         style={{
                           height: WIDTH,
                           width: WIDTH,
-                          borderRadius: 12,
+                          borderRadius: 15,
+                          transform:
+                            index === 0
+                              ? [{rotateX: '360deg'}, {rotateY: '-310deg'}]
+                              : index === 2
+                              ? [{rotateX: '0deg'}, {rotateY: '-50deg'}]
+                              : [],
                           // transform:
                           //   activeTrackIndex! > index
                           //     ? [{rotateX: '360deg'}, {rotateY: '-310deg'}]
@@ -365,28 +483,10 @@ const NowPlaying = ({navigation}: any) => {
                         }}
                       />
                     </Shadow>
-                  );
-                }}
-              />
+                  )}
+                />
+              )}
 
-              {/* <Image
-                source={{uri: activeTrack?.artwork}}
-                style={{
-                  flex: 1,
-                  height: WIDTH * 0.9,
-                  width: WIDTH * 0.9,
-                  borderRadius: 12,
-                }}
-              /> */}
-
-              {/* // ) : (
-            //   <Image
-            //     key={index}
-            //     source={{uri: imageFiller}}
-            //     style={{height: WIDTH, width: WIDTH, borderRadius: 12}}
-            //     onLoadEnd={() => setImageLoaded(true)}
-            //   />
-            // ) */}
               <View
                 style={{
                   flexDirection: 'row',
@@ -396,17 +496,18 @@ const NowPlaying = ({navigation}: any) => {
                   gap: 20,
                 }}>
                 <View style={{flexDirection: 'row', gap: 5}}>
-                  <Icon name="musical-notes-sharp" size={21} />
+                  <Ionicons name="musical-notes-sharp" size={21} />
 
                   <Text style={{fontSize: 18, fontWeight: 'bold'}}>
-                    {trackPlayCount || 0} play
+                    {trackPlayCount} play
                     {`${trackPlayCount === 1 ? '' : 's'}`}
                   </Text>
                 </View>
 
                 <View
                   style={{
-                    backgroundColor: `${activeTrack?.palette[3]}4D`,
+                    borderWidth: 1,
+                    borderColor: activeTrack?.palette[1],
                     borderRadius: 7,
                     flexDirection: 'row',
                     opacity: 0.7,
@@ -433,7 +534,7 @@ const NowPlaying = ({navigation}: any) => {
                     {`${activeTrackIndex! + 1} / ${artworkQueue.length}`}
                   </Text>
 
-                  <Icon name="disc" size={21} />
+                  <Ionicons name="disc" size={21} />
                 </View>
               </View>
 
@@ -469,7 +570,8 @@ const NowPlaying = ({navigation}: any) => {
                 </Pressable>
 
                 <StarRating
-                  rating={trackRating}
+                  rating={trackRating as RatingType}
+                  //rating={activeTrack?.rating}
                   onChange={rating => {
                     Vibration.vibrate(50);
                     setTrackRating(rating);
@@ -493,28 +595,11 @@ const NowPlaying = ({navigation}: any) => {
                     ...styles.chip,
                     backgroundColor: `${activeTrack?.palette[1]}66`,
                   }}
-                  onPress={handlePlay}>
-                  <MaterialIcons name="shuffle" size={25} />
+                  onPress={() => {
+                    setLyricsVisible(prev => !prev);
+                  }}>
+                  <MaterialIcons name="lyrics" size={25} />
                 </Pressable>
-
-                {/*  <View style={{flex: 1}} /> */}
-
-                {/* <Pressable
-                  style={{
-                    ...styles.chip,
-                    backgroundColor: `${activeTrack?.palette[1]}66`,
-                  }}
-                  onPress={handlePlay}>
-                  <MaterialIcons name="article" size={25} />
-                </Pressable>
-                <Pressable
-                  style={{
-                    ...styles.chip,
-                    backgroundColor: `${activeTrack?.palette[1]}66`,
-                  }}
-                  onPress={handlePlay}>
-                  <MaterialIcons name="playlist-play" size={28} />
-                </Pressable> */}
               </View>
 
               {/* Waveform */}
@@ -595,7 +680,7 @@ const NowPlaying = ({navigation}: any) => {
                       width: WIDTH * 0.9,
                       position: 'absolute',
                       resizeMode: 'stretch',
-                      tintColor: activeTrack?.palette[1],
+                      tintColor: activeTrack?.palette[3],
                       zIndex: 2,
                     }}
                   />
@@ -613,10 +698,12 @@ const NowPlaying = ({navigation}: any) => {
                   }}
                   value={Math.floor((position / duration) * 100)}
                   thumbTintColor="transparent"
-                  onValueChange={value => seekTo((value / 100) * duration)}
+                  onValueChange={value =>
+                    TrackPlayer.seekTo((value / 100) * duration)
+                  }
                   minimumValue={0}
                   maximumValue={100}
-                  minimumTrackTintColor={activeTrack?.palette[3] || '#FFF'}
+                  minimumTrackTintColor={activeTrack?.palette[0] || '#FFF'}
                   maximumTrackTintColor="#fff"
                 />
               </View>
@@ -675,7 +762,7 @@ const NowPlaying = ({navigation}: any) => {
                 <Pressable
                   disabled={activeTrackIndex === 0}
                   onPress={() => TrackPlayer.skip(0)}>
-                  <Icon
+                  <Ionicons
                     name="play-back"
                     size={40}
                     color={activeTrackIndex === 0 ? 'grey' : 'white'}
@@ -685,7 +772,7 @@ const NowPlaying = ({navigation}: any) => {
                 <Pressable
                   disabled={activeTrackIndex === 0}
                   onPress={() => TrackPlayer.skipToPrevious()}>
-                  <Icon
+                  <Ionicons
                     name="play-back-circle"
                     size={70}
                     color={activeTrackIndex === 0 ? 'grey' : 'white'}
@@ -693,7 +780,7 @@ const NowPlaying = ({navigation}: any) => {
                 </Pressable>
 
                 <Pressable onPress={() => pauseplay()}>
-                  <Icon
+                  <Ionicons
                     name={
                       state === State.Playing ? 'pause-circle' : 'play-circle'
                     }
@@ -705,7 +792,7 @@ const NowPlaying = ({navigation}: any) => {
                 <Pressable
                   disabled={activeTrackIndex === artworkQueue.length - 1}
                   onPress={() => TrackPlayer.skipToNext()}>
-                  <Icon
+                  <Ionicons
                     name="play-forward-circle"
                     size={70}
                     color={
@@ -719,7 +806,7 @@ const NowPlaying = ({navigation}: any) => {
                 <Pressable
                   disabled={activeTrackIndex === artworkQueue.length - 1}
                   onPress={() => TrackPlayer.skip(artworkQueue.length)}>
-                  <Icon
+                  <Ionicons
                     name="play-forward"
                     size={40}
                     color={
@@ -738,39 +825,54 @@ const NowPlaying = ({navigation}: any) => {
         renderItem={() => (
           <ScrollView>
             <TabView
+              lazy
               navigationState={{
                 index: tabIndex,
                 routes: [
                   {key: 'backTo', title: 'BACK TO'},
                   {key: 'upNext', title: 'UP NEXT'},
-                  {key: 'lyrics', title: 'LYRICS'},
+                  //{key: 'lyrics', title: 'LYRICS'},
                 ],
               }}
               renderScene={SceneMap({
-                backTo: BackTo,
-                upNext: UpNext,
-                lyrics: () => (
-                  <View
-                    style={{
-                      flex: 1,
-                      backgroundColor: '#673ab7',
-                      height: 100,
-                    }}>
-                    <Text>lyrics</Text>
-                  </View>
-                ),
+                backTo: () =>
+                  BackTo({
+                    queue,
+                    artworkQueue,
+                    trimmedArtworkQueue,
+                    activeTrackIndex,
+                    trackRating,
+                    trackPlayCount,
+                    playRegistered,
+                  }),
+                upNext: () =>
+                  UpNext({
+                    queue,
+                    artworkQueue,
+                    trimmedArtworkQueue,
+                    activeTrackIndex,
+                    trackRating,
+                    trackPlayCount,
+                    playRegistered,
+                  }),
+                //lyrics: Lyrics,
               })}
               renderTabBar={props => (
                 <TabBar
                   {...props}
-                  indicatorStyle={{backgroundColor: 'white'}}
-                  style={{backgroundColor: 'transparent'}}
+                  indicatorStyle={{backgroundColor: 'yellow'}}
+                  style={{
+                    backgroundColor: 'transparent',
+                    shadowColor: 'transparent',
+                    borderBottomWidth: 1,
+                    borderBottomColor: 'white',
+                  }}
                 />
               )}
               onIndexChange={setTabIndex}
               initialLayout={{width: layout.width}}
-              //style={{height: upNextCount * 36 || 0}}
-              style={{height: 500}}
+              //style={{height: 15 * 36 || 0}}
+              style={{height: 400}}
             />
           </ScrollView>
         )}

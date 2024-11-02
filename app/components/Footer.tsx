@@ -1,15 +1,4 @@
 import React, {useMemo, useState} from 'react';
-import {useNavigation} from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import Slider from '@react-native-community/slider';
-import LinearGradient from 'react-native-linear-gradient';
-
-import TrackPlayer, {
-  usePlaybackState,
-  useProgress,
-  State,
-  useActiveTrack,
-} from 'react-native-track-player';
 
 import {
   Dimensions,
@@ -19,8 +8,21 @@ import {
   Text,
   Pressable,
 } from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import LinearGradient from 'react-native-linear-gradient';
+import Slider from '@react-native-community/slider';
+import TrackPlayer, {
+  usePlaybackState,
+  useProgress,
+  State,
+  useActiveTrack,
+} from 'react-native-track-player';
+
 import {usePlayerStore} from '../store';
+
 import {Track} from '../types';
+
 const logoJPG = require('../assets/images/logo.jpg');
 
 const Footer = () => {
@@ -124,6 +126,7 @@ const Footer = () => {
                 borderRadius: 10,
               }}
             />
+
             <View
               style={{
                 justifyContent: 'center',
@@ -138,7 +141,9 @@ const Footer = () => {
                 {activeTrack?.artists ?? 'Unknown Artist'}
               </Text>
             </View>
+
             <View style={{flex: 1}} />
+
             <View style={{flexDirection: 'row', alignItems: 'center'}}>
               <Pressable onPress={() => pauseplay()} style={{marginRight: 30}}>
                 <Icon

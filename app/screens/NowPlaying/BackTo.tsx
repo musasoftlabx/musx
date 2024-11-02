@@ -14,7 +14,6 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import SwipeableRating from 'react-native-swipeable-rating';
 import TrackPlayer, {
   RepeatMode,
   useActiveTrack,
@@ -23,9 +22,10 @@ import TrackPlayer, {
   useProgress,
 } from 'react-native-track-player';
 import {usePlayerStore} from '../../store';
-import {Track} from '../../types';
+//import {Track} from '../../types';
 import BigList from 'react-native-big-list';
 import {StarRatingDisplay} from 'react-native-star-rating-widget';
+import {TQueue} from '../../types';
 
 const spinValue = new Animated.Value(0);
 
@@ -45,9 +45,17 @@ const spin = spinValue.interpolate({
   outputRange: ['0deg', '360deg'],
 });
 
-const Queue = () => {
+const BackTo = ({
+  queue,
+  artworkQueue,
+  trimmedArtworkQueue,
+  activeTrackIndex,
+  trackRating,
+  trackPlayCount,
+  playRegistered,
+}: TQueue) => {
   const {state} = usePlaybackState();
-  const _activeTrack = useActiveTrack();
+  const activeTrack = useActiveTrack();
   const playwhenready = usePlayWhenReady();
 
   const currentTrack = usePlayerStore(state => state.currentTrack);
@@ -62,22 +70,17 @@ const Queue = () => {
   const playerState = usePlaybackState();
   //const isPlaying = playerState === State.Playing;
 
-  const {position, buffered, duration} = useProgress();
-  const [repeatMode, setRepeatMode] = useState(RepeatMode.Off);
+  // const [selectedTab, setSelectedTab] = useState(1);
+  // const [queue, setQueue] = useState<any>([]);
+  // const [activeArtwork, setActiveArtwork] = useState(0);
+  // const [activeTrack, setActiveTrack] = useState<Track>();
+  // const [activeTrackIndex, setActiveTrackIndex] = useState<number>();
+  // const [trackRating, setTrackRating] = useState<number>(0);
+  // const [trackPlayCount, setTrackPlayCount] = useState<number>(0);
+  // const [playRegistered, setPlayRegistered] = useState<boolean>(false);
+  // const [trackMetadata, setTrackMetadata] = useState({});
 
-  const carousel = useRef(null);
-
-  const [selectedTab, setSelectedTab] = useState(1);
-  const [queue, setQueue] = useState<any>([]);
-  const [activeArtwork, setActiveArtwork] = useState(0);
-  const [activeTrack, setActiveTrack] = useState<Track>();
-  const [activeTrackIndex, setActiveTrackIndex] = useState<number>();
-  const [trackRating, setTrackRating] = useState<number>(0);
-  const [trackPlayCount, setTrackPlayCount] = useState<number>(0);
-  const [playRegistered, setPlayRegistered] = useState<boolean>(false);
-  const [trackMetadata, setTrackMetadata] = useState({});
-
-  useMemo(() => {
+  /*  useMemo(() => {
     //if (playwhenready) console.log('ok', playwhenready);
     //else console.log('no', playwhenready);
     //TrackPlayer.getQueue().then(tracks => setNextTracks(tracks));
@@ -103,7 +106,7 @@ const Queue = () => {
       setActiveTrack(metadata);
       setTrackRating(metadata.rating);
     });
-  }, [_activeTrack]);
+  }, [_activeTrack]); */
 
   // return (
   //   <FlatList
@@ -135,13 +138,7 @@ const Queue = () => {
   //           </View>
   //           <View style={{flex: 1}} />
   //           <View style={{justifyContent: 'center', alignItems: 'flex-end'}}>
-  //             <SwipeableRating
-  //               rating={item.rating || 0}
-  //               size={15}
-  //               allowHalves={true}
-  //               color={'#FFD700'}
-  //               emptyColor={'#FFD700'}
-  //             />
+  //
   //             <Text style={{fontWeight: 'bold', marginRight: 5}}>
   //               {item.plays || 0} play{item.plays === 1 ? '' : 's'}
   //             </Text>
@@ -155,8 +152,15 @@ const Queue = () => {
   // );
 
   return (
+    <View>
+      <Text>def</Text>
+    </View>
+  );
+
+  /*  return (
     <BigList
-      data={queue.slice(0, activeTrackIndex).reverse()}
+      //data={queue.slice(0, activeTrackIndex).reverse()}
+      data={queue.slice(activeTrackIndex! - 5, activeTrackIndex).reverse()}
       numColumns={1}
       keyExtractor={(item, index) => index.toString()}
       //sections={[data]}
@@ -211,7 +215,7 @@ const Queue = () => {
       headerHeight={0}
       footerHeight={0}
     />
-  );
+  ); */
 };
 
 /* <SortableList
@@ -280,4 +284,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Queue;
+export default BackTo;

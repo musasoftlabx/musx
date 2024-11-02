@@ -17,10 +17,10 @@ declare global {
 }
 
 export type RootStackParamList = {
-  Root: NavigatorScreenParams<RootTabParamList> | undefined;
-  Modal: undefined;
-  NotFound: undefined;
-  AddPurchase: undefined;
+  //Root: NavigatorScreenParams<RootTabParamList> | undefined;
+  //Modal: undefined;
+  //NotFound: undefined;
+  //Footer: undefined;
 };
 
 export type RootStackScreenProps<Screen extends keyof RootStackParamList> =
@@ -46,7 +46,7 @@ export interface IAxiosError {
   };
 }
 
-export type Track = {
+export type TTrack = {
   album: string;
   albumArtist: string;
   artists: string;
@@ -74,4 +74,14 @@ export type Track = {
   year: string;
 };
 
-export type Tracks = Track[];
+export type Tracks = TTrack[];
+
+export type TQueue = {
+  queue: any;
+  artworkQueue: any;
+  trimmedArtworkQueue: any;
+  activeTrackIndex: any;
+  trackRating: any;
+  trackPlayCount: any;
+  playRegistered: any;
+};
