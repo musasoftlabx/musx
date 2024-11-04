@@ -23,6 +23,7 @@ import {
   API_URL,
   ARTWORK_URL,
   AUDIO_URL,
+  HEIGHT,
   SERVER_URL,
   useConfigStore,
   usePlayerStore,
@@ -35,13 +36,18 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import TrackPlayer from 'react-native-track-player';
 import {TTrack} from '../../types';
 import StarRating, {StarRatingDisplay} from 'react-native-star-rating-widget';
+import LinearGradient from 'react-native-linear-gradient';
 
-const Folders = ({navigation, route}: any) => {
+export default function Folders({navigation, route}: any) {
   const play = usePlayerStore(state => state.play);
   //console.log(navigation);
   const queryClient = useQueryClient();
   const [path, setPath] = useState('');
   const [data, setData] = useState([]);
+
+  // ? StoreStates
+  const activeTrack = usePlayerStore(state => state.activeTrack);
+  const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
 
   //const {state, dispatch} = useContext(Context);
   const [actionSheet, setActionSheet] = useState({});
@@ -202,7 +208,7 @@ const Folders = ({navigation, route}: any) => {
   ];
 
   const modalRef = useRef(null);
-  const onOpen = props => {
+  const onOpen = (props: React.SetStateAction<{}>) => {
     const modal = modalRef.current;
     setActionSheet(props);
 
@@ -213,8 +219,27 @@ const Folders = ({navigation, route}: any) => {
 
   return (
     <>
+      <LinearGradient
+        colors={[
+          activeTrack?.palette?.[5] ?? '#000',
+          activeTrack?.palette?.[1] ?? '#fff',
+          activeTrack?.palette?.[0] ?? '#000',
+        ]}
+        useAngle={true}
+        angle={290}
+        style={{
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          opacity: 0.7,
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          bottom: 0,
+          right: 0,
+        }}
+      />
+
       <Modalize
-        modalHeight={Dimensions.get('window').height * 0.5}
+        modalHeight={HEIGHT * 0.5}
         handlePosition="inside"
         openAnimationConfig={
           ({spring: {speed: 100, bounciness: 100, mass: 100}},
@@ -287,7 +312,7 @@ const Folders = ({navigation, route}: any) => {
         numColumns={1}
         keyExtractor={(item, index) => index.toString()}
         //sections={[data]}
-        renderItem={({item, index}: {item: Track; index: number}) => (
+        renderItem={({item, index}: {item: TTrack; index: number}) => (
           <>
             {item.hasOwnProperty('name') ? (
               <Pressable
@@ -480,7 +505,7 @@ const Folders = ({navigation, route}: any) => {
       />
     </>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -529,5 +554,3 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
   },
 });
-
-export default Folders;

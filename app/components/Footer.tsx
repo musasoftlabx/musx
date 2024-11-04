@@ -1,77 +1,55 @@
-import React, {useMemo, useState} from 'react';
+import React from 'react';
 
-import {
-  Dimensions,
-  View,
-  StyleSheet,
-  Image,
-  Text,
-  Pressable,
-} from 'react-native';
+// * React Native
+import {View, StyleSheet, Image, Text, Pressable} from 'react-native';
+
+// * Libraries
+import {Shadow} from 'react-native-shadow-2';
 import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
 import Slider from '@react-native-community/slider';
-import TrackPlayer, {
-  usePlaybackState,
-  useProgress,
-  State,
-  useActiveTrack,
-} from 'react-native-track-player';
+import TrackPlayer, {State} from 'react-native-track-player';
 
-import {usePlayerStore} from '../store';
+// * Store
+import {usePlayerStore, WIDTH} from '../store';
 
-import {Track} from '../types';
+// * Assets
+import imageFiller from '../assets/images/image-filler.png';
 
-const logoJPG = require('../assets/images/logo.jpg');
+export default function Footer() {
+  // ? Hooks
+  const navigation: any = useNavigation();
 
-const Footer = () => {
-  const {position, duration} = useProgress();
-  const {state} = usePlaybackState();
-  const _activeTrack = useActiveTrack();
+  // ? StoreStates
+  const {position, buffered, duration} = usePlayerStore(
+    state => state.progress,
+  );
+  const {state} = usePlayerStore(state => state.playbackState);
+  const activeTrack = usePlayerStore(state => state.activeTrack);
+  const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
+  const queue = usePlayerStore(state => state.queue);
 
-  const [selectedTab, setSelectedTab] = useState(1);
-  const [artworkQueue, setArtworkQueue] = useState<string[]>([]);
-  const [activeArtwork, setActiveArtwork] = useState(0);
-  const [activeTrack, setActiveTrack] = useState<Track>();
-  const [activeTrackIndex, setActiveTrackIndex] = useState<number>();
-  const [trackPlayCount, setTrackPlayCount] = useState<number>(0);
-  const [playRegistered, setPlayRegistered] = useState<boolean>(false);
+  // ? StoreActions
+  const playPause = usePlayerStore(state => state.playPause);
 
-  const currentTrack = usePlayerStore(state => state.currentTrack);
-  const pauseplay = usePlayerStore(state => state.pauseplay);
-  const next = usePlayerStore(state => state.next);
-
-  useMemo(() => {
-    setPlayRegistered(false);
-
-    TrackPlayer.getQueue().then((queue: any) =>
-      setArtworkQueue(queue.map(({artwork}: {artwork: string}) => artwork)),
-    );
-
-    TrackPlayer.getActiveTrackIndex().then((index: any) => {
-      setActiveArtwork(index);
-      setActiveTrackIndex(index);
-    });
-  }, [_activeTrack]);
-
-  const navigation = useNavigation();
-
+  // ? Constants
+  const isPlaying = state === State.Playing;
   const activeStates = [
     State.Playing,
     State.Paused,
     State.Buffering,
     State.Ready,
+    State.Loading,
   ];
 
   return (
-    activeStates.includes(state!) && (
-      <View
-        style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.9)',
-          width: '100%',
-          zIndex: 1000,
-        }}>
+    activeStates.includes(state) && (
+      <Shadow
+        distance={23}
+        startColor="#00000020"
+        sides={{top: true}}
+        style={{width: WIDTH, bottom: -1}}>
         <LinearGradient
           colors={[
             activeTrack?.palette?.[5] ?? '#000',
@@ -81,7 +59,7 @@ const Footer = () => {
           useAngle={true}
           angle={290}
           style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'rgba(0, 0, 0, 1)',
             opacity: 0.7,
             position: 'absolute',
             top: 0,
@@ -93,11 +71,10 @@ const Footer = () => {
 
         <Slider
           style={{
-            width: Dimensions.get('window').width * 1.1,
+            width: WIDTH * 1.1,
             marginTop: -10,
             marginBottom: -10,
             marginLeft: -20,
-            //height: 40,
           }}
           value={Math.floor((position / duration) * 100) || 0}
           thumbTintColor="transparent"
@@ -117,7 +94,7 @@ const Footer = () => {
             }}>
             <Image
               source={
-                activeTrack?.artwork ? {uri: activeTrack?.artwork} : logoJPG
+                activeTrack?.artwork ? {uri: activeTrack?.artwork} : imageFiller
               }
               style={{
                 height: 45,
@@ -131,7 +108,7 @@ const Footer = () => {
               style={{
                 justifyContent: 'center',
                 marginTop: -2,
-                maxWidth: Dimensions.get('window').width - 175,
+                maxWidth: WIDTH - 175,
                 gap: 2,
               }}>
               <Text numberOfLines={1} style={styles.title}>
@@ -144,18 +121,32 @@ const Footer = () => {
 
             <View style={{flex: 1}} />
 
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
-              <Pressable onPress={() => pauseplay()} style={{marginRight: 30}}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 20}}>
+              <Pressable
+                disabled={activeTrackIndex === 0}
+                onPress={() => TrackPlayer.skipToPrevious()}
+                android_ripple={{
+                  color: 'white',
+                  radius: 39,
+                  foreground: true,
+                  borderless: true,
+                }}>
                 <Icon
-                  name={
-                    state === State.Playing ? 'pause-circle' : 'play-circle'
-                  }
+                  name="play-back"
+                  size={25}
+                  color={activeTrackIndex === 0 ? 'grey' : 'white'}
+                />
+              </Pressable>
+
+              <Pressable onPress={playPause}>
+                <Icon
+                  name={isPlaying ? 'pause-circle' : 'play-circle'}
                   size={45}
                 />
               </Pressable>
 
               <Pressable
-                disabled={activeTrackIndex === artworkQueue.length - 1}
+                disabled={activeTrackIndex === queue.length - 1}
                 onPress={() => TrackPlayer.skipToNext()}
                 android_ripple={{
                   color: 'white',
@@ -167,33 +158,20 @@ const Footer = () => {
                   name="play-forward"
                   size={25}
                   color={
-                    activeTrackIndex === artworkQueue.length - 1
-                      ? 'grey'
-                      : 'white'
+                    activeTrackIndex === queue.length - 1 ? 'grey' : 'white'
                   }
                 />
               </Pressable>
             </View>
           </View>
         </Pressable>
-      </View>
+      </Shadow>
     )
   );
-};
+}
 
 const styles = StyleSheet.create({
   title: {fontSize: 17, fontWeight: '600'},
   artists: {fontSize: 14, fontWeight: '300'},
   album: {fontSize: 12, fontWeight: '300'},
-  plays: {
-    backgroundColor: 'grey',
-    borderRadius: 10,
-    height: 35,
-    margin: 10,
-    opacity: 0.6,
-    padding: 5,
-    paddingHorizontal: 15,
-  },
 });
-
-export default Footer;

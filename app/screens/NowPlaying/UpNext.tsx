@@ -1,4 +1,11 @@
-import React, {useContext, useState, useEffect, useRef, useMemo} from 'react';
+import React, {
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from 'react';
 import {
   Animated,
   Easing,
@@ -25,8 +32,13 @@ import {usePlayerStore} from '../../store';
 import {TQueue, Tracks} from '../../types';
 import BigList from 'react-native-big-list';
 import {StarRatingDisplay} from 'react-native-star-rating-widget';
-
-const NODE_SERVER = 'http://musasoft.ddns.net:3000/';
+import DraggableFlatList, {
+  NestableScrollContainer,
+  OpacityDecorator,
+  RenderItemParams,
+  ScaleDecorator,
+  ShadowDecorator,
+} from 'react-native-draggable-flatlist';
 
 const spinValue = new Animated.Value(0);
 
@@ -45,6 +57,28 @@ const spin = spinValue.interpolate({
   inputRange: [0, 1],
   outputRange: ['0deg', '360deg'],
 }); */
+
+export function getColor(i: number, numItems: number = 25) {
+  const multiplier = 255 / (numItems - 1);
+  const colorVal = i * multiplier;
+  return `rgb(${colorVal}, ${Math.abs(128 - colorVal)}, ${255 - colorVal})`;
+}
+
+export const mapIndexToData = (_d: any, index: number, arr: any[]) => {
+  const backgroundColor = getColor(index, arr.length);
+  return {
+    text: `${index}`,
+    key: `key-${index}`,
+    backgroundColor,
+    height: 15,
+  };
+};
+
+const NUM_ITEMS = 5;
+
+const initialData: ReturnType<typeof mapIndexToData>[] = [
+  ...Array(NUM_ITEMS),
+].map(mapIndexToData);
 
 const Queue = ({
   queue,
@@ -131,6 +165,105 @@ const Queue = ({
   //     scrollEnabled={false}
   //   />
   // );
+
+  const [data, setData] = useState(
+    queue.slice(activeTrackIndex, activeTrackIndex! + 5),
+  );
+
+  const renderItem = useCallback(
+    ({item, drag, isActive}: RenderItemParams<any>) => {
+      return (
+        <ShadowDecorator>
+          <ScaleDecorator>
+            <OpacityDecorator>
+              <TouchableOpacity
+                activeOpacity={1}
+                onLongPress={drag}
+                disabled={isActive}
+                style={[
+                  {
+                    height: 100,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  },
+                  {backgroundColor: isActive ? 'blue' : item.backgroundColor},
+                ]}>
+                <View
+                  style={[
+                    activeTrack?.id === item.id
+                      ? {
+                          backgroundColor: '#ffffff4d',
+                          borderRadius: 10,
+                          flexDirection: 'row',
+                          paddingBottom: 6,
+                          paddingTop: 10,
+                          paddingHorizontal: 10,
+                          marginTop: 10,
+                        }
+                      : {
+                          flexDirection: 'row',
+                          paddingVertical: 10,
+                          paddingHorizontal: 10,
+                          marginTop: 10,
+                        },
+                  ]}>
+                  <Image
+                    source={{uri: item.artwork}}
+                    style={
+                      activeTrack?.id === item.id
+                        ? styles.isPlaying
+                        : styles.image
+                    }
+                  />
+                  <View
+                    style={{
+                      justifyContent: 'center',
+                      marginTop: -2,
+                      maxWidth: Dimensions.get('window').width - 175,
+                    }}>
+                    <Text numberOfLines={1} style={styles.title}>
+                      {item.title || item.name}
+                    </Text>
+                    <Text numberOfLines={1} style={styles.artists}>
+                      {item.artists || 'Unknown Artist'}
+                    </Text>
+                    <Text numberOfLines={1} style={styles.album}>
+                      {item.album || 'Unknown Album'}
+                    </Text>
+                  </View>
+                  <View style={{flex: 1}} />
+                  <View
+                    style={{justifyContent: 'center', alignItems: 'flex-end'}}>
+                    <StarRatingDisplay
+                      rating={item.rating}
+                      starSize={16}
+                      starStyle={{marginHorizontal: 0}}
+                    />
+                    <Text style={{fontWeight: 'bold', marginRight: 5}}>
+                      {item.plays || 0} play{item.plays === 1 ? '' : 's'}
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            </OpacityDecorator>
+          </ScaleDecorator>
+        </ShadowDecorator>
+      );
+    },
+    [],
+  );
+
+  return (
+    <DraggableFlatList
+      data={data}
+      onDragEnd={({data}) => setData(data)}
+      keyExtractor={item => item.id}
+      renderItem={renderItem}
+      renderPlaceholder={() => (
+        <View style={{backgroundColor: 'tomato', height: 500}} />
+      )}
+    />
+  );
 
   return (
     <View>
@@ -227,6 +360,17 @@ const Queue = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  rowItem: {
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  text: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   imageShadow: {
     shadowColor: '#000',

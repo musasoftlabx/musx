@@ -71,6 +71,12 @@ import TrackPlayer, {
   useTrackPlayerEvents,
   Event,
   State,
+  usePlaybackState,
+  useActiveTrack,
+  usePlayWhenReady,
+  useProgress,
+  RepeatMode,
+  Track,
 } from 'react-native-track-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -110,57 +116,34 @@ function App(): React.JSX.Element {
   axios.defaults.headers.post['Content-Type'] = 'application/json';
   axios.defaults.headers.post['Accept'] = 'application/json';
 
+  const activeTrack = useActiveTrack();
+  const playwhenready = usePlayWhenReady();
+  const progress = useProgress();
+  const playbackState = usePlaybackState();
+
   const config = useConfigStore((state: {config: any}) => state.config);
 
-  const trackChange = usePlayerStore(state => state.trackChange);
-  const restoreSavedQueue = usePlayerStore(state => state.restoreSavedQueue);
+  const trackPlayCount = usePlayerStore(state => state.trackPlayCount);
+  const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
+  const playRegistered = usePlayerStore(state => state.playRegistered);
+  const setPlaybackState = usePlayerStore(state => state.setPlaybackState);
+  const setProgress = usePlayerStore(state => state.setProgress);
+  const setPlayRegistered = usePlayerStore(state => state.setPlayRegistered);
+  const setActiveTrack = usePlayerStore(state => state.setActiveTrack);
+  const setActiveTrackIndex = usePlayerStore(
+    state => state.setActiveTrackIndex,
+  );
+  const setQueue = usePlayerStore(state => state.setQueue);
+  const setArtworkQueue = usePlayerStore(state => state.setArtworkQueue);
+  const setCarouselQueue = usePlayerStore(state => state.setCarouselQueue);
+  const setTrackRating = usePlayerStore(state => state.setTrackRating);
+  const setTrackPlayCount = usePlayerStore(state => state.setTrackPlayCount);
+  const setLyrics = usePlayerStore(state => state.setLyrics);
+  const setLyricsVisible = usePlayerStore(state => state.setLyricsVisible);
 
-  useEffect(() => {
-    //console.log(URL());
-    // ? Axios
-    const Axios = axios.create({
-      baseURL: API_URL,
-      timeout: 10000,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-    });
+  //const isPlaying = playerState === State.Playing;
 
-    // Axios.interceptors.request.use(
-    //   (req: any) => {
-    //     req.headers.Authorization = `Bearer ${token}`;
-    //     req.headers.DeviceInfo = deviceInfo;
-    //     return req;
-    //   },
-    //   err => Promise.reject(err),
-    // );
-
-    // Axios.interceptors.response.use(
-    //   (res: any) => {
-    //     res.data.__aT && login(res.data.__aT);
-    //     return res;
-    //   },
-    //   err => {
-    //     if (err.code === 'ERR_NETWORK') {
-    //       Alert.alert(
-    //         err.message,
-    //         'We could not establish a connection to the server. Kindly ensure you are connected.',
-    //         [{onPress: () => {}, text: 'OK'}, {text: 'Cancel'}],
-    //       );
-    //     } else {
-    //       err.response.data.forceLogout && logout() /* router.push("/login") */;
-    //     }
-    //     return Promise.reject(err);
-    //   },
-    // );
-
-    //restore();
-    //config(Axios);
-    //configTheme(mode);
-
-    return () => {};
-  }, []);
+  const [repeatMode, setRepeatMode] = useState(RepeatMode.Off);
 
   useEffect(() => {
     const setUpTrackPlayer = async () => {
@@ -172,7 +155,7 @@ function App(): React.JSX.Element {
               AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
             alwaysPauseOnInterruption: true,
           },
-          progressUpdateEventInterval: 10,
+          progressUpdateEventInterval: 0.1,
           capabilities: [
             Capability.Play,
             Capability.Pause,
@@ -237,24 +220,91 @@ function App(): React.JSX.Element {
     setUpTrackPlayer();
   }, []);
 
-  // useTrackPlayerEvents(
-  //   [Event.PlaybackActiveTrackChanged],
-  //   async event =>
-  //     event.type === Event.PlaybackActiveTrackChanged && trackChange(event),
-  // );
+  useTrackPlayerEvents(
+    [
+      Event.PlaybackActiveTrackChanged,
+      Event.PlaybackProgressUpdated,
+      Event.PlaybackState,
+    ],
+    async event => {
+      if (event.type === Event.PlaybackActiveTrackChanged) {
+        setPlayRegistered(false);
 
-  // useTrackPlayerEvents([Event.PlaybackState], async (event: any) => {
-  //   if (event.type === Event.PlaybackState) {
-  //     //console.log('PlaybackState', event);
-  //   }
-  // });
+        const _queue = await TrackPlayer.getQueue();
+        const _activeTrackIndex = await TrackPlayer.getActiveTrackIndex();
+        const _artworkQueue = _queue.map((track: Track['']) => track.artwork);
 
-  // useTrackPlayerEvents([Event.PlaybackQueueEnded], event => {
-  //   console.log('Queue ended');
-  // });
+        setActiveTrackIndex(_activeTrackIndex);
+        setActiveTrack(activeTrack);
+        setQueue(_queue);
+        setArtworkQueue(_artworkQueue);
+
+        setProgress(progress);
+        // setCarouselQueue([
+        //   ..._artworkQueue.slice(
+        //     _activeTrackIndex! - 1,
+        //     _activeTrackIndex! + 2,
+        //   ),
+        // ]);
+        setCarouselQueue([
+          ..._artworkQueue.slice(_activeTrackIndex! - 1, _activeTrackIndex),
+          ..._artworkQueue.slice(_activeTrackIndex, _activeTrackIndex! + 2),
+        ]);
+
+        setTrackRating(activeTrack?.rating);
+        setTrackPlayCount(activeTrack?.plays);
+
+        axios
+          .get(
+            `${SERVER_URL}/Music/${activeTrack?.path.replace('.mp3', '.lrc')}`,
+          )
+          .then(({data: lyrics}) => {
+            setLyrics(lyrics);
+            setLyricsVisible(true);
+          })
+          .catch(() => {
+            setLyrics(null);
+            setLyricsVisible(false);
+          });
+
+        await AsyncStorage.setItem('queue', JSON.stringify(_queue));
+      }
+
+      if (event.type === Event.PlaybackProgressUpdated) {
+        setProgress(progress);
+
+        if (progress.position >= 10 && playRegistered === false) {
+          setPlayRegistered(true);
+          setTrackPlayCount(trackPlayCount + 1);
+          TrackPlayer.updateMetadataForTrack(activeTrackIndex!, {
+            ...activeTrack,
+            plays: activeTrack?.plays! + 1,
+          } as Track);
+          // updatePlayCount(
+          //   {id: activeTrack?.id},
+          //   {onSuccess: ({data}) => console.log(data)},
+          // );
+          axios
+            .patch('updatePlayCount', {id: activeTrack?.id})
+            .then(({data}) => console.log(data));
+        }
+      }
+
+      if (event.type === Event.PlaybackState) {
+        setPlaybackState(playbackState);
+        console.log(playbackState);
+      }
+    },
+  );
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>
+      <StatusBar
+        animated
+        backgroundColor="transparent"
+        barStyle="light-content"
+        translucent
+      />
       <QueryClientProvider client={queryClient}>
         <Provider theme={mode === 'dark' ? darkTheme : lightTheme}>
           <SafeAreaProvider>

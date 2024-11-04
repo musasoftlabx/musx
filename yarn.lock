@@ -2225,6 +2225,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/preset-typescript@npm:^7.17.12":
+  version: 7.26.0
+  resolution: "@babel/preset-typescript@npm:7.26.0"
+  dependencies:
+    "@babel/helper-plugin-utils": ^7.25.9
+    "@babel/helper-validator-option": ^7.25.9
+    "@babel/plugin-syntax-jsx": ^7.25.9
+    "@babel/plugin-transform-modules-commonjs": ^7.25.9
+    "@babel/plugin-transform-typescript": ^7.25.9
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: 6d8641fa6efd0e10eec5e8f92cd164b916a06d57131cfa5216c281404289c87d2b4995140a1c1d9c3bad171ff6ef2226be5f0585e09577ffff349706e991ec71
+  languageName: node
+  linkType: hard
+
 "@babel/register@npm:^7.13.16":
   version: 7.25.7
   resolution: "@babel/register@npm:7.25.7"
@@ -2401,6 +2416,40 @@ __metadata:
     react-native: ^0.64.0
     react-native-linear-gradient: ^2.6.0
   checksum: 434d20409515a1aff1a9c28ba948e5e4642a3bd133a7c2b6bb97423bc905c4ff184f2136ef073e364a813584d543e65531e65fd8647ec90b53b66dbf1f73136f
+  languageName: node
+  linkType: hard
+
+"@gorhom/bottom-sheet@npm:^5.0.5":
+  version: 5.0.5
+  resolution: "@gorhom/bottom-sheet@npm:5.0.5"
+  dependencies:
+    "@gorhom/portal": 1.0.14
+    invariant: ^2.2.4
+  peerDependencies:
+    "@types/react": "*"
+    "@types/react-native": "*"
+    react: "*"
+    react-native: "*"
+    react-native-gesture-handler: ">=2.16.1"
+    react-native-reanimated: ">=3.10.1"
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-native":
+      optional: true
+  checksum: 52c4b1abf0e5d3ec2956cc86e1deabb080fba39d84a1695fe74d3a899ad114f664ca5bc41e6617678531c70f19d25beeefb33aa9fc8925467f2e3c9d3070a50c
+  languageName: node
+  linkType: hard
+
+"@gorhom/portal@npm:1.0.14":
+  version: 1.0.14
+  resolution: "@gorhom/portal@npm:1.0.14"
+  dependencies:
+    nanoid: ^3.3.1
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 227bb96a2db854ab29bb9da8d4f3823c7f7448358de459709dd1b78522110da564c9a8734c6bc7d7153ed7c99320e0fb5d60b420c2ebb75ecaf2f0d757f410f9
   languageName: node
   linkType: hard
 
@@ -3046,6 +3095,16 @@ __metadata:
     react: ">=16"
     react-native: ">=0.57"
   checksum: 880059020709ce856c448657c2d67a905f2ebcd3f42c1c4d344d732761cb2de98efb600172df5591d943f562393dbca42802e8a903b974aa2b038b441c5718fb
+  languageName: node
+  linkType: hard
+
+"@react-native-picker/picker@npm:^2.9.0":
+  version: 2.9.0
+  resolution: "@react-native-picker/picker@npm:2.9.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 3f88ecbad85f071861bbd16c0d4891dd5eff13d638e6ecfe68da279a07e0a31dfa7844ae329fe2a2144695456f1c96d1be38e10185475dd164f8e918d6d083a1
   languageName: node
   linkType: hard
 
@@ -7998,6 +8057,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lodash.isequal@npm:^4.5.0":
+  version: 4.5.0
+  resolution: "lodash.isequal@npm:4.5.0"
+  checksum: da27515dc5230eb1140ba65ff8de3613649620e8656b19a6270afe4866b7bd461d9ba2ac8a48dcc57f7adac4ee80e1de9f965d89d4d81a0ad52bb3eec2609644
+  languageName: node
+  linkType: hard
+
+"lodash.isobject@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "lodash.isobject@npm:3.0.2"
+  checksum: 6c1667cbc4494d0a13a3617a4b23278d6d02dac520311f2bbb43f16f2cf71d2e6eb9dec8057315b77459df4890c756a256a087d3f4baa44a79ab5d6c968b060e
+  languageName: node
+  linkType: hard
+
 "lodash.merge@npm:^4.6.2":
   version: 4.6.2
   resolution: "lodash.merge@npm:4.6.2"
@@ -8835,9 +8908,11 @@ __metadata:
     "@babel/preset-env": ^7.20.0
     "@babel/runtime": ^7.20.0
     "@furkankaya/react-native-linear-text-gradient": ^1.0.2
+    "@gorhom/bottom-sheet": ^5.0.5
     "@react-native-async-storage/async-storage": ^2.0.0
     "@react-native-community/slider": ^4.5.4
     "@react-native-masked-view/masked-view": ^0.3.1
+    "@react-native-picker/picker": ^2.9.0
     "@react-native/babel-preset": 0.75.4
     "@react-native/eslint-config": 0.75.4
     "@react-native/metro-config": 0.75.4
@@ -8863,6 +8938,7 @@ __metadata:
     react-native-animatable: ^1.4.0
     react-native-big-list: ^1.6.1
     react-native-device-info: ^13.1.0
+    react-native-draggable-flatlist: ^4.0.1
     react-native-flipper: ^0.270.0
     react-native-gesture-handler: ^2.20.1
     react-native-linear-gradient: ^2.8.3
@@ -8870,16 +8946,19 @@ __metadata:
     react-native-modalize: ^2.1.1
     react-native-pager-view: ^6.4.1
     react-native-paper: ^5.12.5
+    react-native-picker-select: ^9.3.1
     react-native-reanimated: ^3.16.1
     react-native-reanimated-carousel: ^3.5.1
     react-native-responsive-fontsize: ^0.5.1
     react-native-safe-area-context: ^4.11.1
     react-native-screens: ^3.34.0
+    react-native-select-dropdown: ^4.0.1
     react-native-shadow-2: ^7.1.1
     react-native-snap-carousel: ^3.9.1
     react-native-star-rating-widget: ^1.9.1
     react-native-svg: ^15.8.0
     react-native-svg-animated-linear-gradient: ^0.4.0
+    react-native-swipeable-item: ^2.0.9
     react-native-tab-view: ^3.5.2
     react-native-text-ticker: ^1.14.0
     react-native-track-player: ^4.1.1
@@ -8890,7 +8969,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"nanoid@npm:^3.1.23":
+"nanoid@npm:^3.1.23, nanoid@npm:^3.3.1":
   version: 3.3.7
   resolution: "nanoid@npm:3.3.7"
   bin:
@@ -9705,6 +9784,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-draggable-flatlist@npm:^4.0.1":
+  version: 4.0.1
+  resolution: "react-native-draggable-flatlist@npm:4.0.1"
+  dependencies:
+    "@babel/preset-typescript": ^7.17.12
+  peerDependencies:
+    react-native: ">=0.64.0"
+    react-native-gesture-handler: ">=2.0.0"
+    react-native-reanimated: ">=2.8.0"
+  checksum: f904e3f30737a883b683e12e119856188e81d7b6cd8811e38124353630391326385bec040a3c200a06535bcd4bbbe973e504c2e0546f7aa4cc96aa573787813d
+  languageName: node
+  linkType: hard
+
 "react-native-flipper@npm:^0.270.0":
   version: 0.270.0
   resolution: "react-native-flipper@npm:0.270.0"
@@ -9796,6 +9888,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-picker-select@npm:^9.3.1":
+  version: 9.3.1
+  resolution: "react-native-picker-select@npm:9.3.1"
+  dependencies:
+    lodash.isequal: ^4.5.0
+    lodash.isobject: ^3.0.2
+  peerDependencies:
+    "@react-native-picker/picker": ^2.4.0
+  checksum: ba03c79bff736f225f6cf06a971a5058739ef27c26d2f66edf31e80250fc40be29085d4b15a35339c31b4d4830d362594f8d5933a25a0f2f1f9d702189e2d611
+  languageName: node
+  linkType: hard
+
 "react-native-reanimated-carousel@npm:^3.5.1":
   version: 3.5.1
   resolution: "react-native-reanimated-carousel@npm:3.5.1"
@@ -9865,6 +9969,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-select-dropdown@npm:^4.0.1":
+  version: 4.0.1
+  resolution: "react-native-select-dropdown@npm:4.0.1"
+  checksum: 0f841ec81921e4f79959c883a1c83570e60b9fe28bbf075892aec75edf9bfd5506a7d71221fce388bf664a9d863785fc10a87dac3a27a9cdac248da909611ddd
+  languageName: node
+  linkType: hard
+
 "react-native-shadow-2@npm:^7.1.1":
   version: 7.1.1
   resolution: "react-native-shadow-2@npm:7.1.1"
@@ -9923,6 +10034,19 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: ad9d6093f3aef0d53c5e2a562afb7805009f2bf50fd4ec6e77f8c18a6cb7e06a7793d55cc66d523c7d30c77cae170ee26767c72ad5b1a1f07032420ccf4162fe
+  languageName: node
+  linkType: hard
+
+"react-native-swipeable-item@npm:^2.0.9":
+  version: 2.0.9
+  resolution: "react-native-swipeable-item@npm:2.0.9"
+  dependencies:
+    "@babel/preset-typescript": ^7.17.12
+  peerDependencies:
+    react-native: ">=0.64.0"
+    react-native-gesture-handler: ">=2.0.0"
+    react-native-reanimated: ">=2.8.0"
+  checksum: edb9d0d9876c7bf1cd5180c7a4d05264100f2f2bd5dfa79f9c36af5aa9b9958925d49995463ed1ad97b5ed32651cb7c8e51ee1c1e5f586723f3cae497e717c5b
   languageName: node
   linkType: hard
 

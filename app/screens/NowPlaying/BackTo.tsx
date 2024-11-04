@@ -108,53 +108,52 @@ const BackTo = ({
     });
   }, [_activeTrack]); */
 
-  // return (
-  //   <FlatList
-  //     data={queue}
-  //     renderItem={({item, index}) => (
-  //       <Pressable onPress={() => skipTo(index)}>
-  //         <View style={styles.item}>
-  //           <Animated.Image
-  //             source={{uri: item.artwork}}
-  //             style={
-  //               activeTrack?.id === item.id ? styles.isPlaying : styles.image
-  //             }
-  //           />
-  //           <View
-  //             style={{
-  //               justifyContent: 'center',
-  //               marginTop: -2,
-  //               maxWidth: Dimensions.get('window').width - 175,
-  //             }}>
-  //             <Text numberOfLines={1} style={styles.title}>
-  //               {item.title || item.name}
-  //             </Text>
-  //             <Text numberOfLines={1} style={styles.artists}>
-  //               {item.artists || 'Unknown Artist'}
-  //             </Text>
-  //             <Text numberOfLines={1} style={styles.album}>
-  //               {item.album || 'Unknown Album'}
-  //             </Text>
-  //           </View>
-  //           <View style={{flex: 1}} />
-  //           <View style={{justifyContent: 'center', alignItems: 'flex-end'}}>
-  //
-  //             <Text style={{fontWeight: 'bold', marginRight: 5}}>
-  //               {item.plays || 0} play{item.plays === 1 ? '' : 's'}
-  //             </Text>
-  //           </View>
-  //         </View>
-  //       </Pressable>
-  //     )}
-  //     keyExtractor={(item, index) => index.toString()}
-  //     scrollEnabled={false}
-  //   />
-  // );
-
   return (
     <View>
       <Text>def</Text>
     </View>
+  );
+
+  return (
+    <FlatList
+      data={queue}
+      renderItem={({item, index}) => (
+        <Pressable onPress={() => skipTo(index)}>
+          <View style={styles.item}>
+            <Animated.Image
+              source={{uri: item.artwork}}
+              style={
+                activeTrack?.id === item.id ? styles.isPlaying : styles.image
+              }
+            />
+            <View
+              style={{
+                justifyContent: 'center',
+                marginTop: -2,
+                maxWidth: Dimensions.get('window').width - 175,
+              }}>
+              <Text numberOfLines={1} style={styles.title}>
+                {item.title || item.name}
+              </Text>
+              <Text numberOfLines={1} style={styles.artists}>
+                {item.artists || 'Unknown Artist'}
+              </Text>
+              <Text numberOfLines={1} style={styles.album}>
+                {item.album || 'Unknown Album'}
+              </Text>
+            </View>
+            <View style={{flex: 1}} />
+            <View style={{justifyContent: 'center', alignItems: 'flex-end'}}>
+              <Text style={{fontWeight: 'bold', marginRight: 5}}>
+                {item.plays || 0} play{item.plays === 1 ? '' : 's'}
+              </Text>
+            </View>
+          </View>
+        </Pressable>
+      )}
+      keyExtractor={(item, index) => index.toString()}
+      scrollEnabled={false}
+    />
   );
 
   /*  return (

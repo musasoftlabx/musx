@@ -1,5 +1,5 @@
 // * React Native
-import {Platform} from 'react-native';
+import {Dimensions, Platform} from 'react-native';
 
 // * React Native Libraries
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,8 +9,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, {AxiosInstance} from 'axios';
 import dayjs from 'dayjs';
 import {create} from 'zustand';
-import TrackPlayer, {State} from 'react-native-track-player';
+import TrackPlayer, {State, Track} from 'react-native-track-player';
 import {useNavigation} from '@react-navigation/native';
+import {TTrack} from './types';
 
 //export const storage = new MMKV();
 
@@ -23,14 +24,40 @@ interface IAuthStore {
 }
 
 interface IPlayerStore {
-  currentTrack: any;
-  nextTracks: any;
+  playbackState: any;
+  progress: any;
+  activeTrack: any;
+  queue: Track[];
+  artworkQueue: string[];
+  carouselQueue: string[];
+  activeTrackIndex: number;
+  trackRating: number;
+  trackPlayCount: number;
+  playRegistered: boolean;
+  lyricsVisible: boolean;
+  lyrics: null | string;
+  setProgress: (queue: {
+    position: number;
+    buffered: number;
+    duration: number;
+  }) => void;
+  setPlaybackState: (playbackState: any) => void;
+  setQueue: (queue: Track[]) => void;
+  setArtworkQueue: (artworkQueue: string[]) => void;
+  setCarouselQueue: (carouselQueue: string[]) => void;
+  setActiveTrack: (activeTrack?: Track) => void;
+  setActiveTrackIndex: (activeTrackIndex?: number) => void;
+  setTrackRating: (trackRating?: number) => void;
+  setTrackPlayCount: (trackPlayCount: number) => void;
+  setPlayRegistered: (playRegistered: boolean) => void;
+  setLyricsVisible: (lyricsVisible: boolean) => void;
+  setLyrics: (lyrics: null | string) => void;
+
   play: (params: any) => void;
-  pauseplay: () => void;
+  playPause: () => void;
   stop: () => void;
   previous: () => void;
   next: () => void;
-  queue: () => void;
   seekTo: (position: number) => void;
   skipTo: (index: number) => void;
   rate: (activeTrack: {id?: number}, rating: number) => void;
@@ -86,9 +113,37 @@ export const signaturesURL = `${URL()}public/images/signatures/`;
 export const audioURL = `${URL()}Music/`;
 export const artworkURL = `${URL()}Artwork/`;
 
-export const usePlayerStore = create<IPlayerStore>(set => ({
-  currentTrack: {},
-  nextTracks: [],
+export const WIDTH = Dimensions.get('window').width;
+export const HEIGHT = Dimensions.get('window').height;
+
+export const usePlayerStore = create<IPlayerStore>((set, get) => ({
+  progress: {},
+  playbackState: {},
+  queue: [],
+  activeTrack: {},
+  activeTrackIndex: 0,
+  artworkQueue: [],
+  carouselQueue: [],
+  trackRating: 0,
+  trackPlayCount: 0,
+  playRegistered: false,
+  lyricsVisible: false,
+  lyrics: null,
+  setProgress: progress => set(state => ({...state, progress})),
+  setPlaybackState: playbackState => set(state => ({...state, playbackState})),
+  setQueue: queue => set(state => ({...state, queue})),
+  setActiveTrack: activeTrack => set(state => ({...state, activeTrack})),
+  setActiveTrackIndex: activeTrackIndex =>
+    set(state => ({...state, activeTrackIndex})),
+  setArtworkQueue: artworkQueue => set(state => ({...state, artworkQueue})),
+  setCarouselQueue: carouselQueue => set(state => ({...state, carouselQueue})),
+  setTrackRating: trackRating => set(state => ({...state, trackRating})),
+  setTrackPlayCount: trackPlayCount =>
+    set(state => ({...state, trackPlayCount})),
+  setPlayRegistered: playRegistered =>
+    set(state => ({...state, playRegistered})),
+  setLyricsVisible: lyricsVisible => set(state => ({...state, lyricsVisible})),
+  setLyrics: lyrics => set(state => ({...state, lyrics})),
 
   play: async (params: any) => {
     const currentTrack = {
@@ -124,17 +179,16 @@ export const usePlayerStore = create<IPlayerStore>(set => ({
     // await TrackPlayer.play();
     // await TrackPlayer.add(nextTracks);
   },
-  pauseplay: async () => {
-    const {state} = await TrackPlayer.getPlaybackState();
+  playPause: async () => {
+    const {state} = get().playbackState;
 
-    if (State.Paused === state || State.Stopped === state)
+    if (state === State.Paused || state === State.Stopped)
       await TrackPlayer.play();
     else await TrackPlayer.pause();
   },
   stop: async () => TrackPlayer.stop(),
   previous: async () => TrackPlayer.skipToPrevious(),
   next: async () => TrackPlayer.skipToNext(),
-  queue: async () => await TrackPlayer.getQueue(),
   seekTo: async (position: any) => TrackPlayer.seekTo(position),
   skipTo: async (index: any) => await TrackPlayer.skip(index),
   rate: async (activeTrack: any, rating: number) => {
