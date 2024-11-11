@@ -14,6 +14,7 @@ import {
   SectionList,
   StyleSheet,
   Text,
+  StatusBar,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import SvgAnimatedLinearGradient from 'react-native-svg-animated-linear-gradient';
@@ -23,17 +24,37 @@ import _ from 'lodash';
 import {GradientText} from '../../components/TextX';
 //import {Context} from '../../contexts';
 import Footer from '../../components/Footer';
-import {usePlayerStore} from '../../store';
+import {API_URL, ARTWORK_URL, SERVER_URL, usePlayerStore} from '../../store';
 import {StarRatingDisplay} from 'react-native-star-rating-widget';
+import {TrackProps} from '../../types';
 
-const NODE_SERVER = 'http://musasoft.ddns.net:3000/';
-const NGINX_SERVER = 'http://musasoft.ddns.net:8080/';
-
-const wait = timeout => {
+const wait = (timeout: number) => {
   return new Promise(resolve => setTimeout(resolve, timeout));
 };
 
-const Home = ({navigation}) => {
+const Home = ({navigation}: any) => {
+  // ? StoreStates
+  const {position, buffered, duration} = usePlayerStore(
+    state => state.progress,
+  );
+  const {state} = usePlayerStore(state => state.playbackState);
+  const activeTrack = usePlayerStore(state => state.activeTrack);
+  const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
+  const queue = usePlayerStore(state => state.queue);
+  const trackRating = usePlayerStore(state => state.trackRating);
+  const trackPlayCount = usePlayerStore(state => state.trackPlayCount);
+  const lyricsVisible = usePlayerStore(state => state.lyricsVisible);
+  const lyrics = usePlayerStore(state => state.lyrics);
+  const palette = usePlayerStore(state => state.palette);
+
+  // ? StoreActions
+  const play = usePlayerStore(state => state.play);
+  const playPause = usePlayerStore(state => state.playPause);
+  const setTrackRating = usePlayerStore(state => state.setTrackRating);
+  const setLyricsVisible = usePlayerStore(state => state.setLyricsVisible);
+  const setCarouselQueue = usePlayerStore(state => state.setCarouselQueue);
+  const setPalette = usePlayerStore(state => state.setPalette);
+
   const [gradient, setGradient] = useState(['#000', '#00ffaa']);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -85,13 +106,13 @@ const Home = ({navigation}) => {
   ]);
 
   useEffect(() => {
-    //fetchDashboard();
+    fetchDashboard();
   }, []);
 
   const fetchDashboard = () => {
-    let updated = [];
+    let updated: any = [];
 
-    const setter = (title, data) => {
+    const setter = (title: string, data: any) => {
       const sectionIndex = sections.findIndex(
         section => section.title === title,
       );
@@ -104,7 +125,7 @@ const Home = ({navigation}) => {
       return updated;
     };
 
-    fetch(`${NODE_SERVER}dashboard`).then(res =>
+    fetch(`${API_URL}dashboard`).then(res =>
       res.json().then(data => {
         Object.keys(data).forEach(key => setter(_.startCase(key), data[key]));
         updated.unshift(sections[0]);
@@ -150,13 +171,20 @@ const Home = ({navigation}) => {
 
   return (
     <>
+      <StatusBar
+        animated
+        backgroundColor={palette[1]}
+        barStyle="light-content"
+        translucent
+      />
+
       <LinearGradient
-        colors={['#2e7d32', '#000']}
+        colors={[palette[1] ?? '#000', palette[0] ?? '#fff']}
         useAngle={true}
-        angle={145}
+        angle={200}
         style={{
-          opacity: 0.4,
           position: 'absolute',
+          opacity: 1,
           top: 0,
           left: 0,
           bottom: 0,
@@ -189,7 +217,7 @@ const Home = ({navigation}) => {
                   mt={-10}
                   numberOfLines={1}
                   scale={6}>
-                  40.39%
+                  Welcome back,
                 </GradientText>
                 <View style={{flex: 1}} />
                 <Pressable>
@@ -220,33 +248,22 @@ const Home = ({navigation}) => {
                   <FlatList
                     horizontal
                     data={section.dataset}
-                    renderItem={({item, index}) => (
+                    renderItem={({
+                      item,
+                      index,
+                    }: {
+                      item: TrackProps;
+                      index: number;
+                    }) => (
                       <Pressable
-                        onPress={() =>
-                          dispatch({
-                            type: 'PLAY',
-                            payload: {
-                              currentTrack: item,
-                              nextTracks: section.dataset.slice(
-                                index + 1,
-                                section.dataset.length,
-                              ),
-                            },
-                          })
-                        }
+                        onPress={() => play('data', item)}
                         style={{
                           margin: 10,
                           width: 100,
                         }}>
                         <Image
-                          source={{
-                            uri: `${NGINX_SERVER}${item.coverArtURL}`,
-                          }}
-                          style={{
-                            width: 100,
-                            height: 100,
-                            borderRadius: 10,
-                          }}
+                          source={{uri: `${ARTWORK_URL}${item.artwork}`}}
+                          style={{width: 100, height: 100, borderRadius: 10}}
                           resizeMode="cover"
                         />
                         <StarRatingDisplay
@@ -270,13 +287,262 @@ const Home = ({navigation}) => {
                             fontSize: 14,
                             opacity: 0.7,
                           }}>
-                          {(item.artists && item.artists.join(' / ')) ||
-                            'No artist info'}
+                          {item.artists || 'No artist info'}
                         </Text>
                       </Pressable>
                     )}
                     showsHorizontalScrollIndicator={false}
                   />
+                )}
+
+                {section.title === 'Most Played' && (
+                  <>
+                    {loading ? (
+                      <View
+                        style={{
+                          backgroundColor: '#fff',
+                          opacity: 0.2,
+                          padding: 20,
+                          margin: 10,
+                          borderRadius: 10,
+                        }}>
+                        <SvgAnimatedLinearGradient
+                          primaryColor="#e8f7ff"
+                          secondaryColor="#4dadf7"
+                          height={25}>
+                          <Rect
+                            x="0"
+                            y="5"
+                            rx="4"
+                            ry="4"
+                            width="200"
+                            height="15"
+                          />
+                        </SvgAnimatedLinearGradient>
+                        <ItemPlaceholder />
+                      </View>
+                    ) : (
+                      <FlatList
+                        horizontal
+                        data={section.dataset}
+                        renderItem={({item}: {item: TrackProps}) => (
+                          <ImageBackground
+                            source={{uri: `${ARTWORK_URL}${item.artwork}`}}
+                            resizeMode="cover"
+                            borderRadius={20}
+                            width={10}
+                            blurRadius={20}
+                            style={{
+                              margin: 10,
+                              width: 320,
+                              //tintColor: '#000',
+                              padding: 10,
+                            }}>
+                            {/* <View
+                              style={{
+                                top: 0,
+                                bottom: 0,
+                                right: 0,
+                                left: 0,
+                                position: 'absolute',
+                                backgroundColor: 'black',
+                                opacity: 0.6,
+                                zIndex: 2,
+                              }}
+                            /> */}
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                marginHorizontal: 10,
+                                marginVertical: 10,
+                              }}>
+                              <Text
+                                style={{
+                                  fontSize: 20,
+                                  color: '#fff',
+                                }}>
+                                Most played this month
+                              </Text>
+                              <View style={{flex: 1}} />
+                              <Pressable>
+                                <MaterialIcons
+                                  style={{marginTop: 3}}
+                                  name="double-arrow"
+                                  size={15}
+                                />
+                              </Pressable>
+                            </View>
+                            <FlatList
+                              data={section.dataset}
+                              renderItem={({
+                                item,
+                                index,
+                              }: {
+                                item: TrackProps;
+                                index: number;
+                              }) => (
+                                <Pressable onPress={() => play('', item)}>
+                                  <View
+                                    style={{
+                                      flexDirection: 'row',
+                                      alignItems: 'center',
+                                      paddingVertical: 10,
+                                      paddingHorizontal: 10,
+                                    }}>
+                                    <Text
+                                      style={{
+                                        fontSize: 20,
+                                        fontWeight: 'bold',
+                                        color: '#fff',
+                                      }}>
+                                      {index + 1}.
+                                    </Text>
+                                    <Image
+                                      source={{
+                                        uri: `${ARTWORK_URL}${item.artwork}`,
+                                      }}
+                                      style={{
+                                        height: 45,
+                                        width: 45,
+                                        marginHorizontal: 8,
+                                        borderRadius: 10,
+                                      }}
+                                    />
+                                    <View
+                                      style={{
+                                        justifyContent: 'center',
+                                        marginTop: -2,
+                                        maxWidth:
+                                          Dimensions.get('window').width - 175,
+                                      }}>
+                                      <Text
+                                        numberOfLines={1}
+                                        style={styles.title}>
+                                        {item.title || item.name}
+                                      </Text>
+                                      <Text
+                                        numberOfLines={1}
+                                        style={styles.artists}>
+                                        {item.artists || 'Unknown Artist'}
+                                      </Text>
+                                    </View>
+                                    <View style={{flex: 1}} />
+                                    <View
+                                      style={{
+                                        justifyContent: 'center',
+                                        alignItems: 'flex-end',
+                                      }}>
+                                      <StarRatingDisplay
+                                        rating={item.rating}
+                                        starSize={16}
+                                        starStyle={{marginHorizontal: 0}}
+                                      />
+                                      <Text
+                                        style={{
+                                          fontWeight: 'bold',
+                                          marginRight: 5,
+                                        }}>
+                                        {item.plays || 0} plays
+                                      </Text>
+                                    </View>
+                                  </View>
+                                </Pressable>
+                              )}
+                              keyExtractor={(item, index) => index.toString()}
+                              scrollEnabled={false}
+                            />
+                          </ImageBackground>
+                        )}
+                        showsHorizontalScrollIndicator={false}
+                      />
+                    )}
+                  </>
+                )}
+
+                {section.title === 'Favorite Artists' && (
+                  <>
+                    {loading ? (
+                      <View
+                        style={{
+                          opacity: 0.2,
+                          padding: 10,
+                          flexDirection: 'row',
+                        }}>
+                        {[1, 2, 3].map(i => (
+                          <SvgAnimatedLinearGradient
+                            key={i}
+                            primaryColor="#e8f7ff"
+                            secondaryColor="#4dadf7"
+                            height={150}
+                            width={150}>
+                            <Circle cx="50" cy="50" r="50" />
+                            <Rect
+                              x="0"
+                              y="120"
+                              rx="4"
+                              ry="4"
+                              width="100"
+                              height="10"
+                            />
+                            <Rect
+                              x="10"
+                              y="140"
+                              rx="4"
+                              ry="4"
+                              width="80"
+                              height="8"
+                            />
+                          </SvgAnimatedLinearGradient>
+                        ))}
+                      </View>
+                    ) : (
+                      <FlatList
+                        horizontal
+                        data={section.dataset}
+                        renderItem={({item}: {item: TrackProps}) => {
+                          return (
+                            <View
+                              style={{
+                                margin: 10,
+                                alignItems: 'center',
+                                width: 100,
+                              }}>
+                              <Image
+                                //source={{uri: `${SERVER_URL}${item?.path.split('/').slice(-1)}/artist.jpg`,}}
+                                source={require('../../assets/images/musician.png')}
+                                defaultSource={require('../../assets/images/musician.png')}
+                                style={{
+                                  width: 100,
+                                  height: 100,
+                                  borderRadius: 100,
+                                }}
+                                resizeMode="cover"
+                              />
+                              <Text
+                                numberOfLines={1}
+                                style={{
+                                  fontSize: 16,
+                                  color: 'white',
+                                  marginTop: 5,
+                                  marginBottom: 1,
+                                }}>
+                                {item.albumArtist}
+                              </Text>
+                              <Text
+                                style={{
+                                  fontSize: 14,
+                                  opacity: 0.5,
+                                }}>
+                                {item.cumulativeRating} rating
+                              </Text>
+                            </View>
+                          );
+                        }}
+                        showsHorizontalScrollIndicator={false}
+                      />
+                    )}
+                  </>
                 )}
               </>
             ) : (
@@ -301,7 +567,9 @@ const Home = ({navigation}) => {
             )}
           </>
         )}
+        style={{marginTop: 40}}
       />
+
       {/* <Footer /> */}
     </>
   );

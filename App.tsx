@@ -116,12 +116,8 @@ function App(): React.JSX.Element {
   axios.defaults.headers.post['Content-Type'] = 'application/json';
   axios.defaults.headers.post['Accept'] = 'application/json';
 
-  const activeTrack = useActiveTrack();
-  const playwhenready = usePlayWhenReady();
   const progress = useProgress();
   const playbackState = usePlaybackState();
-
-  const config = useConfigStore((state: {config: any}) => state.config);
 
   const trackPlayCount = usePlayerStore(state => state.trackPlayCount);
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
@@ -134,16 +130,13 @@ function App(): React.JSX.Element {
     state => state.setActiveTrackIndex,
   );
   const setQueue = usePlayerStore(state => state.setQueue);
-  const setArtworkQueue = usePlayerStore(state => state.setArtworkQueue);
-  const setCarouselQueue = usePlayerStore(state => state.setCarouselQueue);
   const setTrackRating = usePlayerStore(state => state.setTrackRating);
   const setTrackPlayCount = usePlayerStore(state => state.setTrackPlayCount);
+  const setPalette = usePlayerStore(state => state.setPalette);
   const setLyrics = usePlayerStore(state => state.setLyrics);
   const setLyricsVisible = usePlayerStore(state => state.setLyricsVisible);
 
   //const isPlaying = playerState === State.Playing;
-
-  const [repeatMode, setRepeatMode] = useState(RepeatMode.Off);
 
   useEffect(() => {
     const setUpTrackPlayer = async () => {
@@ -155,7 +148,7 @@ function App(): React.JSX.Element {
               AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
             alwaysPauseOnInterruption: true,
           },
-          progressUpdateEventInterval: 0.1,
+          progressUpdateEventInterval: 1,
           capabilities: [
             Capability.Play,
             Capability.Pause,
@@ -227,43 +220,30 @@ function App(): React.JSX.Element {
       Event.PlaybackState,
     ],
     async event => {
+      const _activeTrack = await TrackPlayer.getActiveTrack();
+      const _activeTrackIndex = await TrackPlayer.getActiveTrackIndex();
+      const _queue = await TrackPlayer.getQueue();
+
       if (event.type === Event.PlaybackActiveTrackChanged) {
         setPlayRegistered(false);
-
-        const _queue = await TrackPlayer.getQueue();
-        const _activeTrackIndex = await TrackPlayer.getActiveTrackIndex();
-        const _artworkQueue = _queue.map((track: Track['']) => track.artwork);
-
+        setActiveTrack(_activeTrack);
         setActiveTrackIndex(_activeTrackIndex);
-        setActiveTrack(activeTrack);
         setQueue(_queue);
-        setArtworkQueue(_artworkQueue);
-
         setProgress(progress);
-        // setCarouselQueue([
-        //   ..._artworkQueue.slice(
-        //     _activeTrackIndex! - 1,
-        //     _activeTrackIndex! + 2,
-        //   ),
-        // ]);
-        setCarouselQueue([
-          ..._artworkQueue.slice(_activeTrackIndex! - 1, _activeTrackIndex),
-          ..._artworkQueue.slice(_activeTrackIndex, _activeTrackIndex! + 2),
-        ]);
-
-        setTrackRating(activeTrack?.rating);
-        setTrackPlayCount(activeTrack?.plays);
+        setTrackRating(_activeTrack?.rating);
+        setTrackPlayCount(_activeTrack?.plays);
+        setPalette(_activeTrack?.palette);
 
         axios
           .get(
-            `${SERVER_URL}/Music/${activeTrack?.path.replace('.mp3', '.lrc')}`,
+            `${SERVER_URL}/Music/${_activeTrack?.path.replace('.mp3', '.lrc')}`,
           )
           .then(({data: lyrics}) => {
             setLyrics(lyrics);
             setLyricsVisible(true);
           })
           .catch(() => {
-            setLyrics(null);
+            setLyrics('');
             setLyricsVisible(false);
           });
 
@@ -277,15 +257,11 @@ function App(): React.JSX.Element {
           setPlayRegistered(true);
           setTrackPlayCount(trackPlayCount + 1);
           TrackPlayer.updateMetadataForTrack(activeTrackIndex!, {
-            ...activeTrack,
-            plays: activeTrack?.plays! + 1,
+            ..._activeTrack,
+            plays: _activeTrack?.plays + 1,
           } as Track);
-          // updatePlayCount(
-          //   {id: activeTrack?.id},
-          //   {onSuccess: ({data}) => console.log(data)},
-          // );
           axios
-            .patch('updatePlayCount', {id: activeTrack?.id})
+            .patch('updatePlayCount', {id: _activeTrack?.id})
             .then(({data}) => console.log(data));
         }
       }

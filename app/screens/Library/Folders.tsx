@@ -1,6 +1,6 @@
-import {useQuery, useQueryClient} from '@tanstack/react-query';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import axios from 'axios';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   Alert,
   BackHandler,
@@ -9,6 +9,7 @@ import {
   Image,
   Pressable,
   StyleSheet,
+  Vibration,
   View,
 } from 'react-native';
 import BigList from 'react-native-big-list';
@@ -28,39 +29,55 @@ import {
   useConfigStore,
   usePlayerStore,
   WAVEFORM_URL,
+  WIDTH,
 } from '../../store';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as Animatable from 'react-native-animatable';
 import {Modalize} from 'react-native-modalize';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import TrackPlayer from 'react-native-track-player';
-import {TTrack} from '../../types';
+import {TrackProps} from '../../types';
 import StarRating, {StarRatingDisplay} from 'react-native-star-rating-widget';
 import LinearGradient from 'react-native-linear-gradient';
+import BottomSheet, {
+  BottomSheetFlatList,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
 
 export default function Folders({navigation, route}: any) {
+  // ? Refs
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
+  // ? Memos
+
   const play = usePlayerStore(state => state.play);
   //console.log(navigation);
   const queryClient = useQueryClient();
   const [path, setPath] = useState('');
   const [data, setData] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [highlighted, setHighlighted] = useState<TrackProps | null>();
+  const [bottomSheetVisible, setBottomSheetVisible] = useState<boolean>(false);
 
   // ? StoreStates
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
 
-  //const {state, dispatch} = useContext(Context);
-  const [actionSheet, setActionSheet] = useState({});
-
   // const {data, isFetching, isFetched} = useQuery({
   //   queryKey: ['directory'],
-  //   queryFn: ({queryKey}) => axios.get(`http://75.119.137.255:3000/${path}`),
+  //   queryFn: ({queryKey}) => axios.get(`${API_URL}${path}`),
   //   select: data => data.data,
   // });
 
+  const list = async (path: string) => {
+    const res = await axios.get(`${API_URL}${path}`);
+    setData(res.data);
+    savePath(path);
+  };
+
   useEffect(() => {
     navigation.setOptions({
-      headerStyle: {backgroundColor: 'rgba(0, 0, 0, 0.3)'},
+      headerStyle: {backgroundColor: 'rgba(0, 0, 0, 0.1)'},
       headerRight: () => (
         <View style={{flexDirection: 'row'}}>
           <MaterialCommunityIcons
@@ -79,31 +96,47 @@ export default function Folders({navigation, route}: any) {
   });
 
   useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        if (bottomSheetVisible) {
+          bottomSheetRef.current?.close();
+          setBottomSheetVisible(false);
+          setHighlighted(null);
+          return true;
+        } else {
+          setBottomSheetVisible(true);
+          return false;
+        }
+      },
+    );
+
+    return () => backHandler.remove();
+  }, [bottomSheetVisible]);
+
+  // useEffect(() => {
+  //   if (highlighted) {
+  //     console.log(highlighted);
+  //     bottomSheetRef.current?.snapToIndex(0);
+  //   }
+  // }, [highlighted]);
+
+  useEffect(() => {
     const getset = async () => {
       //await AsyncStorage.removeItem('path');
-      let x = '';
+      let path = '';
       const value = await AsyncStorage.getItem('path');
       console.log('value:', value);
 
       if (value === null) {
         await AsyncStorage.setItem('path', '');
-        x = '';
+        path = '';
       } else {
-        x = value;
+        path = value;
       }
-      console.log('x:', x);
+      console.log('path:', path);
 
-      const res = await axios.get(`${API_URL}${x}`);
-      setData(res.data);
-      savePath(x);
-      //navigation.push('LibraryStack');
-      //console.log(res.data);
-
-      // navigation.setOptions({
-      //   //...navigation,
-      //   title: x.split('/').pop() === '' ? 'Folders' : path.split('/').pop(),
-      //   //title: 'yug',
-      // });
+      list(path);
     };
 
     getset();
@@ -134,96 +167,12 @@ export default function Folders({navigation, route}: any) {
     await AsyncStorage.setItem('path', value);
   };
 
-  const actionSheetOptions = [
-    {
-      text: 'Play',
-      icon: 'play-arrow',
-    },
-    {
-      text: 'Play Next',
-      icon: 'queue-play-next',
-      //action: track => dispatch({type: 'ADD_NEXT_IN_QUEUE', payload: track}),
-    },
-    {
-      text: 'Add to queue',
-      icon: 'add-to-queue',
-      //action: track => dispatch({type: 'ADD_TO_QUEUE', payload: track}),
-    },
-    {
-      text: 'Add to playlist',
-      icon: 'playlist-add',
-      //action: track => navigation.navigate('AddToPlaylist', {_id: track._id}),
-    },
-    {
-      text: 'Go to artist',
-      icon: 'library-music',
-    },
-    {
-      text: 'Delete from library',
-      icon: 'delete-forever',
-      action: track => {
-        Alert.alert(
-          'Are you sure?',
-          'This will delete the file permanently',
-          // [
-          //   {
-          //     text: 'Cancel',
-          //     onPress: () => console.log('Cancel Pressed'),
-          //     style: 'cancel',
-          //   },
-          //   {
-          //     text: 'OK',
-          //     onPress: () => {
-          //       <Animatable.Image
-          //         source={{
-          //           uri: item.artwork,
-          //         }}
-          //         animation="rotate"
-          //         easing="linear"
-          //         useNativeDriver={true}
-          //         iterationCount="infinite"
-          //         style={styles.isPlaying}
-          //         transition={{opacity: 0.9}}
-          //       />;
-
-          //       fetch(`${state.NODE_SERVER}deleteTrack`, {
-          //     method: 'DELETE',
-          //     headers: {'Content-Type': 'application/json'},
-          //     body: JSON.stringify(track),
-          //   })
-          //     .then(res => res.text())
-          //     .then(() => {
-          //       folders.splice(folders.indexOf(track), 1);
-          //       dispatch({
-          //         type: 'REMOVE_FROM_QUEUE',
-          //         payload: {track, playBackState},
-          //       });
-          //     });
-          //     },
-          //   },
-          // ],
-        );
-      },
-    },
-  ];
-
-  const modalRef = useRef(null);
-  const onOpen = (props: React.SetStateAction<{}>) => {
-    const modal = modalRef.current;
-    setActionSheet(props);
-
-    if (modal) {
-      modal.open();
-    }
-  };
-
   return (
     <>
       <LinearGradient
         colors={[
-          activeTrack?.palette?.[5] ?? '#000',
-          activeTrack?.palette?.[1] ?? '#fff',
-          activeTrack?.palette?.[0] ?? '#000',
+          activeTrack?.palette?.[1] ?? '#000',
+          activeTrack?.palette?.[0] ?? '#fff',
         ]}
         useAngle={true}
         angle={290}
@@ -238,81 +187,19 @@ export default function Folders({navigation, route}: any) {
         }}
       />
 
-      <Modalize
-        modalHeight={HEIGHT * 0.5}
-        handlePosition="inside"
-        openAnimationConfig={
-          ({spring: {speed: 100, bounciness: 100, mass: 100}},
-          {timing: {duration: 500}})
-        }
-        overlayStyle={{backgroundColor: 'rgba(128, 0, 128, 0.5)'}}
-        modalStyle={{
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          borderTopLeftRadius: 30,
-          borderTopRightRadius: 30,
-        }}
-        ref={modalRef}
-        flatListProps={{
-          data: actionSheetOptions,
-          renderItem: ({item}) => (
-            <Pressable
-              onPress={() => (
-                modalRef.current.close(), item.action(actionSheet)
-              )}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  padding: 15,
-                }}>
-                <MaterialIcons
-                  name={item.icon}
-                  size={24}
-                  color="white"
-                  style={{marginRight: 10}}
-                />
-                <Text style={{color: 'white', fontSize: 16}}>{item.text}</Text>
-              </View>
-            </Pressable>
-          ),
-
-          keyExtractor: (item, index) => index.toString(),
-          showsVerticalScrollIndicator: false,
-        }}
-        HeaderComponent={
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginTop: 20,
-              marginBottom: 10,
-              marginHorizontal: 20,
-            }}>
-            {/* <Image
-              source={{uri: `${state.NGINX_SERVER}${actionSheet.coverArtURL}`}}
-              style={{
-                height: 45,
-                width: 45,
-                marginRight: 10,
-                borderRadius: 10,
-              }}
-            /> */}
-            <View style={{justifyContent: 'center', marginLeft: 5}}>
-              <Text style={{fontSize: 18, fontWeight: 'bold'}}>
-                {actionSheet.title || actionSheet.name}
-              </Text>
-              <Text>{actionSheet.albumArtist}</Text>
-            </View>
-          </View>
-        }
-      />
-
       <BigList
         data={data}
         numColumns={1}
         keyExtractor={(item, index) => index.toString()}
-        //sections={[data]}
-        renderItem={({item, index}: {item: TTrack; index: number}) => (
+        refreshing={refreshing}
+        onRefresh={() => {
+          setRefreshing(true);
+          setTimeout(() => {
+            list(path);
+            setRefreshing(false);
+          }, 1000);
+        }}
+        renderItem={({item, index}: {item: TrackProps; index: number}) => (
           <>
             {item.hasOwnProperty('name') ? (
               <Pressable
@@ -343,6 +230,8 @@ export default function Folders({navigation, route}: any) {
             ) : (
               <Pressable
                 onPress={async () => {
+                  //play(data, item);
+
                   const tracks = data.map(
                     (track: {
                       id: number;
@@ -368,42 +257,21 @@ export default function Folders({navigation, route}: any) {
 
                   // ? Find index of currently selected track
                   const selectedIndex = queue.findIndex(
-                    (track: TTrack) => track.id === item.id,
+                    (track: TrackProps) => track.id === item.id,
                   );
 
                   await TrackPlayer.setQueue(queue);
                   await TrackPlayer.skip(selectedIndex);
                   await TrackPlayer.play();
+
                   navigation.push('NowPlaying');
-
-                  // const initTrackPlayer = async () => {
-                  //   await TrackPlayer.setQueue(queue);
-                  //   await TrackPlayer.skip(selectedIndex);
-                  //   await TrackPlayer.play();
-                  //   navigation.push('NowPlaying');
-                  // };
-
-                  // // ? Fetch lrc file from server
-                  // try {
-                  //   const {data: lyrics} = await axios.get(
-                  //     `${SERVER_URL}/Music/${queue[selectedIndex].path.replace(
-                  //       '.mp3',
-                  //       '.lrc',
-                  //     )}`,
-                  //   );
-
-                  //   if (lyrics) queue[selectedIndex].lyrics = lyrics;
-                  //   initTrackPlayer();
-                  // } catch (err) {
-                  //   initTrackPlayer();
-                  // }
-
-                  // play({
-                  //   currentTrack: item,
-                  //   nextTracks: data.slice(index + 1, data.length),
-                  // });
                 }}
-                onLongPress={() => onOpen(item)}>
+                onLongPress={() => {
+                  Vibration.vibrate(100);
+                  setHighlighted(item);
+                  setBottomSheetVisible(true);
+                  bottomSheetRef.current?.snapToIndex(0);
+                }}>
                 <View
                   style={{
                     flexDirection: 'row',
@@ -431,7 +299,7 @@ export default function Folders({navigation, route}: any) {
                     style={{
                       justifyContent: 'center',
                       marginTop: -2,
-                      maxWidth: Dimensions.get('window').width - 190,
+                      maxWidth: WIDTH - 190,
                     }}>
                     <View
                       style={{
@@ -503,6 +371,135 @@ export default function Folders({navigation, route}: any) {
         headerHeight={0}
         footerHeight={0}
       />
+
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={-1}
+        snapPoints={['64%']}
+        enableDynamicSizing={false}
+        enablePanDownToClose
+        handleIndicatorStyle={{backgroundColor: '#fff'}}
+        backgroundStyle={{
+          backgroundColor: 'rgba(0, 0, 0, .85)',
+          borderRadius: 20,
+        }}>
+        <BottomSheetFlatList
+          data={[
+            {
+              text: 'Play',
+              icon: 'play-arrow',
+              action: () => TrackPlayer.play(),
+            },
+            {
+              text: 'Play Next',
+              icon: 'queue-play-next',
+              action: () => TrackPlayer.skipToNext(),
+            },
+            {
+              text: 'Add to queue',
+              icon: 'add-to-queue',
+              action: () => TrackPlayer.add([highlighted]),
+            },
+            {
+              text: 'Add to playlist',
+              icon: 'playlist-add',
+              //action: track => navigation.navigate('AddToPlaylist', {_id: track._id}),
+            },
+            {
+              text: 'Go to artist',
+              icon: 'library-music',
+            },
+            {
+              text: 'Delete from library',
+              icon: 'delete-forever',
+              action: (track: TrackProps) => {
+                Alert.alert(
+                  'Are you sure?',
+                  'This will delete the file permanently',
+                  [
+                    {text: 'Cancel', onPress: () => {}, style: 'cancel'},
+                    {
+                      text: 'OK',
+                      onPress: () => {
+                        {
+                          /* <Animatable.Image
+                          source={{
+                            uri: item.artwork,
+                          }}
+                          animation="rotate"
+                          easing="linear"
+                          useNativeDriver={true}
+                          iterationCount="infinite"
+                          style={styles.isPlaying}
+                          transition={{opacity: 0.9}}
+                        />; */
+                        }
+
+                        // axios(`deleteTrack?track=${highlighted?.id}`, {
+                        //   method: 'DELETE',
+                        // }).then(() => {
+                        //   data.splice(data.indexOf(track), 1);
+                        //   TrackPlayer.remove([]);
+                        // });
+                      },
+                    },
+                  ],
+                );
+              },
+            },
+          ]}
+          keyExtractor={i => i.text}
+          ListHeaderComponent={
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginTop: 20,
+                marginBottom: 10,
+                marginHorizontal: 20,
+              }}>
+              <Image
+                source={{uri: `${ARTWORK_URL}${highlighted?.artwork}`}}
+                style={{
+                  height: 45,
+                  width: 45,
+                  marginRight: 10,
+                  borderRadius: 10,
+                }}
+              />
+              <View style={{justifyContent: 'center', marginLeft: 5}}>
+                <Text style={{fontSize: 18, fontWeight: 'bold'}}>
+                  {highlighted?.title}
+                </Text>
+                <Text>{highlighted?.albumArtist}</Text>
+              </View>
+            </View>
+          }
+          renderItem={({item}) => (
+            <Pressable
+              onPress={() => {
+                bottomSheetRef.current?.snapToIndex(-1);
+                item.action(activeTrack);
+              }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 15,
+                }}>
+                <MaterialIcons
+                  name={item.icon}
+                  size={24}
+                  color="#fff"
+                  style={{marginRight: 10}}
+                />
+                <Text style={{color: '#fff', fontSize: 16}}>{item.text}</Text>
+              </View>
+            </Pressable>
+          )}
+          contentContainerStyle={{}}
+        />
+      </BottomSheet>
     </>
   );
 }

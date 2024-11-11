@@ -76,7 +76,7 @@ export default function Footer() {
             marginBottom: -10,
             marginLeft: -20,
           }}
-          value={Math.floor((position / duration) * 100) || 0}
+          value={Math.floor((position ?? 0 / duration) * 100)}
           thumbTintColor="transparent"
           minimumValue={0}
           maximumValue={100}
@@ -108,14 +108,14 @@ export default function Footer() {
               style={{
                 justifyContent: 'center',
                 marginTop: -2,
-                maxWidth: WIDTH - 175,
+                maxWidth: WIDTH - 220,
                 gap: 2,
               }}>
               <Text numberOfLines={1} style={styles.title}>
                 {activeTrack?.title}
               </Text>
               <Text numberOfLines={1} style={styles.artists}>
-                {activeTrack?.artists ?? 'Unknown Artist'}
+                {activeTrack?.albumArtist ?? 'Unknown Artist'}
               </Text>
             </View>
 
@@ -124,7 +124,10 @@ export default function Footer() {
             <View style={{flexDirection: 'row', alignItems: 'center', gap: 20}}>
               <Pressable
                 disabled={activeTrackIndex === 0}
-                onPress={() => TrackPlayer.skipToPrevious()}
+                onPress={() => {
+                  if (position <= 10) TrackPlayer.skipToPrevious();
+                  else TrackPlayer.seekTo(0);
+                }}
                 android_ripple={{
                   color: 'white',
                   radius: 39,

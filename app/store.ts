@@ -11,7 +11,7 @@ import dayjs from 'dayjs';
 import {create} from 'zustand';
 import TrackPlayer, {State, Track} from 'react-native-track-player';
 import {useNavigation} from '@react-navigation/native';
-import {TTrack} from './types';
+import {TrackProps} from './types';
 
 //export const storage = new MMKV();
 
@@ -36,6 +36,7 @@ interface IPlayerStore {
   playRegistered: boolean;
   lyricsVisible: boolean;
   lyrics: null | string;
+  palette: string[];
   setProgress: (queue: {
     position: number;
     buffered: number;
@@ -50,10 +51,11 @@ interface IPlayerStore {
   setTrackRating: (trackRating?: number) => void;
   setTrackPlayCount: (trackPlayCount: number) => void;
   setPlayRegistered: (playRegistered: boolean) => void;
+  setPalette: (palette: string[]) => void;
   setLyricsVisible: (lyricsVisible: boolean) => void;
   setLyrics: (lyrics: null | string) => void;
 
-  play: (params: any) => void;
+  play: (params: any, selected: TrackProps) => void;
   playPause: () => void;
   stop: () => void;
   previous: () => void;
@@ -128,6 +130,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   trackPlayCount: 0,
   playRegistered: false,
   lyricsVisible: false,
+  palette: [],
   lyrics: null,
   setProgress: progress => set(state => ({...state, progress})),
   setPlaybackState: playbackState => set(state => ({...state, playbackState})),
@@ -142,42 +145,43 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     set(state => ({...state, trackPlayCount})),
   setPlayRegistered: playRegistered =>
     set(state => ({...state, playRegistered})),
+  setPalette: palette => set(state => ({...state, palette})),
   setLyricsVisible: lyricsVisible => set(state => ({...state, lyricsVisible})),
   setLyrics: lyrics => set(state => ({...state, lyrics})),
 
-  play: async (params: any) => {
-    const currentTrack = {
-      ...params.currentTrack,
-      url: `${AUDIO_URL}${params.currentTrack.path}`,
-      artwork: `${ARTWORK_URL}${params.currentTrack.artwork}`,
-      palette: JSON.parse(params.currentTrack.palette),
-      //waveform: `${WAVEFORM_URL}${params.currentTrack.waveform}`,
-    };
-
-    const nextTracks = params.nextTracks.map((track: any) => {
-      return {
-        ...track,
-        url: `${AUDIO_URL}${track.path}`,
-        artwork: `${ARTWORK_URL}${track.artwork}`,
-        palette: JSON.parse(track.palette),
-      };
-    });
-
-    set(state => ({...state, currentTrack, nextTracks}));
-
-    await AsyncStorage.setItem(
-      'queue',
-      JSON.stringify([currentTrack, ...nextTracks]),
+  play: async (data: any, selected: TrackProps) => {
+    const tracks = data.map(
+      (track: {
+        id: number;
+        path: string;
+        artwork: string;
+        waveform: string;
+        palette: string;
+      }) => {
+        if (track.hasOwnProperty('format')) {
+          return {
+            ...track,
+            url: `${AUDIO_URL}${track.path}`,
+            artwork: `${ARTWORK_URL}${track.artwork}`,
+            waveform: `${WAVEFORM_URL}${track.waveform}`,
+            palette: JSON.parse(track.palette),
+          };
+        }
+      },
     );
 
-    console.warn(currentTrack);
+    // ? Remove undefined items (folders)
+    const queue: any = tracks.filter((track: any) => track);
 
-    await TrackPlayer.setQueue([currentTrack, ...nextTracks]);
+    // ? Find index of currently selected track
+    const selectedIndex = queue.findIndex(
+      (track: TrackProps) => track.id === selected.id,
+    );
+
+    await TrackPlayer.setQueue(queue);
+    await TrackPlayer.skip(selectedIndex);
     await TrackPlayer.play();
-    // await TrackPlayer.reset();
-    // await TrackPlayer.add(currentTrack);
-    // await TrackPlayer.play();
-    // await TrackPlayer.add(nextTracks);
+    //navigation.push('NowPlaying');
   },
   playPause: async () => {
     const {state} = get().playbackState;

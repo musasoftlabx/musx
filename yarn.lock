@@ -8940,7 +8940,7 @@ __metadata:
     react-native-device-info: ^13.1.0
     react-native-draggable-flatlist: ^4.0.1
     react-native-flipper: ^0.270.0
-    react-native-gesture-handler: ^2.20.1
+    react-native-gesture-handler: ^2.20.2
     react-native-linear-gradient: ^2.8.3
     react-native-lyric: ^1.0.2
     react-native-modalize: ^2.1.1
@@ -8955,6 +8955,7 @@ __metadata:
     react-native-select-dropdown: ^4.0.1
     react-native-shadow-2: ^7.1.1
     react-native-snap-carousel: ^3.9.1
+    react-native-sound: ^0.11.2
     react-native-star-rating-widget: ^1.9.1
     react-native-svg: ^15.8.0
     react-native-svg-animated-linear-gradient: ^0.4.0
@@ -9807,9 +9808,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-gesture-handler@npm:^2.20.1":
-  version: 2.20.1
-  resolution: "react-native-gesture-handler@npm:2.20.1"
+"react-native-gesture-handler@npm:^2.20.2":
+  version: 2.20.2
+  resolution: "react-native-gesture-handler@npm:2.20.2"
   dependencies:
     "@egjs/hammerjs": ^2.0.17
     hoist-non-react-statics: ^3.3.0
@@ -9818,7 +9819,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 5d4414ca0c06cc9a1ed704285c2d01a5afd77400914de3374657a777c07de74fc9d0c6bf1fda2ad2f0f1cb2aebed7eaa29a0ce8707d40ab67055abf613e2adc8
+  checksum: 8d9e7496615dad4e6bb6dd1c750c2d3b2e57c6173a1d466b4503b28b159b1dbbb1e7527c3d4bda12324422200c07835f34d81c9bd3cd1b7f594b22949bef274a
   languageName: node
   linkType: hard
 
@@ -9998,6 +9999,15 @@ __metadata:
     react: ">=15.0.0"
     react-native: "*"
   checksum: e71f6887ba8e86b4aea6d6a88c304135a7acbb5ef9173b78018fc0e6d9965da9ec1d7c794db31282dc85892c6ca89f398d07145ab3e7d1e28cf12a09c247bb9d
+  languageName: node
+  linkType: hard
+
+"react-native-sound@npm:^0.11.2":
+  version: 0.11.2
+  resolution: "react-native-sound@npm:0.11.2"
+  peerDependencies:
+    react-native: ">=0.8.0"
+  checksum: d019de415c5f7bc8af51bc50adff7b9c307cb990aad3ea193933f89df743bbcdbfaa33c4a12bb1143a223137cea39f8b69baf5e1c29f77cf80476616bccc6f91
   languageName: node
   linkType: hard
 

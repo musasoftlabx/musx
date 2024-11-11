@@ -12,6 +12,7 @@ import Playlists from '../Library/Playlists';
 import Playlist from '../Library/Playlist';
 import Artists from '../Library/Artists';
 import Artist from '../Library/Artist';
+import Footer from '../../components/Footer';
 
 const Stack = createNativeStackNavigator();
 
@@ -28,13 +29,14 @@ const HomeStack = ({navigation}) => {
   };
 
   return (
-    <Stack.Navigator initialRouteName="Home">
-      <Stack.Screen
-        name="Home"
-        component={Home}
-        options={{headerShown: false}}
-      />
-      {/* <Stack.Screen name="RecentlyAdded" component={RecentlyAdded} />
+    <>
+      <Stack.Navigator initialRouteName="Home">
+        <Stack.Screen
+          name="Home"
+          component={Home}
+          options={{headerShown: false}}
+        />
+        {/* <Stack.Screen name="RecentlyAdded" component={RecentlyAdded} />
       <Stack.Screen name="RecentlyPlayed" component={RecentlyPlayed} />
       <Stack.Screen
         name="Folders"
@@ -74,7 +76,10 @@ const HomeStack = ({navigation}) => {
         component={Artist}
         options={{headerShown: false}}
       /> */}
-    </Stack.Navigator>
+      </Stack.Navigator>
+
+      <Footer />
+    </>
   );
 };
 

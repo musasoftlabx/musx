@@ -9,6 +9,7 @@ import {
   NavigatorScreenParams,
 } from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
+import {Track} from 'react-native-track-player';
 
 declare global {
   namespace ReactNavigation {
@@ -46,7 +47,7 @@ export interface IAxiosError {
   };
 }
 
-export type TTrack = {
+export type TrackProps = {
   album: string;
   albumArtist: string;
   artists: string;
@@ -72,16 +73,8 @@ export type TTrack = {
   track: number;
   waveform: string;
   year: string;
-};
+} & Track;
 
-export type Tracks = TTrack[];
+export type TracksProps = TrackProps[];
 
-export type TQueue = {
-  queue: any;
-  artworkQueue: any;
-  trimmedArtworkQueue: any;
-  activeTrackIndex: any;
-  trackRating: any;
-  trackPlayCount: any;
-  playRegistered: any;
-};
+export type QueueProps = {queue: any; activeTrack: any; activeTrackIndex: any};

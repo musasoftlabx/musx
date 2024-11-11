@@ -20,7 +20,7 @@ import {usePlayerStore, WIDTH} from '../../store';
 import {QueueProps, TrackProps, TracksProps} from '../../types';
 import TrackPlayer from 'react-native-track-player';
 
-export default function UpNext({
+export default function History({
   queue,
   activeTrack,
   activeTrackIndex,
@@ -28,12 +28,11 @@ export default function UpNext({
   // ? States
   const [data, setData] = useState<TracksProps>([]);
 
-  // ? StoreActions
   const setQueue = usePlayerStore(state => state.setQueue);
 
   // ? Effects
   useEffect(() => {
-    setData(queue.slice(activeTrackIndex + 1, activeTrackIndex! + 10));
+    setData(queue.slice(activeTrackIndex! - 10, activeTrackIndex).reverse());
   }, [activeTrackIndex]);
 
   // ? Callbacks
@@ -44,11 +43,6 @@ export default function UpNext({
           <OpacityDecorator>
             <TouchableOpacity
               activeOpacity={1}
-              onPress={() =>
-                TrackPlayer.skip(
-                  queue.findIndex(({id}: {id: string}) => id === item.id),
-                )
-              }
               onLongPress={drag}
               disabled={isActive}
               style={[
@@ -137,6 +131,12 @@ export default function UpNext({
   );
 
   return (
+    <View>
+      <Text>uiyf</Text>
+    </View>
+  );
+
+  return (
     <DraggableFlatList
       data={data}
       onDragEnd={async ({data, from, to}) => {
@@ -160,17 +160,17 @@ export default function UpNext({
           ),
         );
 
-        // console.log(restoredQueue.map(t => t.title));
-        // console.error(
-        //   restoredQueue.findIndex(
-        //     (track: TrackProps) =>
-        //       track.title === data.find((x, i) => i === from)?.title,
-        //   ),
-        //   restoredQueue.findIndex(
-        //     (track: TrackProps) =>
-        //       track.title === data.find((x, i) => i === to)?.title,
-        //   ),
-        // );
+        console.log(restoredQueue.map(t => t.title));
+        console.error(
+          restoredQueue.findIndex(
+            (track: TrackProps) =>
+              track.title === data.find((x, i) => i === from)?.title,
+          ),
+          restoredQueue.findIndex(
+            (track: TrackProps) =>
+              track.title === data.find((x, i) => i === to)?.title,
+          ),
+        );
       }}
       keyExtractor={({id}) => id.toString()}
       renderItem={renderItem}
