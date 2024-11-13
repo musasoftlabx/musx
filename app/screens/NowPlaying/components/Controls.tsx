@@ -65,13 +65,15 @@ export default function Controls() {
 
       {isLoading || isBuffering ? (
         <ActivityIndicator
-          size="large"
+          size={50}
           color="grey"
           style={{
             backgroundColor: '#fff',
-            borderRadius: 50,
+            borderRadius: 100,
+            borderColor: 'transparent',
             width: 80,
             height: 80,
+            margin: 10,
           }}
         />
       ) : (
@@ -87,7 +89,8 @@ export default function Controls() {
       <Pressable
         disabled={activeTrackIndex === queue.length - 1}
         onPress={() => {
-          const crossfader = new Sound(
+          TrackPlayer.skipToNext();
+          /* const crossfader = new Sound(
             queue[activeTrackIndex + 1].url,
             Sound.MAIN_BUNDLE,
             e => {
@@ -131,7 +134,7 @@ export default function Controls() {
                 }
               }, 1000);
             },
-          );
+          ); */
         }}>
         <Ionicons
           name="play-forward-circle"

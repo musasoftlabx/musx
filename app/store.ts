@@ -12,6 +12,7 @@ import {create} from 'zustand';
 import TrackPlayer, {State, Track} from 'react-native-track-player';
 import {useNavigation} from '@react-navigation/native';
 import {TrackProps} from './types';
+import BottomSheet from '@gorhom/bottom-sheet';
 
 //export const storage = new MMKV();
 
@@ -37,6 +38,7 @@ interface IPlayerStore {
   lyricsVisible: boolean;
   lyrics: null | string;
   palette: string[];
+  nowPlayingRef: BottomSheet | null;
   setProgress: (queue: {
     position: number;
     buffered: number;
@@ -54,6 +56,9 @@ interface IPlayerStore {
   setPalette: (palette: string[]) => void;
   setLyricsVisible: (lyricsVisible: boolean) => void;
   setLyrics: (lyrics: null | string) => void;
+  openNowPlaying: (nowPlayingRef: BottomSheet | {}) => void;
+  closeNowPlaying: (nowPlayingRef: BottomSheet | {}) => void;
+  setNowPlayingRef: (nowPlayingRef: BottomSheet | {}) => void;
 
   play: (params: any, selected: TrackProps) => void;
   playPause: () => void;
@@ -132,6 +137,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   lyricsVisible: false,
   palette: [],
   lyrics: null,
+  nowPlayingRef: null,
   setProgress: progress => set(state => ({...state, progress})),
   setPlaybackState: playbackState => set(state => ({...state, playbackState})),
   setQueue: queue => set(state => ({...state, queue})),
@@ -148,6 +154,16 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   setPalette: palette => set(state => ({...state, palette})),
   setLyricsVisible: lyricsVisible => set(state => ({...state, lyricsVisible})),
   setLyrics: lyrics => set(state => ({...state, lyrics})),
+  openNowPlaying: (nowPlayingRef: any) => {
+    set(state => ({...state, nowPlayingRef}));
+    nowPlayingRef.current?.snapToIndex(0);
+  },
+  closeNowPlaying: (nowPlayingRef: any) => {
+    set(state => ({...state, nowPlayingRef}));
+    nowPlayingRef.current?.snapToIndex(-1);
+  },
+  setNowPlayingRef: (nowPlayingRef: any) =>
+    set(state => ({...state, nowPlayingRef})),
 
   play: async (data: any, selected: TrackProps) => {
     const tracks = data.map(
@@ -186,7 +202,11 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   playPause: async () => {
     const {state} = get().playbackState;
 
-    if (state === State.Paused || state === State.Stopped)
+    if (
+      state === State.Paused ||
+      state === State.Stopped ||
+      state === State.Ready
+    )
       await TrackPlayer.play();
     else await TrackPlayer.pause();
   },

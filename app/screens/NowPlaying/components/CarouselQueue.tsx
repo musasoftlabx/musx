@@ -25,18 +25,22 @@ export default function CarouselQueue() {
   const queue = usePlayerStore(state => state.queue);
 
   // ? Constants
-  const isPlaying = state === State.Playing;
-  const isPaused = state === State.Paused;
+  const isBuffering = state === State.Buffering;
+  const isLoading = state === State.Loading;
 
   const CarouselCallback = useCallback(
     () =>
-      isPlaying || isPaused ? (
+      isBuffering || isLoading ? (
+        <View style={{width: WIDTH, height: WIDTH * 0.05}}>
+          <ActivityIndicator size="large" color="#fff" style={{top: '900%'}} />
+        </View>
+      ) : (
         <Carousel
           ref={ref}
           width={WIDTH}
           height={WIDTH}
           mode="parallax"
-          //enabled={false}
+          enabled={false}
           snapEnabled={true}
           loop={false}
           scrollAnimationDuration={2000}
@@ -58,7 +62,11 @@ export default function CarouselQueue() {
           //   ] as string[]
           // }
           // defaultIndex={
-          //   activeTrackIndex === 0 ? 0 : activeTrackIndex === queue.length ? 2 : 1
+          //   activeTrackIndex === 0
+          //     ? 0
+          //     : activeTrackIndex === queue.length
+          //     ? 2
+          //     : 1
           // }
           // onSnapToItem={async index => {
           //   if (index < 1) {
@@ -98,10 +106,6 @@ export default function CarouselQueue() {
             </Shadow>
           )}
         />
-      ) : (
-        <View style={{width: WIDTH, height: WIDTH * 0.05}}>
-          <ActivityIndicator size="large" color="#fff" style={{top: '900%'}} />
-        </View>
       ),
     [activeTrackIndex, queue, state],
   );

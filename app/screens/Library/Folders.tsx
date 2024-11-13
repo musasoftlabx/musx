@@ -1,96 +1,98 @@
-import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import axios from 'axios';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+// * React
+import React, {useEffect, useRef, useState} from 'react';
+
+// * React Native
 import {
+  ActivityIndicator,
   Alert,
   BackHandler,
-  Button,
-  Dimensions,
   Image,
   Pressable,
   StyleSheet,
   Vibration,
   View,
 } from 'react-native';
-import BigList from 'react-native-big-list';
+
+// * Libraries
+import {useMutation, useQueryClient} from '@tanstack/react-query';
+import {StarRatingDisplay} from 'react-native-star-rating-widget';
 import {Text} from 'react-native-paper';
-import {
-  NavigationProp,
-  ParamListBase,
-  useFocusEffect,
-} from '@react-navigation/native';
+import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import BigList from 'react-native-big-list';
+import BottomSheet, {BottomSheetFlatList} from '@gorhom/bottom-sheet';
+import LinearGradient from 'react-native-linear-gradient';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import TrackPlayer, {useActiveTrack} from 'react-native-track-player';
+
+// * Store
 import {
   API_URL,
   ARTWORK_URL,
   AUDIO_URL,
   HEIGHT,
-  SERVER_URL,
-  useConfigStore,
   usePlayerStore,
   WAVEFORM_URL,
   WIDTH,
 } from '../../store';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import * as Animatable from 'react-native-animatable';
-import {Modalize} from 'react-native-modalize';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import TrackPlayer from 'react-native-track-player';
-import {TrackProps} from '../../types';
-import StarRating, {StarRatingDisplay} from 'react-native-star-rating-widget';
-import LinearGradient from 'react-native-linear-gradient';
-import BottomSheet, {
-  BottomSheetFlatList,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+
+// * Components
+import Footer from '../../components/Footer';
+
+// * Types
+import {TrackProps, TracksProps} from '../../types';
 
 export default function Folders({navigation, route}: any) {
   // ? Refs
   const bottomSheetRef = useRef<BottomSheet>(null);
 
-  // ? Memos
+  // ? Hooks
+  const activeTrack = useActiveTrack();
 
-  const play = usePlayerStore(state => state.play);
-  //console.log(navigation);
-  const queryClient = useQueryClient();
+  // ? States
   const [path, setPath] = useState('');
-  const [data, setData] = useState([]);
-  const [refreshing, setRefreshing] = useState(false);
+  const [data, setData] = useState<TracksProps>();
   const [highlighted, setHighlighted] = useState<TrackProps | null>();
+  const [refreshing, setRefreshing] = useState<boolean>(false);
   const [bottomSheetVisible, setBottomSheetVisible] = useState<boolean>(false);
 
   // ? StoreStates
-  const activeTrack = usePlayerStore(state => state.activeTrack);
-  const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
+  const nowPlayingRef = usePlayerStore(state => state.nowPlayingRef);
+  const palette = usePlayerStore(state => state.palette);
 
-  // const {data, isFetching, isFetched} = useQuery({
-  //   queryKey: ['directory'],
-  //   queryFn: ({queryKey}) => axios.get(`${API_URL}${path}`),
-  //   select: data => data.data,
-  // });
+  // ? StoreActions
+  const openNowPlaying = usePlayerStore(state => state.openNowPlaying);
 
-  const list = async (path: string) => {
-    const res = await axios.get(`${API_URL}${path}`);
-    setData(res.data);
-    savePath(path);
-  };
+  // ? Mutations
+  const {
+    mutate: list,
+    isError,
+    isPending,
+  } = useMutation({
+    mutationFn: (path: string) => axios.get(`${API_URL}${path}`),
+    onSuccess: ({data}) => {
+      setData(data);
+      console.log('rq', path);
+      savePath(path);
+    },
+  });
 
+  // ? Effects
   useEffect(() => {
     navigation.setOptions({
-      headerStyle: {backgroundColor: 'rgba(0, 0, 0, 0.1)'},
+      headerStyle: {backgroundColor: palette?.[1] ?? '#000'},
       headerRight: () => (
-        <View style={{flexDirection: 'row'}}>
-          <MaterialCommunityIcons
-            name="folder-home"
-            size={24}
-            color="white"
-            style={{marginRight: 10}}
-            onPress={async () => {
-              await AsyncStorage.setItem('currentPath', ' ');
-              //getData();
-            }}
-          />
-        </View>
+        <MaterialCommunityIcons
+          name="folder-home"
+          size={24}
+          color="white"
+          style={{marginRight: 10}}
+          onPress={async () => {
+            await AsyncStorage.setItem('currentPath', ' ');
+            // getData();
+          }}
+        />
       ),
     });
   });
@@ -114,15 +116,8 @@ export default function Folders({navigation, route}: any) {
     return () => backHandler.remove();
   }, [bottomSheetVisible]);
 
-  // useEffect(() => {
-  //   if (highlighted) {
-  //     console.log(highlighted);
-  //     bottomSheetRef.current?.snapToIndex(0);
-  //   }
-  // }, [highlighted]);
-
   useEffect(() => {
-    const getset = async () => {
+    (async () => {
       //await AsyncStorage.removeItem('path');
       let path = '';
       const value = await AsyncStorage.getItem('path');
@@ -134,12 +129,11 @@ export default function Folders({navigation, route}: any) {
       } else {
         path = value;
       }
+
       console.log('path:', path);
 
       list(path);
-    };
-
-    getset();
+    })();
   }, []);
 
   useEffect(() => {
@@ -162,29 +156,30 @@ export default function Folders({navigation, route}: any) {
     return () => backHandler.remove();
   }, [path]);
 
+  // ? Functions
   const savePath = async (value: string) => {
     setPath(value);
     await AsyncStorage.setItem('path', value);
   };
 
+  // useEffect(() => {
+  //   if (highlighted) {
+  //     console.log(highlighted);
+  //     bottomSheetRef.current?.snapToIndex(0);
+  //   }
+  // }, [highlighted]);
+
   return (
     <>
       <LinearGradient
-        colors={[
-          activeTrack?.palette?.[1] ?? '#000',
-          activeTrack?.palette?.[0] ?? '#fff',
-        ]}
+        colors={[palette[0] ?? '#000', palette[1] ?? '#fff']}
+        // colors={[
+        //   activeTrack?.palette?.[1] ?? '#000',
+        //   activeTrack?.palette?.[0] ?? '#fff',
+        // ]}
         useAngle={true}
         angle={290}
-        style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          opacity: 0.7,
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          bottom: 0,
-          right: 0,
-        }}
+        style={{position: 'absolute', top: 0, left: 0, bottom: 0, right: 0}}
       />
 
       <BigList
@@ -230,30 +225,20 @@ export default function Folders({navigation, route}: any) {
             ) : (
               <Pressable
                 onPress={async () => {
-                  //play(data, item);
-
-                  const tracks = data.map(
-                    (track: {
-                      id: number;
-                      path: string;
-                      artwork: string;
-                      waveform: string;
-                      palette: string;
-                    }) => {
-                      if (track.hasOwnProperty('format')) {
-                        return {
-                          ...track,
-                          url: `${AUDIO_URL}${track.path}`,
-                          artwork: `${ARTWORK_URL}${track.artwork}`,
-                          waveform: `${WAVEFORM_URL}${track.waveform}`,
-                          palette: JSON.parse(track.palette),
-                        };
-                      }
-                    },
-                  );
+                  const tracks = data?.map((track: TrackProps) => {
+                    if (track.hasOwnProperty('format')) {
+                      return {
+                        ...track,
+                        url: `${AUDIO_URL}${track.path}`,
+                        artwork: `${ARTWORK_URL}${track.artwork}`,
+                        waveform: `${WAVEFORM_URL}${track.waveform}`,
+                        palette: JSON.parse(track.palette as any),
+                      };
+                    }
+                  });
 
                   // ? Remove undefined items (folders)
-                  const queue: any = tracks.filter((track: any) => track);
+                  const queue: any = tracks?.filter((track: any) => track);
 
                   // ? Find index of currently selected track
                   const selectedIndex = queue.findIndex(
@@ -264,7 +249,7 @@ export default function Folders({navigation, route}: any) {
                   await TrackPlayer.skip(selectedIndex);
                   await TrackPlayer.play();
 
-                  navigation.push('NowPlaying');
+                  openNowPlaying(nowPlayingRef!);
                 }}
                 onLongPress={() => {
                   Vibration.vibrate(100);
@@ -358,18 +343,36 @@ export default function Folders({navigation, route}: any) {
             )}
           </>
         )}
-        renderEmpty={() => (
-          <View>
-            <Text variant="titleLarge" style={{fontFamily: 'Abel'}}>
-              Empty
-            </Text>
-          </View>
-        )}
+        renderEmpty={() =>
+          isPending ? (
+            <View
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: HEIGHT,
+              }}>
+              <ActivityIndicator
+                size="large"
+                color="#fff"
+                style={{alignSelf: 'center'}}
+              />
+            </View>
+          ) : isError ? (
+            <View>
+              <Text variant="titleLarge" style={{fontFamily: 'Abel'}}>
+                Empty
+              </Text>
+            </View>
+          ) : (
+            <View />
+          )
+        }
         renderHeader={() => <View />}
-        renderFooter={() => <View />}
+        renderFooter={() => <View style={{flex: 1}} />}
         itemHeight={60}
         headerHeight={0}
-        footerHeight={0}
+        footerHeight={10}
       />
 
       <BottomSheet
@@ -398,7 +401,7 @@ export default function Folders({navigation, route}: any) {
             {
               text: 'Add to queue',
               icon: 'add-to-queue',
-              action: () => TrackPlayer.add([highlighted]),
+              //action: () => TrackPlayer.add([highlighted]),
             },
             {
               text: 'Add to playlist',
@@ -479,7 +482,7 @@ export default function Folders({navigation, route}: any) {
             <Pressable
               onPress={() => {
                 bottomSheetRef.current?.snapToIndex(-1);
-                item.action(activeTrack);
+                //item.action(activeTrack);
               }}>
               <View
                 style={{
@@ -500,6 +503,8 @@ export default function Folders({navigation, route}: any) {
           contentContainerStyle={{}}
         />
       </BottomSheet>
+
+      <Footer />
     </>
   );
 }

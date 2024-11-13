@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useRef} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
@@ -10,16 +10,18 @@ import Library from './Library/';
 import Downloads from './Downloads';
 import Settings from './Settings';
 import Footer from '../components/Footer';
+import NowPlaying from './NowPlaying';
+import BottomSheet from '@gorhom/bottom-sheet';
 
 const Tab = createBottomTabNavigator();
 //const Tab = createMaterialBottomTabNavigator();
 
-const MainStack = ({navigation}) => {
+const MainStack = ({nowPlayingRef}: any) => {
   return (
     <>
       <Tab.Navigator
         initialRouteName="Library"
-        activeColor="#f0edf6"
+        //activeColor="#f0edf6"
         inactiveColor="gray"
         labeled={false}
         barStyle={{backgroundColor: 'transparent'}}
@@ -59,6 +61,7 @@ const MainStack = ({navigation}) => {
           name="Library"
           component={Library}
           options={{headerShown: false}}
+          //initialParams={{nowPlayingRef}}
         />
         <Tab.Screen name="Downloads" component={Downloads} />
         <Tab.Screen name="Settings" component={Settings} />

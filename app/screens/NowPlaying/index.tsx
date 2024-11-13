@@ -4,8 +4,9 @@ import React, {useState, useCallback, useRef, useEffect} from 'react';
 // * React Native
 import {
   BackHandler,
+  Image,
   Pressable,
-  SectionList,
+  StatusBar,
   StyleSheet,
   Text,
   View,
@@ -13,29 +14,30 @@ import {
 
 // * Libraries
 import axios from 'axios';
-import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
+import BottomSheet, {
+  BottomSheetSectionList,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import SelectDropdown from 'react-native-select-dropdown';
-import TrackPlayer, {RepeatMode, useProgress} from 'react-native-track-player';
+import TrackPlayer, {RepeatMode, State} from 'react-native-track-player';
 
 // * Store
 import {HEIGHT, usePlayerStore, WIDTH} from '../../store';
 
-// * Assets
-import {SegmentedButtons} from 'react-native-paper';
-
 // * Components
-import UpNext from './UpNext';
-import History from './History';
-import Lyrics from './components/Lyrics';
 import CarouselQueue from './components/CarouselQueue';
-import Rating from './components/Rating';
-import WaveformSlider from './components/WaveformSlider';
 import Controls from './components/Controls';
+import Lyrics from './components/Lyrics';
+import Queue from './components/Queue';
+import Rating from './components/Rating';
 import TrackInfo from './components/TrackInfo';
+import WaveformSlider from './components/WaveformSlider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {Shadow} from 'react-native-shadow-2';
 
 // * Functions
 const arrayMove = (fromIndex: number, toIndex: number, palette: string[]) => {
@@ -44,16 +46,18 @@ const arrayMove = (fromIndex: number, toIndex: number, palette: string[]) => {
   palette.splice(toIndex, 0, element);
 };
 
-export default function NowPlaying({navigation}: any) {
+// * Assets
+import imageFiller from '../../assets/images/image-filler.png';
+
+export default function NowPlaying({nowPlayingRef}: {nowPlayingRef: any}) {
   // ? Refs
   const bottomSheetRef = useRef<BottomSheet>(null);
-  //const {position, buffered, duration} = useProgress();
 
   // ? States
-  const [repeatMode, setRepeatMode] = useState(RepeatMode.Off);
-  const [value, setValue] = useState<'queue' | 'history'>('queue');
+  const [repeatMode, setRepeatMode] = useState<number>();
 
   // ? StoreStates
+  const {state} = usePlayerStore(state => state.playbackState);
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const queue = usePlayerStore(state => state.queue);
@@ -65,112 +69,37 @@ export default function NowPlaying({navigation}: any) {
   // ? StoreActions
   const setLyricsVisible = usePlayerStore(state => state.setLyricsVisible);
   const setPalette = usePlayerStore(state => state.setPalette);
+  const closeNowPlaying = usePlayerStore(state => state.closeNowPlaying);
 
   // ? Functions
   const handleRepeatMode = async () => {
     if (repeatMode === RepeatMode.Off) {
       await TrackPlayer.setRepeatMode(RepeatMode.Track);
       setRepeatMode(RepeatMode.Track);
+      AsyncStorage.setItem('repeatMode', RepeatMode.Track.toString());
     } else if (repeatMode === RepeatMode.Track) {
       await TrackPlayer.setRepeatMode(RepeatMode.Queue);
       setRepeatMode(RepeatMode.Queue);
+      AsyncStorage.setItem('repeatMode', RepeatMode.Queue.toString());
     } else if (repeatMode === RepeatMode.Queue) {
       await TrackPlayer.setRepeatMode(RepeatMode.Off);
       setRepeatMode(RepeatMode.Off);
+      AsyncStorage.setItem('repeatMode', RepeatMode.Off.toString());
     }
   };
 
-  const selections = ['Primary', 'Secondary', 'Waveform', 'Icons'];
-
-  const Select = ({index, label}: {index: number; label: string}) => (
-    <SelectDropdown
-      key={index}
-      data={palette}
-      onFocus={() => {}}
-      onSelect={(selectedItem, index) => {
-        arrayMove(index, 0, palette);
-        setPalette(palette);
-        axios
-          .patch('updatePalette', {id: activeTrack.id, palette})
-          .then(({data}) => console.log(data));
-      }}
-      renderButton={(selectedItem, isOpened) => {
-        return (
-          <View
-            style={{
-              borderColor: '#fff',
-              borderWidth: 1,
-              borderRadius: 12,
-              flexDirection: 'row',
-              alignItems: 'center',
-              height: 50,
-              gap: 10,
-              width: 'auto',
-              justifyContent: 'space-between',
-              paddingHorizontal: 12,
-            }}>
-            <View
-              style={{
-                justifyContent: 'center',
-                alignItems: 'center',
-                alignSelf: 'auto',
-                backgroundColor: palette[index],
-                borderRadius: 5,
-                height: 30,
-                width: 30,
-                marginVertical: 5,
-                marginLeft: 4,
-              }}
-            />
-
-            <Text
-              style={{
-                fontSize: 15,
-                fontWeight: '500',
-                color: '#fff',
-              }}>
-              {label}
-            </Text>
-            <Ionicons
-              name={isOpened ? 'chevron-up' : 'chevron-down'}
-              style={{color: '#fff', fontSize: 15}}
-            />
-          </View>
-        );
-      }}
-      renderItem={(item, index, isSelected) => {
-        return (
-          <View
-            style={{
-              justifyContent: 'center',
-              alignItems: 'center',
-              alignSelf: 'auto',
-              backgroundColor: item,
-              borderRadius: 5,
-              height: 30,
-              width: 70,
-              padding: 5,
-              marginVertical: 5,
-            }}>
-            <Text style={{color: '#000'}}>{item}</Text>
-          </View>
-        );
-      }}
-      showsVerticalScrollIndicator={false}
-      dropdownStyle={{
-        backgroundColor: 'transparent',
-        borderRadius: 8,
-        width: 'auto',
-      }}
-    />
-  );
-
   // ? Effects
   useEffect(() => {
+    (async () => {
+      const repeatMode = await AsyncStorage.getItem('repeatMode');
+      if (repeatMode) setRepeatMode(Number(repeatMode));
+      else setRepeatMode(RepeatMode.Off);
+    })();
+
     const backHandler = BackHandler.addEventListener(
       'hardwareBackPress',
       () => {
-        navigation.goBack(null);
+        closeNowPlaying(nowPlayingRef);
         return true;
       },
     );
@@ -191,9 +120,7 @@ export default function NowPlaying({navigation}: any) {
         backgroundStyle={{
           backgroundColor: 'rgba(0, 0, 0, .8)',
           borderRadius: 20,
-        }}
-        //onChange={handleSheetChange}
-      >
+        }}>
         <BottomSheetView
           style={{
             alignItems: 'flex-start',
@@ -204,206 +131,292 @@ export default function NowPlaying({navigation}: any) {
             paddingHorizontal: 20,
             marginTop: 10,
           }}>
-          {selections.map((selection, index) => (
-            <Select index={index} label={selection} />
-          ))}
+          {['Primary', 'Secondary', 'Waveform', 'Icons'].map(
+            (selection, index) => (
+              <SelectDropdown
+                key={index}
+                data={palette}
+                onFocus={() => {}}
+                onSelect={(selectedItem, index) => {
+                  arrayMove(index, 0, palette);
+                  setPalette(palette);
+                  axios
+                    .patch('updatePalette', {id: activeTrack.id, palette})
+                    .then(({data}) => console.log(data));
+                }}
+                renderButton={(selectedItem, isOpened) => {
+                  return (
+                    <View
+                      style={{
+                        borderColor: '#fff',
+                        borderWidth: 1,
+                        borderRadius: 12,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        height: 50,
+                        gap: 10,
+                        width: 'auto',
+                        justifyContent: 'space-between',
+                        paddingHorizontal: 12,
+                      }}>
+                      <View
+                        style={{
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          alignSelf: 'auto',
+                          backgroundColor: palette[index],
+                          borderRadius: 5,
+                          height: 30,
+                          width: 30,
+                          marginVertical: 5,
+                          marginLeft: 4,
+                        }}
+                      />
+
+                      <Text
+                        style={{
+                          fontSize: 15,
+                          fontWeight: '500',
+                          color: '#fff',
+                        }}>
+                        {selection}
+                      </Text>
+                      <Ionicons
+                        name={isOpened ? 'chevron-up' : 'chevron-down'}
+                        style={{color: '#fff', fontSize: 15}}
+                      />
+                    </View>
+                  );
+                }}
+                renderItem={(item, index, isSelected) => {
+                  return (
+                    <View
+                      style={{
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        alignSelf: 'auto',
+                        backgroundColor: item,
+                        borderRadius: 5,
+                        height: 30,
+                        width: 70,
+                        padding: 5,
+                        marginVertical: 5,
+                      }}>
+                      <Text style={{color: '#000'}}>{item}</Text>
+                    </View>
+                  );
+                }}
+                showsVerticalScrollIndicator={false}
+                dropdownStyle={{
+                  backgroundColor: 'transparent',
+                  borderRadius: 8,
+                  width: 'auto',
+                }}
+              />
+            ),
+          )}
         </BottomSheetView>
       </BottomSheet>
     ),
     [],
   );
 
-  const QueueCallback = useCallback(
-    () => (
-      <>
-        <SegmentedButtons
-          value={value}
-          onValueChange={(x: any) => setValue(x)}
-          buttons={[
-            {value: 'history', label: 'History'},
-            {value: 'queue', label: 'Queue'},
-          ]}
-        />
-
-        {value === 'queue' ? (
-          <UpNext
-            queue={queue}
-            activeTrack={activeTrack}
-            activeTrackIndex={activeTrackIndex}
-          />
-        ) : (
-          <History
-            queue={queue}
-            activeTrack={activeTrack}
-            activeTrackIndex={activeTrackIndex}
-          />
-        )}
-      </>
-    ),
-    [activeTrackIndex],
-  );
-
   return (
     <>
-      <LinearGradient
-        colors={[palette[1] ?? '#000', palette[0] ?? '#fff']}
-        useAngle={true}
-        angle={200}
-        style={{
-          position: 'absolute',
-          opacity: 1,
-          top: 0,
-          left: 0,
-          bottom: 0,
-          right: 0,
-        }}
+      <StatusBar
+        animated
+        backgroundColor={activeTrack?.palette?.[1] ?? '#000'}
+        barStyle="light-content"
+        translucent={false}
       />
 
-      <SectionList
-        contentContainerStyle={{paddingHorizontal: 10}}
-        stickySectionHeadersEnabled={false}
-        showsVerticalScrollIndicator={false}
-        sections={[{title: '', data: [{key: '1'}]}]}
-        renderSectionHeader={() => (
-          <View style={{marginTop: 40}}>
-            <View
-              style={{
-                alignItems: 'center',
-                flexDirection: 'row',
-                gap: 40,
-                justifyContent: 'flex-end',
-                paddingTop: 10,
-                paddingRight: 5,
-              }}>
-              <MaterialIcons
-                name="gradient"
-                size={26}
-                onPress={() => {
-                  bottomSheetRef.current?.snapToIndex(0);
-                  //TrackPlayer.pause();
+      <BottomSheet
+        ref={nowPlayingRef}
+        index={-1}
+        snapPoints={['100%']}
+        enableDynamicSizing={false}
+        enablePanDownToClose
+        handleStyle={{display: 'none'}}
+        backgroundStyle={{borderRadius: 0}}>
+        <BottomSheetSectionList
+          sections={[{title: '', data: [{key: '1'}]}]}
+          keyExtractor={i => i.toString()}
+          stickySectionHeadersEnabled={false}
+          showsVerticalScrollIndicator={false}
+          renderSectionHeader={() => (
+            <>
+              <LinearGradient
+                colors={[palette[1] ?? '#000', palette[0] ?? '#fff']}
+                useAngle={true}
+                angle={200}
+                style={{
+                  position: 'absolute',
+                  opacity: 1,
+                  top: 0,
+                  left: 0,
+                  bottom: 0,
+                  right: 0,
                 }}
               />
-              <MaterialIcons name="cast" size={25} />
-            </View>
-
-            <View style={{alignItems: 'center', height: HEIGHT}}>
-              {lyrics && lyricsVisible ? <Lyrics /> : <CarouselQueue />}
 
               <View
                 style={{
-                  flexDirection: 'row',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginTop: WIDTH * 0.95,
-                  gap: 20,
+                  flexDirection: 'row',
+                  gap: 40,
+                  justifyContent: 'flex-end',
+                  paddingVertical: 5,
+                  paddingHorizontal: 25,
                 }}>
-                <View style={{flexDirection: 'row', gap: 5}}>
-                  <Ionicons name="musical-notes-sharp" size={21} />
+                <MaterialIcons
+                  name="gradient"
+                  size={26}
+                  onPress={() => bottomSheetRef.current?.snapToIndex(0)}
+                />
+                <MaterialIcons name="cast" size={25} />
+              </View>
 
-                  <Text style={{fontSize: 18, fontWeight: 'bold'}}>
-                    {trackPlayCount} play
-                    {`${trackPlayCount === 1 ? '' : 's'}`}
-                  </Text>
+              <View style={{alignItems: 'center', height: HEIGHT}}>
+                {/* {lyrics && lyricsVisible ? <Lyrics /> : <CarouselQueue />} */}
+                {lyrics && lyricsVisible ? (
+                  <Lyrics />
+                ) : (
+                  <View style={{flex: 1}}>
+                    <Shadow startColor="#00000066" distance={3}>
+                      <Image
+                        source={
+                          activeTrack?.artwork
+                            ? {uri: activeTrack?.artwork}
+                            : imageFiller
+                        }
+                        style={{
+                          height: WIDTH * 0.95,
+                          width: WIDTH * 0.95,
+                          borderRadius: 20,
+                        }}
+                      />
+                    </Shadow>
+                  </View>
+                )}
+
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginTop: WIDTH * 0.95,
+                    gap: 20,
+                  }}>
+                  <View style={{flexDirection: 'row', gap: 5}}>
+                    <Ionicons name="musical-notes-sharp" size={21} />
+
+                    <Text style={{fontSize: 18, fontWeight: 'bold'}}>
+                      {trackPlayCount} play
+                      {`${trackPlayCount === 1 ? '' : 's'}`}
+                    </Text>
+                  </View>
+
+                  <View
+                    style={{
+                      borderWidth: 1,
+                      borderColor: palette[1],
+                      borderRadius: 7,
+                      flexDirection: 'row',
+                      opacity: 0.7,
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                    }}>
+                    <Text style={{fontWeight: 'bold'}}>
+                      {`${activeTrack?.format?.toLocaleUpperCase()} ${
+                        activeTrack?.sampleRate! / 1000
+                      } Khz`}
+                    </Text>
+
+                    <Text style={{fontWeight: 'bold'}}>
+                      &nbsp;&nbsp;/&nbsp;&nbsp;
+                    </Text>
+
+                    <Text style={{fontWeight: 'bold'}}>
+                      {(activeTrack?.bitrate! / 1000).toFixed(2)} Kbps
+                    </Text>
+                  </View>
+
+                  <View style={{flexDirection: 'row', gap: 5}}>
+                    <Text style={{fontSize: 18, fontWeight: 'bold'}}>
+                      {`${activeTrackIndex! + 1} / ${queue.length}`}
+                    </Text>
+
+                    <Ionicons name="disc" size={21} />
+                  </View>
                 </View>
 
                 <View
                   style={{
-                    borderWidth: 1,
-                    borderColor: palette[1],
-                    borderRadius: 7,
                     flexDirection: 'row',
-                    opacity: 0.7,
-                    paddingHorizontal: 10,
-                    paddingVertical: 5,
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginTop: 20,
+                    gap: 10,
                   }}>
-                  <Text style={{fontWeight: 'bold'}}>
-                    {`${activeTrack?.format?.toLocaleUpperCase()} ${
-                      activeTrack?.sampleRate! / 1000
-                    } Khz`}
-                  </Text>
-
-                  <Text style={{fontWeight: 'bold'}}>
-                    &nbsp;&nbsp;/&nbsp;&nbsp;
-                  </Text>
-
-                  <Text style={{fontWeight: 'bold'}}>
-                    {(activeTrack?.bitrate! / 1000).toFixed(2)} Kbps
-                  </Text>
-                </View>
-
-                <View style={{flexDirection: 'row', gap: 5}}>
-                  <Text style={{fontSize: 18, fontWeight: 'bold'}}>
-                    {`${activeTrackIndex! + 1} / ${queue.length}`}
-                  </Text>
-
-                  <Ionicons name="disc" size={21} />
-                </View>
-              </View>
-
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginTop: 20,
-                  gap: 10,
-                }}>
-                <Pressable
-                  style={{
-                    ...styles.chip,
-                    backgroundColor: `${palette[1]}66`,
-                  }}
-                  onPress={handleRepeatMode}>
-                  {repeatMode === RepeatMode.Off ? (
-                    <MaterialCommunityIcons name="repeat-off" size={25} />
-                  ) : repeatMode === RepeatMode.Track ? (
-                    <MaterialCommunityIcons
-                      name="repeat-once"
-                      size={25}
-                      color="#54ff65"
-                    />
-                  ) : (
-                    <MaterialCommunityIcons
-                      name="repeat"
-                      size={25}
-                      color="#d7ff54"
-                    />
-                  )}
-                </Pressable>
-
-                <Rating />
-
-                <Pressable
-                  style={{
-                    ...styles.chip,
-                    backgroundColor: `${palette[1]}66`,
-                  }}
-                  onPress={() => setLyricsVisible(!lyricsVisible)}>
-                  <MaterialIcons
-                    name="lyrics"
-                    size={25}
+                  <Pressable
                     style={{
-                      color: lyrics ? 'yellow' : 'rgba(255,255,255,.5)',
+                      ...styles.chip,
+                      backgroundColor: `${palette[1]}66`,
                     }}
-                  />
-                </Pressable>
+                    onPress={handleRepeatMode}>
+                    {repeatMode === RepeatMode.Off ? (
+                      <MaterialCommunityIcons name="repeat-off" size={25} />
+                    ) : repeatMode === RepeatMode.Track ? (
+                      <MaterialCommunityIcons
+                        name="repeat-once"
+                        size={25}
+                        color="#54ff65"
+                      />
+                    ) : (
+                      <MaterialCommunityIcons
+                        name="repeat"
+                        size={25}
+                        color="#d7ff54"
+                      />
+                    )}
+                  </Pressable>
+
+                  <Rating />
+
+                  <Pressable
+                    style={{
+                      ...styles.chip,
+                      backgroundColor: `${palette[1]}66`,
+                    }}
+                    onPress={() => setLyricsVisible(!lyricsVisible)}>
+                    <MaterialIcons
+                      name="lyrics"
+                      size={25}
+                      style={{
+                        color: lyrics ? 'yellow' : 'rgba(255,255,255,.5)',
+                      }}
+                    />
+                  </Pressable>
+                </View>
+
+                <WaveformSlider />
+
+                <TrackInfo />
+
+                <Controls />
+
+                <View style={{flex: 1}} />
+
+                {/* <Queue /> */}
               </View>
-
-              <WaveformSlider />
-
-              <TrackInfo />
-
-              <Controls />
-
-              <View style={{flex: 1}} />
-            </View>
-          </View>
-        )}
-        renderItem={() => {
-          return <View />;
-          //return <QueueCallback />;
-        }}
-      />
+            </>
+          )}
+          renderItem={() => {
+            return <View />;
+            //return <Queue />;
+          }}
+        />
+      </BottomSheet>
 
       <BottomSheetCallback />
     </>
@@ -415,7 +428,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     height: 35,
     margin: 10,
-    //opacity: 0.6,
     padding: 5,
     paddingHorizontal: 15,
   },

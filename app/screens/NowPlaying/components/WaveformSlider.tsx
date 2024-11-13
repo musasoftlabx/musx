@@ -47,7 +47,7 @@ export default function WaveformSlider() {
             left: '-49%',
             top: 0,
             height: 100,
-            width: WIDTH * 0.9,
+            width: WIDTH * 0.95,
             position: 'absolute',
             resizeMode: 'stretch',
             tintColor: 'gray',
@@ -60,7 +60,7 @@ export default function WaveformSlider() {
           style={{
             left: '-49%',
             height: 100,
-            width: WIDTH * 0.9,
+            width: WIDTH * 0.95,
             maxWidth: `${Math.floor((buffered / duration) * 99)}%` || `${0}%`,
             overflow: 'hidden',
             position: 'absolute',
@@ -72,7 +72,7 @@ export default function WaveformSlider() {
             }
             style={{
               height: 100,
-              width: WIDTH * 0.9,
+              width: WIDTH * 0.95,
               position: 'absolute',
               resizeMode: 'stretch',
               tintColor: 'white',
@@ -86,9 +86,10 @@ export default function WaveformSlider() {
           style={{
             left: '-49%',
             height: 100,
-            width: WIDTH * 0.9,
-            maxWidth:
-              `${Math.floor((position ?? 0 / duration) * 99)}%` || `${0}%`,
+            width: WIDTH * 0.95,
+            maxWidth: position
+              ? `${Math.floor((position / duration) * 99)}%`
+              : `${0}%`,
             overflow: 'hidden',
             position: 'absolute',
             zIndex: 2,
@@ -99,7 +100,7 @@ export default function WaveformSlider() {
             }
             style={{
               height: 100,
-              width: WIDTH * 0.9,
+              width: WIDTH * 0.95,
               position: 'absolute',
               resizeMode: 'stretch',
               tintColor: palette[3],
@@ -114,7 +115,7 @@ export default function WaveformSlider() {
           style={{
             left: '-53%',
             position: 'absolute',
-            width: WIDTH * 0.97,
+            width: WIDTH,
             top: 41,
             zIndex: 3,
           }}

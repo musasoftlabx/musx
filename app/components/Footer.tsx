@@ -1,11 +1,18 @@
+// * React
 import React from 'react';
 
 // * React Native
-import {View, StyleSheet, Image, Text, Pressable} from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Image,
+  Text,
+  Pressable,
+  Vibration,
+} from 'react-native';
 
 // * Libraries
 import {Shadow} from 'react-native-shadow-2';
-import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
 import Slider from '@react-native-community/slider';
@@ -18,29 +25,26 @@ import {usePlayerStore, WIDTH} from '../store';
 import imageFiller from '../assets/images/image-filler.png';
 
 export default function Footer() {
-  // ? Hooks
-  const navigation: any = useNavigation();
-
   // ? StoreStates
-  const {position, buffered, duration} = usePlayerStore(
-    state => state.progress,
-  );
+  const {position, duration} = usePlayerStore(state => state.progress);
   const {state} = usePlayerStore(state => state.playbackState);
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
+  const nowPlayingRef = usePlayerStore(state => state.nowPlayingRef);
   const queue = usePlayerStore(state => state.queue);
 
   // ? StoreActions
   const playPause = usePlayerStore(state => state.playPause);
+  const openNowPlaying = usePlayerStore(state => state.openNowPlaying);
 
   // ? Constants
   const isPlaying = state === State.Playing;
   const activeStates = [
     State.Playing,
     State.Paused,
+    State.Loading,
     State.Buffering,
     State.Ready,
-    State.Loading,
   ];
 
   return (
@@ -52,7 +56,6 @@ export default function Footer() {
         style={{width: WIDTH, bottom: -1}}>
         <LinearGradient
           colors={[
-            activeTrack?.palette?.[5] ?? '#000',
             activeTrack?.palette?.[1] ?? '#fff',
             activeTrack?.palette?.[0] ?? '#000',
           ]}
@@ -84,7 +87,11 @@ export default function Footer() {
           maximumTrackTintColor="#FFFFFF"
         />
 
-        <Pressable onPress={() => navigation.navigate('NowPlaying')}>
+        <Pressable
+          onPress={() => {
+            openNowPlaying(nowPlayingRef!);
+            Vibration.vibrate(50);
+          }}>
           <View
             style={{
               flexDirection: 'row',

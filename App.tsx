@@ -1,88 +1,51 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React, {useEffect, useState} from 'react';
+// * React
+import React, {useEffect, useRef, useState} from 'react';
 import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+// * React Native
+import {StatusBar, useColorScheme} from 'react-native';
 
-// import TrackPlayer, {
-//   Capability,
-//   useTrackPlayerEvents,
-//   Event,
-//   State,
-// } from 'react-native-track-player';
+// * Libraries
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {Provider, adaptNavigationTheme, useTheme} from 'react-native-paper';
-import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
-import axios from 'axios';
 import {
   DefaultTheme as RNLightTheme,
   DarkTheme as RNDarkTheme,
   NavigationContainer,
-  useNavigation,
 } from '@react-navigation/native';
-
-import MainStack from './app/screens/MainStack';
-import NowPlaying from './app/screens/NowPlaying';
-import AddToPlaylist from './app/screens/AddToPlaylist';
-import {darkTheme, lightTheme} from './app/utils';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
-import {
-  API_URL,
-  SERVER_URL,
-  URL,
-  useAuthStore,
-  useConfigStore,
-  usePlayerStore,
-} from './app/store';
 import {
   getBrand,
   getBuildNumber,
-  getCarrier,
-  getLastUpdateTime,
   getSystemVersion,
   getVersion,
 } from 'react-native-device-info';
-
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {Provider, adaptNavigationTheme, useTheme} from 'react-native-paper';
+import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import BottomSheet from '@gorhom/bottom-sheet';
 import TrackPlayer, {
   AppKilledPlaybackBehavior,
   Capability,
   useTrackPlayerEvents,
   Event,
-  State,
   usePlaybackState,
   useActiveTrack,
-  usePlayWhenReady,
   useProgress,
-  RepeatMode,
   Track,
 } from 'react-native-track-player';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+// * Components
+import AddToPlaylist from './app/screens/AddToPlaylist';
+import MainStack from './app/screens/MainStack';
+import NowPlaying from './app/screens/NowPlaying';
+
+// * Utils
+import {darkTheme, lightTheme} from './app/utils';
+
+// * Store
+import {API_URL, SERVER_URL, usePlayerStore} from './app/store';
 
 const Stack = createNativeStackNavigator();
 const {DarkTheme, LightTheme} = adaptNavigationTheme({
@@ -101,14 +64,14 @@ const info = {
 };
 
 function App(): React.JSX.Element {
+  // ? Refs
+  const ref = useRef<BottomSheet>(null);
+  //const nowPlayingRef = useRef<BottomSheet>(null);
+
   //const isDarkMode = useColorScheme() === 'dark';
   const mode: string = useColorScheme() || 'light';
 
   const [root, setRoot] = useState('');
-
-  // const backgroundStyle = {
-  //   backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  // };
 
   // * Axios config
   axios.defaults.baseURL = API_URL;
@@ -118,7 +81,9 @@ function App(): React.JSX.Element {
 
   const progress = useProgress();
   const playbackState = usePlaybackState();
+  const activeTrack = useActiveTrack();
 
+  const nowPlayingRef = usePlayerStore(state => state.nowPlayingRef);
   const trackPlayCount = usePlayerStore(state => state.trackPlayCount);
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const playRegistered = usePlayerStore(state => state.playRegistered);
@@ -135,20 +100,23 @@ function App(): React.JSX.Element {
   const setPalette = usePlayerStore(state => state.setPalette);
   const setLyrics = usePlayerStore(state => state.setLyrics);
   const setLyricsVisible = usePlayerStore(state => state.setLyricsVisible);
-
-  //const isPlaying = playerState === State.Playing;
+  const openNowPlaying = usePlayerStore(state => state.openNowPlaying);
+  const setNowPlayingRef = usePlayerStore(state => state.setNowPlayingRef);
 
   useEffect(() => {
-    const setUpTrackPlayer = async () => {
+    (async () => {
       try {
-        await TrackPlayer.setupPlayer();
+        await TrackPlayer.setupPlayer({
+          autoHandleInterruptions: true,
+        });
+
         await TrackPlayer.updateOptions({
           android: {
             appKilledPlaybackBehavior:
               AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
             alwaysPauseOnInterruption: true,
           },
-          progressUpdateEventInterval: 1,
+          progressUpdateEventInterval: 0.1,
           capabilities: [
             Capability.Play,
             Capability.Pause,
@@ -173,44 +141,24 @@ function App(): React.JSX.Element {
         });
 
         const savedQueue = await AsyncStorage.getItem('queue');
+        const savedActiveTrackIndex = await AsyncStorage.getItem(
+          'activeTrackIndex',
+        );
 
         if (savedQueue) {
-          const queue = JSON.parse(savedQueue);
-
-          //await TrackPlayer.load(queue[0]);
-          await TrackPlayer.setQueue(queue);
-          //await TrackPlayer.setQueue(queue.slice(1));
-          //console.log(queue.slice(1));
-
-          setRoot('NowPlaying');
-        } else {
-          setRoot('MainStack');
+          const _queue = JSON.parse(savedQueue);
+          setQueue(_queue);
+          await TrackPlayer.setQueue(_queue);
+          await TrackPlayer.skip(Number(savedActiveTrackIndex));
+          openNowPlaying(ref);
+          //openNowPlaying(nowPlayingRef);
         }
-
-        //restoreSavedQueue();
-        // await TrackPlayer.getQueue().then(tracks =>
-        //   console.log('lext:', tracks.length),
-        // );
-
-        // const savedQueue = await AsyncStorage.getItem('queue');
-        // if (savedQueue) {
-        //   const queue = JSON.parse(savedQueue);
-        //   await TrackPlayer.add(queue);
-        //   restoreSavedQueue({
-        //     currentTrack: queue[0],
-        //     nextTracks: queue.unshift(),
-        //   });
-        // }
-
-        // restoreSavedQueue({
-        //   currentTrack: queue[0],
-        //   nextTracks: queue.unshift(),
-        // })
-      } catch (e) {
-        console.log(e);
+      } catch (err: any) {
+        console.warn(err.message);
       }
-    };
-    setUpTrackPlayer();
+    })();
+
+    setNowPlayingRef(ref);
   }, []);
 
   useTrackPlayerEvents(
@@ -218,25 +166,24 @@ function App(): React.JSX.Element {
       Event.PlaybackActiveTrackChanged,
       Event.PlaybackProgressUpdated,
       Event.PlaybackState,
+      Event.PlaybackQueueEnded,
     ],
     async event => {
-      const _activeTrack = await TrackPlayer.getActiveTrack();
-      const _activeTrackIndex = await TrackPlayer.getActiveTrackIndex();
-      const _queue = await TrackPlayer.getQueue();
-
       if (event.type === Event.PlaybackActiveTrackChanged) {
-        setPlayRegistered(false);
-        setActiveTrack(_activeTrack);
-        setActiveTrackIndex(_activeTrackIndex);
-        setQueue(_queue);
-        setProgress(progress);
-        setTrackRating(_activeTrack?.rating);
-        setTrackPlayCount(_activeTrack?.plays);
-        setPalette(_activeTrack?.palette);
+        setLyricsVisible(false);
 
+        // ? Save variables to store to be accessed by components
+        setPlayRegistered(false);
+        setActiveTrack(activeTrack);
+        setProgress(progress);
+        setTrackRating(activeTrack?.rating);
+        setTrackPlayCount(activeTrack?.plays);
+        setPalette(activeTrack?.palette);
+
+        // ? Get active track lyrics. Display the lyrics if found else display artwork
         axios
           .get(
-            `${SERVER_URL}/Music/${_activeTrack?.path.replace('.mp3', '.lrc')}`,
+            `${SERVER_URL}/Music/${activeTrack?.path.replace('.mp3', '.lrc')}`,
           )
           .then(({data: lyrics}) => {
             setLyrics(lyrics);
@@ -247,7 +194,21 @@ function App(): React.JSX.Element {
             setLyricsVisible(false);
           });
 
-        await AsyncStorage.setItem('queue', JSON.stringify(_queue));
+        const _activeTrackIndex = await TrackPlayer.getActiveTrackIndex();
+        setActiveTrackIndex(_activeTrackIndex);
+
+        const _queue = await TrackPlayer.getQueue();
+        setQueue(_queue);
+
+        // ? Defer getting and storing the queue for performance
+        setTimeout(async () => {
+          // ? Store the queue and the active track index to restore state incase the app crashes or is dismissed
+          await AsyncStorage.setItem('queue', JSON.stringify(_queue));
+          await AsyncStorage.setItem(
+            'activeTrackIndex',
+            _activeTrackIndex!.toString(),
+          );
+        }, 1000);
       }
 
       if (event.type === Event.PlaybackProgressUpdated) {
@@ -257,11 +218,11 @@ function App(): React.JSX.Element {
           setPlayRegistered(true);
           setTrackPlayCount(trackPlayCount + 1);
           TrackPlayer.updateMetadataForTrack(activeTrackIndex!, {
-            ..._activeTrack,
-            plays: _activeTrack?.plays + 1,
+            ...activeTrack,
+            plays: activeTrack?.plays + 1,
           } as Track);
           axios
-            .patch('updatePlayCount', {id: _activeTrack?.id})
+            .patch('updatePlayCount', {id: activeTrack?.id})
             .then(({data}) => console.log(data));
         }
       }
@@ -269,6 +230,11 @@ function App(): React.JSX.Element {
       if (event.type === Event.PlaybackState) {
         setPlaybackState(playbackState);
         console.log(playbackState);
+      }
+
+      if (event.type === Event.PlaybackQueueEnded) {
+        await AsyncStorage.removeItem('queue');
+        await AsyncStorage.removeItem('activeTrackIndex');
       }
     },
   );
@@ -281,15 +247,12 @@ function App(): React.JSX.Element {
         barStyle="light-content"
         translucent
       />
+
       <QueryClientProvider client={queryClient}>
         <Provider theme={mode === 'dark' ? darkTheme : lightTheme}>
           <SafeAreaProvider>
             <NavigationContainer
               theme={mode === 'dark' ? DarkTheme : LightTheme}>
-              {/* <StatusBar
-            barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-            backgroundColor={backgroundStyle.backgroundColor}
-          /> */}
               <Stack.Navigator initialRouteName={root}>
                 <Stack.Screen
                   name="MainStack"
@@ -297,17 +260,7 @@ function App(): React.JSX.Element {
                   options={{headerShown: false}}
                 />
 
-                {/* <Stack.Screen
-                  name="NowPlaying"
-                  component={NowPlaying}
-                  options={{
-                    headerShown: false,
-                    gestureEnabled: true,
-                    gestureDirection: 'vertical',
-                  }}
-                /> */}
-
-                <Stack.Group screenOptions={{presentation: 'modal'}}>
+                {/* <Stack.Group screenOptions={{presentation: 'modal'}}>
                   <Stack.Screen
                     name="NowPlaying"
                     component={NowPlaying}
@@ -317,7 +270,8 @@ function App(): React.JSX.Element {
                       gestureDirection: 'vertical',
                     }}
                   />
-                </Stack.Group>
+                </Stack.Group> */}
+
                 {/* <Stack.Screen
                     name="AddToPlaylist"
                     component={AddToPlaylist}
@@ -328,6 +282,8 @@ function App(): React.JSX.Element {
                   /> */}
               </Stack.Navigator>
             </NavigationContainer>
+
+            <NowPlaying nowPlayingRef={nowPlayingRef} />
           </SafeAreaProvider>
         </Provider>
       </QueryClientProvider>

@@ -8943,7 +8943,6 @@ __metadata:
     react-native-gesture-handler: ^2.20.2
     react-native-linear-gradient: ^2.8.3
     react-native-lyric: ^1.0.2
-    react-native-modalize: ^2.1.1
     react-native-pager-view: ^6.4.1
     react-native-paper: ^5.12.5
     react-native-picker-select: ^9.3.1
@@ -9849,17 +9848,6 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: c7b9390e73c9c9daf5860a1992c03dc5ac19e864d271987397519ba800f3af0bf67a613d2a9be97b22851dee1a7dc8b2199e8a68b95c794cf463643b8180a2d4
-  languageName: node
-  linkType: hard
-
-"react-native-modalize@npm:^2.1.1":
-  version: 2.1.1
-  resolution: "react-native-modalize@npm:2.1.1"
-  peerDependencies:
-    react: "> 15.0.0"
-    react-native: "> 0.50.0"
-    react-native-gesture-handler: "> 1.0.0"
-  checksum: c383c79d9397d72e285b67eb8c50e0743037bb72f0d12dc5a743ae45d092a4aa87e6fba0cd8cb8bef4ce675ffe784adb24bc996c137b4a30d9b8a882e7610c30
   languageName: node
   linkType: hard
 

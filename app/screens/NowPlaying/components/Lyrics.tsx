@@ -2,7 +2,7 @@
 import React, {useCallback} from 'react';
 
 // * React Native
-import {Text, View} from 'react-native';
+import {Image, Text, View} from 'react-native';
 
 // * Libraries
 import * as Animatable from 'react-native-animatable';
@@ -22,6 +22,7 @@ export default function Lyrics() {
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const lyrics = usePlayerStore(state => state.lyrics);
   const palette = usePlayerStore(state => state.palette);
+  const trackPlayCount = usePlayerStore(state => state.trackPlayCount);
 
   // ? Constants
   const isPlaying = state === State.Playing;
@@ -69,7 +70,18 @@ export default function Lyrics() {
             paddingLeft: 15,
             paddingRight: 20,
           }}>
-          <Animatable.Image
+          <Image
+            source={{uri: activeTrack?.artwork}}
+            style={[
+              {
+                height: 45,
+                width: 45,
+                marginRight: 8,
+                borderRadius: 50,
+              },
+            ]}
+          />
+          {/* <Animatable.Image
             animation={isPlaying ? 'rotate' : ''}
             easing="linear"
             iterationCount="infinite"
@@ -83,7 +95,7 @@ export default function Lyrics() {
                 borderRadius: 50,
               },
             ]}
-          />
+          /> */}
           <View
             style={{
               justifyContent: 'center',
@@ -104,14 +116,10 @@ export default function Lyrics() {
             </Text>
           </View>
           <View style={{flex: 1}} />
-          <View
-            style={{
-              justifyContent: 'center',
-              alignItems: 'flex-end',
-            }}>
+          <View style={{justifyContent: 'center', alignItems: 'flex-end'}}>
             <Text style={{fontWeight: 'bold', marginRight: 5}}>
-              {activeTrack?.plays || 0} play
-              {activeTrack?.plays === 1 ? '' : 's'}
+              {trackPlayCount || 0} play
+              {trackPlayCount === 1 ? '' : 's'}
             </Text>
           </View>
         </View>
