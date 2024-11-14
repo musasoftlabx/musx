@@ -57,8 +57,8 @@ const Home = ({navigation, route}: any) => {
             count: 20,
           },
           {
-            id: 'Tracks',
-            title: 'Tracks',
+            id: 'History',
+            title: 'History',
             icon: 'disc',
             count: 20,
           },
@@ -79,7 +79,7 @@ const Home = ({navigation, route}: any) => {
           <Pressable
             onPress={async () => {
               navigation.navigate(item.id);
-              //await AsyncStorage.setItem('path', '');
+              await AsyncStorage.setItem('path', item.id);
             }}
             style={{
               flexDirection: 'row',

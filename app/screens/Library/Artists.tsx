@@ -60,8 +60,9 @@ export default function Artists({navigation}: any) {
                 <Pressable
                   onPress={() =>
                     navigation.navigate('Artist', {
-                      artist: item.albumArtist,
-                      plays: item.plays,
+                      albumArtist: item.albumArtist,
+                      tracks: item.tracks,
+                      path: item.path,
                     })
                   }
                   style={{flexBasis: '33%'}}>

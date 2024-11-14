@@ -1,5 +1,5 @@
 // * React
-import React, {useState, useCallback, useEffect} from 'react';
+import React, {useState, useCallback} from 'react';
 
 // * Store
 import {usePlayerStore} from '../../../store';
