@@ -15,7 +15,7 @@ import {
 
 // * Libraries
 import {useMutation} from '@tanstack/react-query';
-import {StarRatingDisplay} from 'react-native-star-rating-widget';
+import {useBackHandler} from '@react-native-community/hooks';
 import {Text} from 'react-native-paper';
 import axios from 'axios';
 import BigList from 'react-native-big-list';
@@ -31,6 +31,11 @@ import {API_URL, ARTWORK_URL, HEIGHT, usePlayerStore, WIDTH} from '../../store';
 import {TrackProps, TracksProps} from '../../types';
 
 export default function Folders({navigation}: any) {
+  useBackHandler(() => {
+    navigation.goBack();
+    return true;
+  });
+
   // ? Refs
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -154,20 +159,6 @@ export default function Folders({navigation}: any) {
                   }}>
                   <Text
                     numberOfLines={1}
-                    style={{
-                      alignSelf: 'flex-start',
-                      backgroundColor: '#ffffff4D',
-                      borderRadius: 5,
-                      marginTop: 1,
-                      maxWidth: 'auto',
-                      paddingVertical: 1,
-                      paddingHorizontal: 5,
-                    }}>
-                    {`${(item.size / 1000000).toFixed(2)} MB`}
-                  </Text>
-
-                  <Text
-                    numberOfLines={1}
                     style={{fontSize: 17, fontWeight: '600'}}>
                     {item.title}
                   </Text>
@@ -182,12 +173,14 @@ export default function Folders({navigation}: any) {
                   justifyContent: 'center',
                   alignItems: 'flex-end',
                 }}>
-                <StarRatingDisplay
-                  rating={item.rating}
-                  starSize={16}
-                  starStyle={{marginHorizontal: 0}}
-                />
-
+                <Text
+                  style={{
+                    fontWeight: 'bold',
+                    marginRight: 5,
+                    marginTop: 5,
+                  }}>
+                  Last played on {item.playedOn}
+                </Text>
                 <Text
                   style={{
                     fontWeight: 'bold',

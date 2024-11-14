@@ -160,7 +160,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   },
   closeNowPlaying: (nowPlayingRef: any) => {
     set(state => ({...state, nowPlayingRef}));
-    nowPlayingRef.current?.snapToIndex(-1);
+    nowPlayingRef?.current?.snapToIndex(-1);
   },
   setNowPlayingRef: (nowPlayingRef: any) =>
     set(state => ({...state, nowPlayingRef})),
