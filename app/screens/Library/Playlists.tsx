@@ -4,121 +4,146 @@ import {Image, View, Pressable, Text, FlatList, StyleSheet} from 'react-native';
 
 import axios from 'axios';
 
-import {API_URL, ARTWORK_URL, WIDTH} from '../../store';
+import {API_URL, ARTWORK_URL, usePlayerStore, WIDTH} from '../../store';
 
 import {TrackProps} from '../../types';
+import LinearGradient from 'react-native-linear-gradient';
+import {useBackHandler} from '@react-native-community/hooks';
 
 export default function Playlists({navigation}: any) {
   const [layout, setLayout] = useState('grid');
   const [playlists, setPlaylists] = useState(null);
+
+  const palette = usePlayerStore(state => state.palette);
+
+  useBackHandler(() => {
+    navigation.goBack();
+    return true;
+  });
+
+  // ? Effects
+  useEffect(() => {
+    navigation.setOptions({
+      headerStyle: {backgroundColor: palette?.[1] ?? '#000'},
+    });
+  });
 
   useEffect(() => {
     axios(`${API_URL}playlists`).then(({data}) => setPlaylists(data));
   }, []);
 
   return (
-    <FlatList
-      data={playlists}
-      keyExtractor={(item, index) => index.toString()}
-      numColumns={3}
-      contentContainerStyle={{minHeight: '100%'}}
-      renderItem={({item}: {item: TrackProps}) => (
-        <>
-          {layout === 'grid' ? (
-            <Pressable
-              onPress={() =>
-                navigation.navigate('Playlist', {
-                  id: item.id,
-                  name: item.name,
-                  duration: item.duration,
-                  totalTracks: item.totalTracks,
-                  tracks: item.tracks,
-                })
-              }
-              style={{flexBasis: '33%'}}>
-              <View style={{paddingVertical: 12, alignItems: 'center'}}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    flexBasis: '50%',
-                    flexWrap: 'wrap',
-                    width: 100,
-                    height: 100,
-                  }}>
-                  {item.tracks.map((track: TrackProps, i: number) => (
-                    <Image
-                      key={i}
-                      source={{uri: `${ARTWORK_URL}${track.artwork}`}}
-                      style={{width: 50, height: 50}}
-                      resizeMode="cover"
-                    />
-                  ))}
-                </View>
-                <Text
-                  numberOfLines={1}
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 'bold',
-                    color: 'white',
-                    marginTop: 8,
-                  }}>
-                  {item.name}
-                </Text>
-                <Text
-                  numberOfLines={1}
-                  style={{
-                    fontSize: 16,
-                    color: 'white',
-                    marginVertical: 1,
-                  }}>
-                  {item.totalTracks} tracks
-                </Text>
-                <Text style={{fontSize: 14, opacity: 0.5}}>
-                  {item.duration}
-                </Text>
-              </View>
-            </Pressable>
-          ) : (
-            <Pressable onPress={() => navigation.navigate('NowPlaying')}>
-              <View style={styles.item}>
-                <Image
-                  source={{uri: `${ARTWORK_URL}${item.artwork}`}}
-                  style={{
-                    width: 100,
-                    height: 100,
-                    borderRadius: 100,
-                  }}
-                  onError={(e: any) => {
-                    e.target.onerror = null;
-                    e.target.src = require('../../assets/images/musician.png');
-                  }}
-                />
-                <View
-                  style={{
-                    justifyContent: 'center',
-                    marginTop: -2,
-                    maxWidth: WIDTH - 180,
-                  }}>
-                  <Text numberOfLines={1} style={styles.title}>
-                    {item.artist}
+    <>
+      <LinearGradient
+        colors={[palette[0] ?? '#000', palette[1] ?? '#fff']}
+        useAngle={true}
+        angle={290}
+        style={{position: 'absolute', top: 0, left: 0, bottom: 0, right: 0}}
+      />
+
+      <FlatList
+        data={playlists}
+        keyExtractor={(item, index) => index.toString()}
+        numColumns={3}
+        contentContainerStyle={{minHeight: '100%'}}
+        renderItem={({item}: {item: TrackProps}) => (
+          <>
+            {layout === 'grid' ? (
+              <Pressable
+                onPress={() =>
+                  navigation.navigate('Playlist', {
+                    id: item.id,
+                    name: item.name,
+                    duration: item.duration,
+                    totalTracks: item.totalTracks,
+                    tracks: item.tracks,
+                  })
+                }
+                style={{flexBasis: '33%'}}>
+                <View style={{paddingVertical: 12, alignItems: 'center'}}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      flexBasis: '50%',
+                      flexWrap: 'wrap',
+                      width: 100,
+                      height: 100,
+                    }}>
+                    {item.tracks.map((track: TrackProps, i: number) => (
+                      <Image
+                        key={i}
+                        source={{uri: `${ARTWORK_URL}${track.artwork}`}}
+                        style={{width: 50, height: 50}}
+                        resizeMode="cover"
+                      />
+                    ))}
+                  </View>
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      fontSize: 18,
+                      fontWeight: 'bold',
+                      color: 'white',
+                      marginTop: 8,
+                    }}>
+                    {item.name}
                   </Text>
-                  <Text numberOfLines={1} style={styles.album}>
-                    {item.plays}
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      fontSize: 16,
+                      color: 'white',
+                      marginVertical: 1,
+                    }}>
+                    {item.totalTracks} tracks
+                  </Text>
+                  <Text style={{fontSize: 14, opacity: 0.5}}>
+                    {item.duration}
                   </Text>
                 </View>
-                <View style={{flex: 1}} />
-                <View
-                  style={{justifyContent: 'center', alignItems: 'flex-end'}}>
-                  <Text style={{fontWeight: 'bold', marginRight: 5}}>
-                    {item.tracks}
-                  </Text>
+              </Pressable>
+            ) : (
+              <Pressable onPress={() => navigation.navigate('NowPlaying')}>
+                <View style={styles.item}>
+                  <Image
+                    source={{uri: `${ARTWORK_URL}${item.artwork}`}}
+                    style={{
+                      width: 100,
+                      height: 100,
+                      borderRadius: 100,
+                    }}
+                    onError={(e: any) => {
+                      e.target.onerror = null;
+                      e.target.src = require('../../assets/images/musician.png');
+                    }}
+                  />
+                  <View
+                    style={{
+                      justifyContent: 'center',
+                      marginTop: -2,
+                      maxWidth: WIDTH - 180,
+                    }}>
+                    <Text numberOfLines={1} style={styles.title}>
+                      {item.artist}
+                    </Text>
+                    <Text numberOfLines={1} style={styles.album}>
+                      {item.plays}
+                    </Text>
+                  </View>
+                  <View style={{flex: 1}} />
+                  <View
+                    style={{justifyContent: 'center', alignItems: 'flex-end'}}>
+                    <Text style={{fontWeight: 'bold', marginRight: 5}}>
+                      {item.tracks}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            </Pressable>
-          )}
-        </>
-      )}
-    />
+              </Pressable>
+            )}
+          </>
+        )}
+      />
+    </>
   );
 }
 
