@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 
 // * Libraries
-import {useMutation, useQueryClient} from '@tanstack/react-query';
+import {useMutation} from '@tanstack/react-query';
 import {StarRatingDisplay} from 'react-native-star-rating-widget';
 import {Text} from 'react-native-paper';
 import axios from 'axios';
@@ -48,9 +48,12 @@ export default function Folders({navigation, route}: any) {
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   // ? Hooks
-  const activeTrack = useActiveTrack();
+  //const activeTrack = useActiveTrack();
 
   // ? States
+  // const [isError] = useState(false);
+  // const [isPending] = useState(false);
+
   const [path, setPath] = useState('');
   const [data, setData] = useState<TracksProps>();
   const [highlighted, setHighlighted] = useState<TrackProps | null>();
@@ -62,6 +65,7 @@ export default function Folders({navigation, route}: any) {
   const palette = usePlayerStore(state => state.palette);
 
   // ? StoreActions
+  const activeTrack = usePlayerStore(state => state.activeTrack);
   const openNowPlaying = usePlayerStore(state => state.openNowPlaying);
 
   // ? Mutations
@@ -70,13 +74,18 @@ export default function Folders({navigation, route}: any) {
     isError,
     isPending,
   } = useMutation({
-    mutationFn: (path: string) => axios.get(`${API_URL}${path}`),
-    onSuccess: ({data}) => {
-      setData(data);
-      console.log('rq', path);
+    mutationFn: (path: string) => {
       savePath(path);
+      return axios.get(`${API_URL}${path}`);
     },
+    onSuccess: ({data}) => setData(data),
   });
+
+  // const list = async (path: string) => {
+  //   const res = await axios.get(`${API_URL}${path}`);
+  //   setData(res.data);
+  //   savePath(path);
+  // };
 
   // ? Effects
   useEffect(() => {
@@ -401,16 +410,19 @@ export default function Folders({navigation, route}: any) {
             {
               text: 'Add to queue',
               icon: 'add-to-queue',
-              //action: () => TrackPlayer.add([highlighted]),
+              action: () => TrackPlayer.add(activeTrack),
             },
             {
               text: 'Add to playlist',
               icon: 'playlist-add',
-              //action: track => navigation.navigate('AddToPlaylist', {_id: track._id}),
+              action: ({id}: {id: number}) =>
+                navigation.navigate('AddToPlaylist', {id}),
             },
             {
               text: 'Go to artist',
               icon: 'library-music',
+              action: ({id}: {id: number}) =>
+                navigation.navigate('Artist', {id}),
             },
             {
               text: 'Delete from library',
@@ -478,11 +490,19 @@ export default function Folders({navigation, route}: any) {
               </View>
             </View>
           }
-          renderItem={({item}) => (
+          renderItem={({
+            item,
+          }: {
+            item: {
+              text: string;
+              icon: string;
+              action: (track: TrackProps) => void;
+            };
+          }) => (
             <Pressable
               onPress={() => {
                 bottomSheetRef.current?.snapToIndex(-1);
-                //item.action(activeTrack);
+                item.action(activeTrack);
               }}>
               <View
                 style={{

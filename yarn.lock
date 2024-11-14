@@ -3081,6 +3081,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-community/hooks@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "@react-native-community/hooks@npm:3.0.0"
+  peerDependencies:
+    react: ">=17.0.2"
+    react-native: ">=0.65"
+  checksum: 4fefcc22883ca7e21ad26e12830671e7287e29eed8fc51fdebebbccdd27b53f7743f64f55d640a74ea2dae4fed1f44b7be40410938564e736a2c3bbb9a770d3e
+  languageName: node
+  linkType: hard
+
 "@react-native-community/slider@npm:^4.5.4":
   version: 4.5.4
   resolution: "@react-native-community/slider@npm:4.5.4"
@@ -8910,6 +8920,7 @@ __metadata:
     "@furkankaya/react-native-linear-text-gradient": ^1.0.2
     "@gorhom/bottom-sheet": ^5.0.5
     "@react-native-async-storage/async-storage": ^2.0.0
+    "@react-native-community/hooks": ^3.0.0
     "@react-native-community/slider": ^4.5.4
     "@react-native-masked-view/masked-view": ^0.3.1
     "@react-native-picker/picker": ^2.9.0

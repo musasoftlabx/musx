@@ -45,6 +45,12 @@ const Home = ({navigation, route}: NavigationProp) => {
           count: 20,
         },
         {
+          id: 'Playlists',
+          title: 'Playlists',
+          icon: 'playlist-music',
+          count: 20,
+        },
+        {
           id: 'Folders',
           title: 'Folders',
           icon: 'folder-music',
@@ -54,7 +60,7 @@ const Home = ({navigation, route}: NavigationProp) => {
       renderItem={({item}) => (
         <Pressable
           onPress={async () => {
-            navigation.navigate('Folders');
+            navigation.navigate(item.id);
             //await AsyncStorage.setItem('path', '');
           }}
           style={{

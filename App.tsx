@@ -272,14 +272,14 @@ function App(): React.JSX.Element {
                   />
                 </Stack.Group> */}
 
-                {/* <Stack.Screen
-                    name="AddToPlaylist"
-                    component={AddToPlaylist}
-                    options={{
-                      title: 'Add to playlist',
-                      headerTransparent: true,
-                    }}
-                  /> */}
+                <Stack.Screen
+                  name="AddToPlaylist"
+                  component={AddToPlaylist}
+                  options={{
+                    title: 'Add to playlist',
+                    headerTransparent: true,
+                  }}
+                />
               </Stack.Navigator>
             </NavigationContainer>
 

@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Footer from '../../components/Footer';
 import NowPlaying from '../NowPlaying';
 import BottomSheet from '@gorhom/bottom-sheet';
+import Playlists from './Playlists';
 
 const Stack = createNativeStackNavigator();
 
@@ -38,9 +39,13 @@ const HomeStack = ({nowPlayingRef}: any) => {
         //options={{headerShown: false}}
       />
       <Stack.Screen
+        name="Playlists"
+        component={Playlists}
+        //options={{headerShown: false}}
+      />
+      <Stack.Screen
         name="Folders"
         component={Folders}
-        //initialParams={{nowPlayingRef}}
         //options={{headerShown: false}}
       />
     </Stack.Navigator>

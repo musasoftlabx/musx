@@ -1,31 +1,28 @@
-import React, {useContext, useState, useEffect, useFocusEffect} from 'react';
+import React, {useState, useEffect} from 'react';
+
 import {
   Animated,
   Easing,
-  BackHandler,
-  Button,
   Image,
   ImageBackground,
-  Dimensions,
   View,
   Pressable,
   Text,
-  ScrollView,
   FlatList,
-  SectionList,
-  SafeAreaView,
   StyleSheet,
 } from 'react-native';
+
 import {FAB, TouchableRipple} from 'react-native-paper';
-import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
-import SwipeableRating from 'react-native-swipeable-rating';
+import {StarRatingDisplay} from 'react-native-star-rating-widget';
+import axios from 'axios';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import _ from 'lodash';
 
-import {Context} from '../../contexts';
+import {API_URL, ARTWORK_URL, WIDTH} from '../../store';
+
+import {TrackProps} from '../../types';
 
 const spinValue = new Animated.Value(0);
 
@@ -45,65 +42,17 @@ const spin = spinValue.interpolate({
   outputRange: ['0deg', '360deg'],
 });
 
-const Playlist = ({route, navigation}) => {
-  const {artist: albumArtist, plays} = route.params;
+export default function Playlist({
+  navigation,
+  route: {
+    params: {id},
+  },
+}: any) {
   const [layout, setLayout] = useState('grid');
   const [playlist, setPlaylist] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [cp, setCp] = useState(null);
-  const {state, dispatch} = useContext(Context);
-  const [sections, setSections] = useState([
-    {
-      title: 'Header',
-      data: [1],
-      dataset: [
-        {
-          name: 'Playlists',
-          icon: require(`../../assets/icons/Playlists.png`),
-        },
-        {
-          name: 'Folders',
-          icon: require(`../../assets/icons/Folders.png`),
-        },
-        {
-          name: 'Artists',
-          icon: require(`../../assets/icons/Artists.png`),
-        },
-        {
-          name: 'Albums',
-          icon: require(`../../assets/icons/Albums.png`),
-        },
-      ],
-    },
-    {
-      title: 'Favorite Artists',
-      horizontal: true,
-      data: [1],
-    },
-    {
-      title: 'Most Played',
-      horizontal: true,
-      data: [1],
-    },
-    {
-      title: 'Recently Added',
-      horizontal: true,
-      data: [1],
-    },
-    {
-      title: 'Recently Played',
-      horizontal: true,
-      data: [1],
-    },
-  ]);
 
   useEffect(() => {
-    fetch(`${state.NODE_SERVER}playlists/${route.params.name}`).then(res =>
-      res.json().then(data => {
-        setPlaylist(data[0]);
-        setLoading(false);
-      }),
-    );
+    axios(`${API_URL}playlist/${id}`).then(({data}) => setPlaylist(data));
   }, []);
 
   return (
@@ -126,14 +75,12 @@ const Playlist = ({route, navigation}) => {
               height: 100,
             }}>
             {playlist &&
-              route.params.tracks.map((track, i) => {
+              route.params.tracks.map((track: TrackProps, i: number) => {
                 return (
                   i < 4 && (
                     <Image
                       key={i}
-                      source={{
-                        uri: `${state.NGINX_SERVER}${track.coverArtURL}`,
-                      }}
+                      source={{uri: `${ARTWORK_URL}${track.artwork}`}}
                       style={{width: 50, height: 50}}
                       resizeMode="cover"
                     />
@@ -166,36 +113,21 @@ const Playlist = ({route, navigation}) => {
           </TouchableRipple> */}
         </View>
       </ImageBackground>
+
       <FlatList
         data={playlist && playlist.tracks}
         contentContainerStyle={{minHeight: '100%'}}
         keyExtractor={(item, index) => index.toString()}
         renderItem={({item, index}) => (
           <Pressable
-            onPress={() => (
-              dispatch({
-                type: 'PLAY',
-                payload: {
-                  currentTrack: item,
-                  nextTracks:
-                    playlist &&
-                    playlist.tracks.slice(
-                      index + 1,
-                      playlist && playlist.tracks.length,
-                    ),
-                },
-              }),
-              navigation.navigate('NowPlaying')
-            )}
+            onPress={() => navigation.navigate('NowPlaying')}
             style={{
               flexDirection: 'row',
               paddingVertical: 15,
               paddingHorizontal: 20,
             }}>
             <Image
-              source={{
-                uri: `${state.NGINX_SERVER}${item.coverArtURL}`,
-              }}
+              source={{uri: `${ARTWORK_URL}${item.artwork}`}}
               // style={
               //   state.currentlyPlaying &&
               //   state.currentlyPlaying._id === item._id
@@ -213,7 +145,7 @@ const Playlist = ({route, navigation}) => {
               style={{
                 justifyContent: 'center',
                 marginTop: -2,
-                maxWidth: Dimensions.get('window').width - 180,
+                maxWidth: WIDTH - 180,
               }}>
               <Text numberOfLines={1} style={styles.title}>
                 {item.title || item.name}
@@ -227,13 +159,12 @@ const Playlist = ({route, navigation}) => {
             </View>
             <View style={{flex: 1}} />
             <View style={{justifyContent: 'center', alignItems: 'flex-end'}}>
-              <SwipeableRating
-                rating={3}
-                size={15}
-                allowHalves={true}
-                color={'#FFD700'}
-                emptyColor={'#FFD700'}
+              <StarRatingDisplay
+                rating={item.rating}
+                starSize={16}
+                starStyle={{marginHorizontal: 0}}
               />
+
               <Text style={{fontWeight: 'bold', marginRight: 5}}>
                 {item.plays || 0} plays
               </Text>
@@ -243,7 +174,7 @@ const Playlist = ({route, navigation}) => {
       />
     </>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -299,8 +230,5 @@ const styles = StyleSheet.create({
     opacity: 0.6,
     padding: 5,
     paddingHorizontal: 15,
-    backgroundColor: '#000',
   },
 });
-
-export default Playlist;

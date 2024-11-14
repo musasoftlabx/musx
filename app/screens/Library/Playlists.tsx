@@ -1,35 +1,19 @@
-import React, {useContext, useState, useEffect, useFocusEffect} from 'react';
-import {
-  Animated,
-  Easing,
-  BackHandler,
-  Button,
-  Image,
-  Dimensions,
-  View,
-  Pressable,
-  Text,
-  ScrollView,
-  FlatList,
-  SectionList,
-  StyleSheet,
-} from 'react-native';
+import React, {useState, useEffect} from 'react';
 
-import {Context} from '../../contexts';
+import {Image, View, Pressable, Text, FlatList, StyleSheet} from 'react-native';
 
-const Playlists = ({navigation}) => {
-  const {state, dispatch} = useContext(Context);
+import axios from 'axios';
+
+import {API_URL, ARTWORK_URL, WIDTH} from '../../store';
+
+import {TrackProps} from '../../types';
+
+export default function Playlists({navigation}: any) {
   const [layout, setLayout] = useState('grid');
   const [playlists, setPlaylists] = useState(null);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch(`${state.NODE_SERVER}playlists`).then(res =>
-      res.json().then(data => {
-        setPlaylists(data);
-        setLoading(false);
-      }),
-    );
+    axios(`${API_URL}playlists`).then(({data}) => setPlaylists(data));
   }, []);
 
   return (
@@ -38,14 +22,14 @@ const Playlists = ({navigation}) => {
       keyExtractor={(item, index) => index.toString()}
       numColumns={3}
       contentContainerStyle={{minHeight: '100%'}}
-      renderItem={({item, index}) => (
+      renderItem={({item}: {item: TrackProps}) => (
         <>
           {layout === 'grid' ? (
             <Pressable
               onPress={() =>
                 navigation.navigate('Playlist', {
+                  id: item.id,
                   name: item.name,
-                  description: item.description,
                   duration: item.duration,
                   totalTracks: item.totalTracks,
                   tracks: item.tracks,
@@ -61,12 +45,10 @@ const Playlists = ({navigation}) => {
                     width: 100,
                     height: 100,
                   }}>
-                  {item.tracks.map((track, i) => (
+                  {item.tracks.map((track: TrackProps, i: number) => (
                     <Image
                       key={i}
-                      source={{
-                        uri: `${state.NGINX_SERVER}${track.coverArtURL}`,
-                      }}
+                      source={{uri: `${ARTWORK_URL}${track.artwork}`}}
                       style={{width: 50, height: 50}}
                       resizeMode="cover"
                     />
@@ -100,24 +82,22 @@ const Playlists = ({navigation}) => {
             <Pressable onPress={() => navigation.navigate('NowPlaying')}>
               <View style={styles.item}>
                 <Image
-                  source={{
-                    uri: `${state.NGINX_SERVER}${item.coverArtURL}`,
-                  }}
+                  source={{uri: `${ARTWORK_URL}${item.artwork}`}}
                   style={{
                     width: 100,
                     height: 100,
                     borderRadius: 100,
                   }}
-                  onError={e => {
+                  onError={(e: any) => {
                     e.target.onerror = null;
-                    e.target.src = require('../../assets/icons/musician.png');
+                    e.target.src = require('../../assets/images/musician.png');
                   }}
                 />
                 <View
                   style={{
                     justifyContent: 'center',
                     marginTop: -2,
-                    maxWidth: Dimensions.get('window').width - 180,
+                    maxWidth: WIDTH - 180,
                   }}>
                   <Text numberOfLines={1} style={styles.title}>
                     {item.artist}
@@ -140,7 +120,7 @@ const Playlists = ({navigation}) => {
       )}
     />
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -195,8 +175,5 @@ const styles = StyleSheet.create({
     opacity: 0.6,
     padding: 5,
     paddingHorizontal: 15,
-    backgroundColor: '#000',
   },
 });
-
-export default Playlists;

@@ -1,59 +1,64 @@
-import React, {useContext, useEffect, useState} from 'react';
-import {Alert, Image, FlatList, Pressable, Text, View} from 'react-native';
+// * React
+import React, {useEffect, useState} from 'react';
+
+// * React Native
+import {Image, FlatList, Pressable, Text, View} from 'react-native';
+
+// * Libraries
 import {Button, Snackbar, TextInput} from 'react-native-paper';
-import * as Animatable from 'react-native-animatable';
+import {useBackHandler} from '@react-native-community/hooks';
 
-import {Context} from '../contexts';
+// * Store
+import {API_URL, ARTWORK_URL} from '../store';
 
-const AddToPlaylist = ({navigation, route}) => {
-  const {state} = useContext(Context);
+// * Types
+import {TrackProps} from '../types';
+import axios from 'axios';
+
+export default function AddToPlaylist({
+  navigation,
+  route: {
+    params: {id},
+  },
+}: any) {
   const [playlists, setPlaylists] = useState(null);
-  const [__name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState('');
   const [snackbar, setSnackbar] = useState(false);
-  const [formHeight, setFormHeight] = useState(0);
+  const [displayForm, setDisplayForm] = useState<boolean>(false);
+
+  useBackHandler(() => {
+    navigation.goBack();
+    return true;
+  });
+
+  // const {data, isSuccess, isFetching, isFetched} = useQuery({
+  //   queryKey: ['playlists'],
+  //   queryFn: ({queryKey}) => axios.get(`${API_URL}${queryKey[0]}`),
+  //   select: ({data}) => data,
+  // });
 
   useEffect(() => {
-    fetch(`${state.NODE_SERVER}playlists`).then(res =>
-      res.json().then(data => {
-        setPlaylists(data);
-      }),
-    );
+    axios(`${API_URL}playlists`).then(({data}) => setPlaylists(data));
   }, []);
 
-  const createPlaylist = () => {
-    fetch(`${state.NODE_SERVER}playlists/create`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        name: __name,
-        description,
-        tracks: route.params._id,
-      }),
-    }).then(res =>
-      res.json().then(data => {
-        navigation.goBack();
-        setName('');
-        setDescription('');
-      }),
-    );
+  const createPlaylist = async () => {
+    const {data} = await axios.post(`${API_URL}createPlaylist`, {
+      name,
+      trackId: id,
+    });
+    setPlaylists(data);
+    setName('');
+    navigation.goBack();
   };
 
-  const addToPlaylist = playlistId => {
-    fetch(`${state.NODE_SERVER}playlists/add`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({playlistId, trackId: route.params._id}),
-    }).then(res =>
-      res.text().then(data => {
-        if (res.status === 201) {
-          //setSnackbar(true);
-          navigation.goBack();
-        } else {
-          Alert.alert('Error', data);
-        }
-      }),
-    );
+  const addPlaylistTrack = async (playlistId: number) => {
+    await axios.post(`${API_URL}addPlaylistTrack`, {
+      playlistId,
+      trackId: id,
+      startsAt: null,
+      endsAt: null,
+    });
+    navigation.goBack();
   };
 
   return (
@@ -61,11 +66,9 @@ const AddToPlaylist = ({navigation, route}) => {
       <Button
         mode="contained"
         icon="plus"
-        onPress={() =>
-          formHeight === 0 ? setFormHeight('auto') : setFormHeight(0)
-        }
+        onPress={() => setDisplayForm(prev => !prev)}
         style={{
-          fontSize: 22,
+          //fontSize: 22,
           marginTop: 80,
           marginBottom: 40,
           width: 150,
@@ -74,36 +77,24 @@ const AddToPlaylist = ({navigation, route}) => {
         }}>
         CREATE NEW
       </Button>
-      <Animatable.View
-        animation="slideInDown"
-        duration={3000}
-        style={{height: formHeight, opacity: 0.7}}>
+      <View
+        //animation="slideInDown"
+        //duration={3000}
+        style={{display: displayForm ? 'flex' : 'none'}}>
         <TextInput
           label="Playlist Name"
-          value={__name}
+          value={name}
           dense
           onChangeText={text => setName(text)}
           style={{
             marginBottom: 20,
-            paddingBottom: formHeight === 0 ? 0 : 5,
             // borderRadius: 20,
             // borderTopLeftRadius: 20,
             // borderTopRightRadius: 20,
             fontSize: 18,
           }}
         />
-        <TextInput
-          label="Playlist Description (Optional)"
-          value={description}
-          multiline={true}
-          numberOfLines={4}
-          onChangeText={text => setDescription(text)}
-          style={{
-            marginBottom: 20,
-            paddingBottom: formHeight === 0 ? 0 : 5,
-            fontSize: 18,
-          }}
-        />
+
         <Button
           mode="contained"
           loading={false}
@@ -112,7 +103,8 @@ const AddToPlaylist = ({navigation, route}) => {
           style={{marginBottom: 40}}>
           CREATE
         </Button>
-      </Animatable.View>
+      </View>
+
       <FlatList
         data={playlists && playlists}
         contentContainerStyle={{minHeight: '100%'}}
@@ -121,8 +113,8 @@ const AddToPlaylist = ({navigation, route}) => {
         ListHeaderComponent={() => (
           <Text style={{fontSize: 16, marginBottom: 10}}>Playlists</Text>
         )}
-        renderItem={({item, index}) => (
-          <Pressable onPress={() => addToPlaylist(item._id)}>
+        renderItem={({item, index}: {item: TrackProps; index: number}) => (
+          <Pressable onPress={() => addPlaylistTrack(item.id)}>
             <View
               style={{
                 flexDirection: 'row',
@@ -139,22 +131,18 @@ const AddToPlaylist = ({navigation, route}) => {
                 }}>
                 {item.tracks.length < 4 ? (
                   <Image
-                    source={{
-                      uri: `${state.NGINX_SERVER}${item.tracks[0].coverArtURL}`,
-                    }}
-                    style={{width: 50, height: 50}}
+                    source={{uri: `${ARTWORK_URL}${item.tracks[0].artwork}`}}
+                    style={{borderRadius: 10, width: 50, height: 50}}
                     resizeMode="cover"
                   />
                 ) : (
                   <>
-                    {item.tracks.map((track, i) => {
+                    {item.tracks.map((track: TrackProps, i: number) => {
                       return (
                         i < 4 && (
                           <Image
                             key={i}
-                            source={{
-                              uri: `${state.NGINX_SERVER}${track.coverArtURL}`,
-                            }}
+                            source={{uri: `${ARTWORK_URL}${track.artwork}`}}
                             style={{width: 25, height: 25}}
                             resizeMode="cover"
                           />
@@ -171,7 +159,8 @@ const AddToPlaylist = ({navigation, route}) => {
                   {item.name}
                 </Text>
                 <Text numberOfLines={1} style={{opacity: 0.7}}>
-                  {item.description}
+                  {item.tracks.length} track
+                  {item.tracks.length === 1 ? '' : 's'}
                 </Text>
               </View>
             </View>
@@ -179,11 +168,9 @@ const AddToPlaylist = ({navigation, route}) => {
         )}
       />
 
-      <Snackbar visible={snackbar} duration={3000}>
+      <Snackbar visible={snackbar} duration={3000} onDismiss={() => {}}>
         Added to Playlist successfully!
       </Snackbar>
     </View>
   );
-};
-
-export default AddToPlaylist;
+}
