@@ -10,6 +10,7 @@ import {
   Text,
   FlatList,
   StyleSheet,
+  Vibration,
 } from 'react-native';
 
 import {FAB, TouchableRipple} from 'react-native-paper';
@@ -20,9 +21,11 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import {API_URL, ARTWORK_URL, WIDTH} from '../../store';
+import {API_URL, ARTWORK_URL, usePlayerStore, WIDTH} from '../../store';
 
 import {TrackProps} from '../../types';
+import LinearGradient from 'react-native-linear-gradient';
+import TrackPlayer from 'react-native-track-player';
 
 const spinValue = new Animated.Value(0);
 
@@ -45,23 +48,40 @@ const spin = spinValue.interpolate({
 export default function Playlist({
   navigation,
   route: {
-    params: {id},
+    params: {id, name, duration, totalTracks, tracks},
   },
 }: any) {
   const [layout, setLayout] = useState('grid');
-  const [playlist, setPlaylist] = useState(null);
+  const [playlistTracks, setPlaylistTracks] = useState(null);
+
+  const palette = usePlayerStore(state => state.palette);
+  const play = usePlayerStore(state => state.play);
+
+  // ? Effects
+  useEffect(() => {
+    navigation.setOptions({
+      headerStyle: {backgroundColor: palette?.[1] ?? '#000'},
+    });
+  });
 
   useEffect(() => {
-    axios(`${API_URL}playlist/${id}`).then(({data}) => setPlaylist(data));
+    axios(`${API_URL}playlist/${id}`)
+      .then(({data}) => setPlaylistTracks(data))
+      .catch(err => console.log(err.message));
   }, []);
 
   return (
     <>
+      <LinearGradient
+        colors={[palette[0] ?? '#000', palette[1] ?? '#fff']}
+        useAngle={true}
+        angle={290}
+        style={{position: 'absolute', top: 0, left: 0, bottom: 0, right: 0}}
+      />
+
       <ImageBackground
         source={{
-          uri: `${state.NGINX_SERVER}${
-            playlist && playlist.tracks[0].coverArtURL
-          }`,
+          uri: `${ARTWORK_URL}${tracks[0].artwork}`,
         }}
         resizeMode="cover"
         blurRadius={20}>
@@ -74,8 +94,8 @@ export default function Playlist({
               width: 100,
               height: 100,
             }}>
-            {playlist &&
-              route.params.tracks.map((track: TrackProps, i: number) => {
+            {playlistTracks &&
+              tracks.map((track: TrackProps, i: number) => {
                 return (
                   i < 4 && (
                     <Image
@@ -90,20 +110,29 @@ export default function Playlist({
           </View>
           <View style={{width: '60%', marginLeft: -70}}>
             <Text numberOfLines={1} style={{fontSize: 24, fontWeight: '700'}}>
-              {route.params.name}
+              {name}
             </Text>
             <Text numberOfLines={1} style={{fontSize: 26}}>
-              {route.params.duration}
+              {duration}
             </Text>
             <Text numberOfLines={2} style={{fontSize: 16, marginTop: 10}}>
-              {route.params.description}
+              d
             </Text>
           </View>
           <FAB
-            style={{position: 'absolute', bottom: -30, right: 30}}
-            large
-            icon="plus"
-            onPress={() => console.log('Pressed')}
+            style={{
+              borderRadius: 50,
+              position: 'absolute',
+              bottom: -30,
+              right: 30,
+              zIndex: 1000,
+            }}
+            //large
+            icon="play"
+            onPress={() => {
+              Vibration.vibrate(100);
+              play(playlistTracks, playlistTracks![0]);
+            }}
           />
           {/* <TouchableRipple
             onPress={() => console.log('Pressed')}
@@ -115,17 +144,21 @@ export default function Playlist({
       </ImageBackground>
 
       <FlatList
-        data={playlist && playlist.tracks}
-        contentContainerStyle={{minHeight: '100%'}}
+        data={playlistTracks && playlistTracks}
+        contentContainerStyle={{minHeight: '100%', marginTop: 40}}
         keyExtractor={(item, index) => index.toString()}
         renderItem={({item, index}) => (
           <Pressable
             onPress={() => navigation.navigate('NowPlaying')}
             style={{
               flexDirection: 'row',
-              paddingVertical: 15,
+              alignItems: 'center',
+              paddingVertical: 5,
               paddingHorizontal: 20,
             }}>
+            <Text style={{fontSize: 20, fontWeight: 'bold'}}>
+              {index + 1}.{' '}
+            </Text>
             <Image
               source={{uri: `${ARTWORK_URL}${item.artwork}`}}
               // style={
@@ -137,7 +170,7 @@ export default function Playlist({
               style={{
                 height: 45,
                 width: 45,
-                marginRight: 10,
+                marginHorizontal: 10,
                 borderRadius: 10,
               }}
             />
@@ -151,10 +184,7 @@ export default function Playlist({
                 {item.title || item.name}
               </Text>
               <Text numberOfLines={1} style={styles.artists}>
-                {(item.artists && item.artists.join(' / ')) || 'Unknown Artist'}
-              </Text>
-              <Text numberOfLines={1} style={styles.album}>
-                {item.album || 'Unknown Album'}
+                {item.artists || 'Unknown Artist'}
               </Text>
             </View>
             <View style={{flex: 1}} />

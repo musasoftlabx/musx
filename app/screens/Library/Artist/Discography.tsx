@@ -1,4 +1,5 @@
-import React, {useContext, useState} from 'react';
+import React, {useState} from 'react';
+
 import {
   Animated,
   Easing,
@@ -11,9 +12,12 @@ import {
   Text,
   View,
 } from 'react-native';
-import SwipeableRating from 'react-native-swipeable-rating';
 
-import {Context} from '../../../contexts';
+import {StarRatingDisplay} from 'react-native-star-rating-widget';
+
+import {ARTWORK_URL} from '../../../store';
+
+import {TrackProps} from '../../../types';
 
 const spinValue = new Animated.Value(0);
 
@@ -31,9 +35,8 @@ const spin = spinValue.interpolate({
   outputRange: ['0deg', '360deg'],
 });
 
-const Discography = ({navigation, artist}) => {
+export default function Discography({navigation, artist}: any) {
   const singles = artist && artist.singles;
-  const {state, dispatch} = useContext(Context);
   const [sections, setSections] = useState([
     {
       title: 'Albums',
@@ -71,7 +74,7 @@ const Discography = ({navigation, artist}) => {
             <FlatList
               horizontal
               data={artist && artist.albums}
-              renderItem={({item}) => (
+              renderItem={({item}: {item: TrackProps}) => (
                 <View
                   style={{
                     margin: 10,
@@ -79,7 +82,7 @@ const Discography = ({navigation, artist}) => {
                   }}>
                   <Image
                     source={{
-                      uri: `${state.NGINX_SERVER}${item.coverArtURL}`,
+                      uri: `${ARTWORK_URL}${item.artwork}`,
                     }}
                     style={{
                       width: 100,
@@ -112,16 +115,9 @@ const Discography = ({navigation, artist}) => {
               renderItem={({item, index}) => (
                 <Pressable>
                   <View style={styles.item}>
-                    <Animated.Image
-                      source={{
-                        uri: `${state.NGINX_SERVER}${item.coverArtURL}`,
-                      }}
-                      style={
-                        state.currentlyPlaying &&
-                        state.currentlyPlaying._id === item._id
-                          ? styles.isPlaying
-                          : styles.image
-                      }
+                    <Image
+                      source={{uri: `${ARTWORK_URL}${item.artwork}`}}
+                      style={styles.image}
                     />
                     <View
                       style={{
@@ -146,12 +142,10 @@ const Discography = ({navigation, artist}) => {
                         justifyContent: 'center',
                         alignItems: 'flex-end',
                       }}>
-                      <SwipeableRating
-                        rating={item.rating || 0}
-                        size={15}
-                        allowHalves={true}
-                        color={'#FFD700'}
-                        emptyColor={'#FFD700'}
+                      <StarRatingDisplay
+                        rating={item.rating}
+                        starSize={16}
+                        starStyle={{marginHorizontal: 0}}
                       />
                       <Text style={{fontWeight: 'bold', marginRight: 5}}>
                         {item.plays || 0} plays
@@ -166,7 +160,7 @@ const Discography = ({navigation, artist}) => {
       )}
     />
   );
-};
+}
 
 {
   /* <Pressable
@@ -287,8 +281,5 @@ const styles = StyleSheet.create({
     opacity: 0.6,
     padding: 5,
     paddingHorizontal: 15,
-    backgroundColor: '#000',
   },
 });
-
-export default Discography;

@@ -67,6 +67,7 @@ export default function Folders({navigation, route}: any) {
   // ? StoreActions
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const openNowPlaying = usePlayerStore(state => state.openNowPlaying);
+  const play = usePlayerStore(state => state.play);
 
   // ? Mutations
   const {
@@ -208,6 +209,7 @@ export default function Folders({navigation, route}: any) {
             {item.hasOwnProperty('name') ? (
               <Pressable
                 onPress={() => {
+                  Vibration.vibrate(50);
                   const stripedSlash = item.path === '/' ? '' : item.path;
                   savePath(`${stripedSlash}${item.name}/`);
                   navigation.setOptions({title: item.name});
@@ -234,7 +236,8 @@ export default function Folders({navigation, route}: any) {
             ) : (
               <Pressable
                 onPress={async () => {
-                  const tracks = data?.map((track: TrackProps) => {
+                  play(data, item);
+                  /*   const tracks = data?.map((track: TrackProps) => {
                     if (track.hasOwnProperty('format')) {
                       return {
                         ...track,
@@ -258,7 +261,7 @@ export default function Folders({navigation, route}: any) {
                   await TrackPlayer.skip(selectedIndex);
                   await TrackPlayer.play();
 
-                  openNowPlaying(nowPlayingRef!);
+                  openNowPlaying(nowPlayingRef!); */
                 }}
                 onLongPress={() => {
                   Vibration.vibrate(100);
@@ -524,7 +527,7 @@ export default function Folders({navigation, route}: any) {
         />
       </BottomSheet>
 
-      <Footer />
+      {/* <Footer /> */}
     </>
   );
 }

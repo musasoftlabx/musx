@@ -197,7 +197,9 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     await TrackPlayer.setQueue(queue);
     await TrackPlayer.skip(selectedIndex);
     await TrackPlayer.play();
-    //navigation.push('NowPlaying');
+
+    const nowPlayingRef = get().nowPlayingRef!;
+    get().openNowPlaying(nowPlayingRef);
   },
   playPause: async () => {
     const {state} = get().playbackState;
