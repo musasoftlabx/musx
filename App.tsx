@@ -46,6 +46,7 @@ import {darkTheme, lightTheme} from './app/utils';
 
 // * Store
 import {API_URL, SERVER_URL, usePlayerStore} from './app/store';
+import {useAppState} from '@react-native-community/hooks';
 
 const Stack = createNativeStackNavigator();
 const {DarkTheme, LightTheme} = adaptNavigationTheme({
@@ -78,6 +79,8 @@ function App(): React.JSX.Element {
   axios.defaults.timeout = 60000;
   axios.defaults.headers.post['Content-Type'] = 'application/json';
   axios.defaults.headers.post['Accept'] = 'application/json';
+
+  const currentAppState = useAppState();
 
   const progress = useProgress();
   const playbackState = usePlaybackState();
@@ -140,6 +143,7 @@ function App(): React.JSX.Element {
           ],
         });
 
+        const playPosition = await AsyncStorage.getItem('playPosition');
         const savedQueue = await AsyncStorage.getItem('queue');
         const savedActiveTrackIndex = await AsyncStorage.getItem(
           'activeTrackIndex',
@@ -148,8 +152,10 @@ function App(): React.JSX.Element {
         if (savedQueue) {
           const _queue = JSON.parse(savedQueue);
           setQueue(_queue);
+
           await TrackPlayer.setQueue(_queue);
           await TrackPlayer.skip(Number(savedActiveTrackIndex));
+          await TrackPlayer.seekTo(Number(playPosition));
           openNowPlaying(ref);
           //openNowPlaying(nowPlayingRef);
         }
@@ -160,6 +166,21 @@ function App(): React.JSX.Element {
 
     setNowPlayingRef(ref);
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      console.log('currentAppState: ', currentAppState);
+
+      if (currentAppState !== 'active') {
+        const _activeTrackIndex = await TrackPlayer.getActiveTrackIndex();
+        const _queue = await TrackPlayer.getQueue();
+
+        AsyncStorage.setItem('playPosition', progress.position.toString());
+        AsyncStorage.setItem('queue', JSON.stringify(_queue));
+        AsyncStorage.setItem('activeTrackIndex', _activeTrackIndex!.toString());
+      }
+    })();
+  }, [currentAppState]);
 
   useTrackPlayerEvents(
     [
@@ -201,14 +222,14 @@ function App(): React.JSX.Element {
         setQueue(_queue);
 
         // ? Defer getting and storing the queue for performance
-        setTimeout(async () => {
-          // ? Store the queue and the active track index to restore state incase the app crashes or is dismissed
-          await AsyncStorage.setItem('queue', JSON.stringify(_queue));
-          await AsyncStorage.setItem(
-            'activeTrackIndex',
-            _activeTrackIndex!.toString(),
-          );
-        }, 1000);
+        // setTimeout(async () => {
+        //   // ? Store the queue and the active track index to restore state incase the app crashes or is dismissed
+        //   await AsyncStorage.setItem('queue', JSON.stringify(_queue));
+        //   await AsyncStorage.setItem(
+        //     'activeTrackIndex',
+        //     _activeTrackIndex!.toString(),
+        //   );
+        // }, 1000);
       }
 
       if (event.type === Event.PlaybackProgressUpdated) {

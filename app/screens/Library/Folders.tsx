@@ -128,19 +128,13 @@ export default function Folders({navigation, route}: any) {
 
   useEffect(() => {
     (async () => {
-      //await AsyncStorage.removeItem('path');
       let path = '';
       const value = await AsyncStorage.getItem('path');
-      console.log('value:', value);
 
-      if (value === null) {
+      if (value === null || value === 'Folders') {
         await AsyncStorage.setItem('path', '');
         path = '';
-      } else {
-        path = value;
-      }
-
-      console.log('path:', path);
+      } else path = value;
 
       list(path);
     })();

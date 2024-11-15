@@ -46,6 +46,7 @@ export default function Library() {
         <Stack.Screen name="Folders" component={Folders} />
         <Stack.Screen name="History" component={History} />
       </Stack.Navigator>
+
       <Footer />
     </>
   );

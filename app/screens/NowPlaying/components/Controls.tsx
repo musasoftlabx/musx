@@ -66,7 +66,7 @@ export default function Controls() {
       {isLoading || isBuffering ? (
         <ActivityIndicator
           size={30}
-          color="grey"
+          color="#000"
           style={{
             backgroundColor: '#fff',
             borderRadius: 100,
