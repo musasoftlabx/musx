@@ -20,7 +20,7 @@ import {usePlayerStore, WIDTH} from '../../../store';
 import {QueueProps, TrackProps, TracksProps} from '../../../types';
 import TrackPlayer from 'react-native-track-player';
 
-export default function UpNext({
+export default function BackTo({
   queue,
   activeTrack,
   activeTrackIndex,
@@ -33,7 +33,9 @@ export default function UpNext({
 
   // ? Effects
   useEffect(() => {
-    setData(queue.slice(activeTrackIndex + 1, activeTrackIndex! + 10));
+    const x = activeTrackIndex! - 5;
+
+    setData(queue.slice(x > 0 ? x : 0, activeTrackIndex).reverse());
   }, [activeTrackIndex]);
 
   // ? Callbacks

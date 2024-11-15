@@ -122,6 +122,7 @@ export const artworkURL = `${URL()}Artwork/`;
 
 export const WIDTH = Dimensions.get('window').width;
 export const HEIGHT = Dimensions.get('window').height;
+export const ASPECT_RATIO = WIDTH / HEIGHT;
 
 export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   progress: {},

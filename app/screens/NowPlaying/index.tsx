@@ -13,20 +13,23 @@ import {
 } from 'react-native';
 
 // * Libraries
-import axios from 'axios';
 import BottomSheet, {
   BottomSheetSectionList,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
+import {useDeviceOrientation} from '@react-native-community/hooks';
+import {Shadow} from 'react-native-shadow-2';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import SelectDropdown from 'react-native-select-dropdown';
-import TrackPlayer, {RepeatMode, State} from 'react-native-track-player';
+import TrackPlayer, {RepeatMode} from 'react-native-track-player';
 
 // * Store
-import {HEIGHT, usePlayerStore, WIDTH} from '../../store';
+import {ASPECT_RATIO, HEIGHT, usePlayerStore, WIDTH} from '../../store';
 
 // * Components
 import CarouselQueue from './components/CarouselQueue';
@@ -36,8 +39,6 @@ import Queue from './components/Queue';
 import Rating from './components/Rating';
 import TrackInfo from './components/TrackInfo';
 import WaveformSlider from './components/WaveformSlider';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {Shadow} from 'react-native-shadow-2';
 
 // * Functions
 const arrayMove = (fromIndex: number, toIndex: number, palette: string[]) => {
@@ -48,10 +49,14 @@ const arrayMove = (fromIndex: number, toIndex: number, palette: string[]) => {
 
 // * Assets
 import imageFiller from '../../assets/images/image-filler.png';
+import WaveformSliderHorizontal from './components/WaveformSliderHorizontal';
 
 export default function NowPlaying({nowPlayingRef}: {nowPlayingRef: any}) {
   // ? Refs
   const bottomSheetRef = useRef<BottomSheet>(null);
+
+  // ? Hooks
+  const orientation = useDeviceOrientation();
 
   // ? States
   const [repeatMode, setRepeatMode] = useState<number>();
@@ -259,162 +264,335 @@ export default function NowPlaying({nowPlayingRef}: {nowPlayingRef: any}) {
                 }}
               />
 
-              <View
-                style={{
-                  alignItems: 'center',
-                  flexDirection: 'row',
-                  gap: 40,
-                  justifyContent: 'flex-end',
-                  paddingVertical: 5,
-                  paddingHorizontal: 25,
-                }}>
-                <MaterialIcons
-                  name="gradient"
-                  size={26}
-                  onPress={() => bottomSheetRef.current?.snapToIndex(0)}
-                />
-                <MaterialIcons name="cast" size={25} />
-              </View>
-
-              <View style={{alignItems: 'center', height: HEIGHT}}>
-                {/* {lyrics && lyricsVisible ? <Lyrics /> : <CarouselQueue />} */}
-                {lyrics && lyricsVisible ? (
-                  <Lyrics />
-                ) : (
-                  <View style={{flex: 1}}>
-                    <Shadow startColor="#00000066" distance={3}>
-                      <Image
-                        source={
-                          activeTrack?.artwork
-                            ? {uri: activeTrack?.artwork}
-                            : imageFiller
-                        }
-                        style={{
-                          height: WIDTH * 0.95,
-                          width: WIDTH * 0.95,
-                          borderRadius: 20,
-                        }}
-                      />
-                    </Shadow>
-                  </View>
-                )}
-
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginTop: WIDTH * 0.95,
-                    gap: 20,
-                  }}>
-                  <View style={{flexDirection: 'row', gap: 5}}>
-                    <Ionicons name="musical-notes-sharp" size={21} />
-
-                    <Text style={{fontSize: 18, fontWeight: 'bold'}}>
-                      {trackPlayCount} play
-                      {`${trackPlayCount === 1 ? '' : 's'}`}
-                    </Text>
+              {orientation === 'landscape' ? (
+                <>
+                  <View
+                    style={{
+                      alignItems: 'center',
+                      flexDirection: 'row',
+                      gap: 40,
+                      justifyContent: 'flex-end',
+                      paddingVertical: 5,
+                      paddingHorizontal: 25,
+                    }}>
+                    <MaterialIcons
+                      name="gradient"
+                      size={26}
+                      onPress={() => bottomSheetRef.current?.snapToIndex(0)}
+                    />
+                    <MaterialIcons name="cast" size={25} />
                   </View>
 
                   <View
                     style={{
-                      borderWidth: 1,
-                      borderColor: palette[1],
-                      borderRadius: 7,
                       flexDirection: 'row',
-                      opacity: 0.7,
+                      height: HEIGHT * 0.91,
                       paddingHorizontal: 10,
-                      paddingVertical: 5,
                     }}>
-                    <Text style={{fontWeight: 'bold'}}>
-                      {`${activeTrack?.format?.toLocaleUpperCase()} ${
-                        activeTrack?.sampleRate! / 1000
-                      } Khz`}
-                    </Text>
-
-                    <Text style={{fontWeight: 'bold'}}>
-                      &nbsp;&nbsp;/&nbsp;&nbsp;
-                    </Text>
-
-                    <Text style={{fontWeight: 'bold'}}>
-                      {(activeTrack?.bitrate! / 1000).toFixed(2)} Kbps
-                    </Text>
-                  </View>
-
-                  <View style={{flexDirection: 'row', gap: 5}}>
-                    <Text style={{fontSize: 18, fontWeight: 'bold'}}>
-                      {`${activeTrackIndex! + 1} / ${queue.length}`}
-                    </Text>
-
-                    <Ionicons name="disc" size={21} />
-                  </View>
-                </View>
-
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginTop: 20,
-                    gap: 10,
-                  }}>
-                  <Pressable
-                    style={{
-                      ...styles.chip,
-                      backgroundColor: `${palette[1]}66`,
-                    }}
-                    onPress={handleRepeatMode}>
-                    {repeatMode === RepeatMode.Off ? (
-                      <MaterialCommunityIcons name="repeat-off" size={25} />
-                    ) : repeatMode === RepeatMode.Track ? (
-                      <MaterialCommunityIcons
-                        name="repeat-once"
-                        size={25}
-                        color="#54ff65"
-                      />
+                    {lyrics && lyricsVisible ? (
+                      <Lyrics />
                     ) : (
-                      <MaterialCommunityIcons
-                        name="repeat"
-                        size={25}
-                        color="#d7ff54"
-                      />
+                      <View
+                        style={{
+                          //flexGrow: 0.4,
+                          justifyContent: 'center',
+                        }}>
+                        <Shadow startColor="#00000066" distance={3}>
+                          <Image
+                            source={
+                              activeTrack?.artwork
+                                ? {uri: activeTrack?.artwork}
+                                : imageFiller
+                            }
+                            style={{
+                              height: HEIGHT * 0.8,
+                              width: HEIGHT * 0.8,
+                              borderRadius: 20,
+                            }}
+                          />
+                        </Shadow>
+                      </View>
                     )}
-                  </Pressable>
 
-                  <Rating />
-
-                  <Pressable
-                    style={{
-                      ...styles.chip,
-                      backgroundColor: `${palette[1]}66`,
-                    }}
-                    onPress={() => setLyricsVisible(!lyricsVisible)}>
-                    <MaterialIcons
-                      name="lyrics"
-                      size={25}
+                    <View
                       style={{
-                        color: lyrics ? 'yellow' : 'rgba(255,255,255,.5)',
-                      }}
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexGrow: 1,
+                        paddingTop: 30,
+                      }}>
+                      <TrackInfo />
+
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          marginTop: 15,
+                          gap: 20,
+                        }}>
+                        <View style={{flexDirection: 'row', gap: 5}}>
+                          <Ionicons name="musical-notes-sharp" size={21} />
+
+                          <Text style={{fontSize: 18, fontWeight: 'bold'}}>
+                            {trackPlayCount} play
+                            {`${trackPlayCount === 1 ? '' : 's'}`}
+                          </Text>
+                        </View>
+
+                        <View
+                          style={{
+                            borderWidth: 1,
+                            borderColor: palette[1],
+                            borderRadius: 7,
+                            flexDirection: 'row',
+                            opacity: 0.7,
+                            paddingHorizontal: 10,
+                            paddingVertical: 5,
+                          }}>
+                          <Text style={{fontWeight: 'bold'}}>
+                            {`${activeTrack?.format?.toLocaleUpperCase()} ${
+                              activeTrack?.sampleRate! / 1000
+                            } Khz`}
+                          </Text>
+
+                          <Text style={{fontWeight: 'bold'}}>
+                            &nbsp;&nbsp;/&nbsp;&nbsp;
+                          </Text>
+
+                          <Text style={{fontWeight: 'bold'}}>
+                            {(activeTrack?.bitrate! / 1000).toFixed(2)} Kbps
+                          </Text>
+                        </View>
+
+                        <View style={{flexDirection: 'row', gap: 5}}>
+                          <Text style={{fontSize: 18, fontWeight: 'bold'}}>
+                            {`${activeTrackIndex! + 1} / ${queue.length}`}
+                          </Text>
+
+                          <Ionicons name="disc" size={21} />
+                        </View>
+                      </View>
+
+                      <WaveformSliderHorizontal />
+
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 30,
+                          marginBottom: -5,
+                        }}>
+                        <Pressable
+                          style={{
+                            ...styles.chip,
+                            backgroundColor: `${palette[1]}66`,
+                          }}
+                          onPress={handleRepeatMode}>
+                          {repeatMode === RepeatMode.Off ? (
+                            <MaterialCommunityIcons
+                              name="repeat-off"
+                              size={25}
+                            />
+                          ) : repeatMode === RepeatMode.Track ? (
+                            <MaterialCommunityIcons
+                              name="repeat-once"
+                              size={25}
+                              color="#54ff65"
+                            />
+                          ) : (
+                            <MaterialCommunityIcons
+                              name="repeat"
+                              size={25}
+                              color="#d7ff54"
+                            />
+                          )}
+                        </Pressable>
+
+                        <Rating />
+
+                        <Pressable
+                          style={{
+                            ...styles.chip,
+                            backgroundColor: `${palette[1]}66`,
+                          }}
+                          onPress={() => setLyricsVisible(!lyricsVisible)}>
+                          <MaterialIcons
+                            name="lyrics"
+                            size={25}
+                            style={{
+                              color: lyrics ? 'yellow' : 'rgba(255,255,255,.5)',
+                            }}
+                          />
+                        </Pressable>
+                      </View>
+
+                      <Controls />
+                    </View>
+
+                    {ASPECT_RATIO > 2.1 && <View />}
+                  </View>
+                </>
+              ) : (
+                <>
+                  <View
+                    style={{
+                      alignItems: 'center',
+                      flexDirection: 'row',
+                      gap: 40,
+                      justifyContent: 'flex-end',
+                      paddingVertical: 5,
+                      paddingHorizontal: 25,
+                    }}>
+                    <MaterialIcons
+                      name="gradient"
+                      size={26}
+                      onPress={() => bottomSheetRef.current?.snapToIndex(0)}
                     />
-                  </Pressable>
-                </View>
+                    <MaterialIcons name="cast" size={25} />
+                  </View>
 
-                <WaveformSlider />
+                  <View style={{alignItems: 'center', height: HEIGHT}}>
+                    {/* {lyrics && lyricsVisible ? <Lyrics /> : <CarouselQueue />} */}
+                    {lyrics && lyricsVisible ? (
+                      <Lyrics />
+                    ) : (
+                      <View style={{flex: 1}}>
+                        <Shadow startColor="#00000066" distance={3}>
+                          <Image
+                            source={
+                              activeTrack?.artwork
+                                ? {uri: activeTrack?.artwork}
+                                : imageFiller
+                            }
+                            style={{
+                              height: WIDTH * 0.95,
+                              width: WIDTH * 0.95,
+                              borderRadius: 20,
+                            }}
+                          />
+                        </Shadow>
+                      </View>
+                    )}
 
-                <TrackInfo />
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginTop: WIDTH * 0.95,
+                        gap: 20,
+                      }}>
+                      <View style={{flexDirection: 'row', gap: 5}}>
+                        <Ionicons name="musical-notes-sharp" size={21} />
 
-                <Controls />
+                        <Text style={{fontSize: 18, fontWeight: 'bold'}}>
+                          {trackPlayCount} play
+                          {`${trackPlayCount === 1 ? '' : 's'}`}
+                        </Text>
+                      </View>
 
-                <View style={{flex: 1}} />
+                      <View
+                        style={{
+                          borderWidth: 1,
+                          borderColor: palette[1],
+                          borderRadius: 7,
+                          flexDirection: 'row',
+                          opacity: 0.7,
+                          paddingHorizontal: 10,
+                          paddingVertical: 5,
+                        }}>
+                        <Text style={{fontWeight: 'bold'}}>
+                          {`${activeTrack?.format?.toLocaleUpperCase()} ${
+                            activeTrack?.sampleRate! / 1000
+                          } Khz`}
+                        </Text>
 
-                {/* <Queue /> */}
-              </View>
+                        <Text style={{fontWeight: 'bold'}}>
+                          &nbsp;&nbsp;/&nbsp;&nbsp;
+                        </Text>
+
+                        <Text style={{fontWeight: 'bold'}}>
+                          {(activeTrack?.bitrate! / 1000).toFixed(2)} Kbps
+                        </Text>
+                      </View>
+
+                      <View style={{flexDirection: 'row', gap: 5}}>
+                        <Text style={{fontSize: 18, fontWeight: 'bold'}}>
+                          {`${activeTrackIndex! + 1} / ${queue.length}`}
+                        </Text>
+
+                        <Ionicons name="disc" size={21} />
+                      </View>
+                    </View>
+
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginTop: 20,
+                        gap: 10,
+                      }}>
+                      <Pressable
+                        style={{
+                          ...styles.chip,
+                          backgroundColor: `${palette[1]}66`,
+                        }}
+                        onPress={handleRepeatMode}>
+                        {repeatMode === RepeatMode.Off ? (
+                          <MaterialCommunityIcons name="repeat-off" size={25} />
+                        ) : repeatMode === RepeatMode.Track ? (
+                          <MaterialCommunityIcons
+                            name="repeat-once"
+                            size={25}
+                            color="#54ff65"
+                          />
+                        ) : (
+                          <MaterialCommunityIcons
+                            name="repeat"
+                            size={25}
+                            color="#d7ff54"
+                          />
+                        )}
+                      </Pressable>
+
+                      <Rating />
+
+                      <Pressable
+                        style={{
+                          ...styles.chip,
+                          backgroundColor: `${palette[1]}66`,
+                        }}
+                        onPress={() => setLyricsVisible(!lyricsVisible)}>
+                        <MaterialIcons
+                          name="lyrics"
+                          size={25}
+                          style={{
+                            color: lyrics ? 'yellow' : 'rgba(255,255,255,.5)',
+                          }}
+                        />
+                      </Pressable>
+                    </View>
+
+                    <WaveformSlider />
+
+                    <TrackInfo />
+
+                    <Controls />
+
+                    <View style={{flex: 1}} />
+
+                    {/* <Queue /> */}
+                  </View>
+                </>
+              )}
+
+              <Queue />
             </>
           )}
-          renderItem={() => {
-            return <View />;
-            //return <Queue />;
-          }}
+          renderItem={() => <View />}
         />
       </BottomSheet>
 

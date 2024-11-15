@@ -1,6 +1,8 @@
 // * React
 import React, {useState, useCallback} from 'react';
 
+//import TrackPlayer from 'react-native-track-player';
+
 // * Store
 import {usePlayerStore} from '../../../store';
 
@@ -8,19 +10,20 @@ import {usePlayerStore} from '../../../store';
 import {SegmentedButtons} from 'react-native-paper';
 
 // * Components
-import History from './History';
+import BackTo from './BackTo';
 import UpNext from './UpNext';
-//import TrackPlayer from 'react-native-track-player';
 
 export default function Queue() {
   // ? States
-  const [value, setValue] = useState<'queue' | 'history'>('queue');
+  const [tab, setTab] = useState('upNext');
   //const [queue, setQueue] = useState();
 
   // ? StoreStates
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const queue = usePlayerStore(state => state.queue);
+
+  const palette = usePlayerStore(state => state.palette);
 
   // useEffect(()=>{
   //   TrackPlayer.getQueue()
@@ -30,22 +33,24 @@ export default function Queue() {
     () => (
       <>
         <SegmentedButtons
-          value={value}
-          onValueChange={(x: any) => setValue(x)}
+          value={tab}
+          onValueChange={state => setTab(state)}
           buttons={[
-            {value: 'history', label: 'History'},
-            {value: 'queue', label: 'Queue'},
+            {value: 'backTo', label: 'BACK TO'},
+            {value: 'upNext', label: 'UP NEXT'},
           ]}
+          style={{marginHorizontal: 60}}
+          theme={{colors: {secondaryContainer: palette[2]}}}
         />
 
-        {value === 'queue' ? (
+        {tab === 'upNext' ? (
           <UpNext
             queue={queue}
             activeTrack={activeTrack}
             activeTrackIndex={activeTrackIndex}
           />
         ) : (
-          <History
+          <BackTo
             queue={queue}
             activeTrack={activeTrack}
             activeTrackIndex={activeTrackIndex}
@@ -53,7 +58,7 @@ export default function Queue() {
         )}
       </>
     ),
-    [activeTrackIndex],
+    [activeTrackIndex, tab],
   );
 
   return <QueueCallback />;

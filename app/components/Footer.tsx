@@ -74,11 +74,11 @@ export default function Footer() {
 
         <View style={{flexDirection: 'row', gap: 10, paddingHorizontal: 20}}>
           <Pressable
+            style={{flexGrow: 0.8, flexDirection: 'row', alignItems: 'center'}}
             onPress={() => {
               openNowPlaying(nowPlayingRef!);
               Vibration.vibrate(50);
-            }}
-            style={{flexGrow: 0.8, flexDirection: 'row', alignItems: 'center'}}>
+            }}>
             <Image
               source={
                 activeTrack?.artwork ? {uri: activeTrack?.artwork} : imageFiller

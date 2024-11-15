@@ -15,6 +15,7 @@ import {
 
 // * Libraries
 import {useMutation} from '@tanstack/react-query';
+import {useDeviceOrientation} from '@react-native-community/hooks';
 import {StarRatingDisplay} from 'react-native-star-rating-widget';
 import {Text} from 'react-native-paper';
 import axios from 'axios';
@@ -24,35 +25,22 @@ import BottomSheet, {BottomSheetFlatList} from '@gorhom/bottom-sheet';
 import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import TrackPlayer, {useActiveTrack} from 'react-native-track-player';
+import TrackPlayer from 'react-native-track-player';
 
 // * Store
-import {
-  API_URL,
-  ARTWORK_URL,
-  AUDIO_URL,
-  HEIGHT,
-  usePlayerStore,
-  WAVEFORM_URL,
-  WIDTH,
-} from '../../store';
-
-// * Components
-import Footer from '../../components/Footer';
+import {API_URL, ARTWORK_URL, HEIGHT, usePlayerStore, WIDTH} from '../../store';
 
 // * Types
 import {TrackProps, TracksProps} from '../../types';
+
+const ITEM_HEIGHT = 60;
 
 export default function Folders({navigation, route}: any) {
   // ? Refs
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   // ? Hooks
-  //const activeTrack = useActiveTrack();
-
-  // ? States
-  // const [isError] = useState(false);
-  // const [isPending] = useState(false);
+  const orientation = useDeviceOrientation();
 
   const [path, setPath] = useState('');
   const [data, setData] = useState<TracksProps>();
@@ -176,7 +164,7 @@ export default function Folders({navigation, route}: any) {
   return (
     <>
       <LinearGradient
-        colors={[palette[0] ?? '#000', palette[1] ?? '#fff']}
+        colors={[palette[0] ?? '#000', palette[1] ?? '#000']}
         // colors={[
         //   activeTrack?.palette?.[1] ?? '#000',
         //   activeTrack?.palette?.[0] ?? '#fff',
@@ -186,200 +174,325 @@ export default function Folders({navigation, route}: any) {
         style={{position: 'absolute', top: 0, left: 0, bottom: 0, right: 0}}
       />
 
-      <BigList
-        data={data}
-        numColumns={1}
-        keyExtractor={(item, index) => index.toString()}
-        refreshing={refreshing}
-        onRefresh={() => {
-          setRefreshing(true);
-          setTimeout(() => {
-            list(path);
-            setRefreshing(false);
-          }, 1000);
-        }}
-        renderItem={({item, index}: {item: TrackProps; index: number}) => (
-          <>
-            {item.hasOwnProperty('name') ? (
-              <Pressable
-                onPress={() => {
-                  Vibration.vibrate(50);
-                  const stripedSlash = item.path === '/' ? '' : item.path;
-                  savePath(`${stripedSlash}${item.name}/`);
-                  navigation.setOptions({title: item.name});
-                  navigation.push('Folders');
-                }}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingVertical: 15,
-                    paddingHorizontal: 15,
+      {orientation === 'portrait' ? (
+        <BigList
+          data={data}
+          keyExtractor={(item, index) => index.toString()}
+          refreshing={refreshing}
+          onRefresh={() => {
+            setRefreshing(true);
+            setTimeout(() => {
+              list(path);
+              setRefreshing(false);
+            }, 1000);
+          }}
+          renderItem={({item, index}: {item: TrackProps; index: number}) => (
+            <>
+              {item.hasOwnProperty('name') ? (
+                <Pressable
+                  onPress={() => {
+                    Vibration.vibrate(50);
+                    const stripedSlash = item.path === '/' ? '' : item.path;
+                    savePath(`${stripedSlash}${item.name}/`);
+                    navigation.setOptions({title: item.name});
+                    navigation.push('Folders');
                   }}>
-                  <Image
-                    source={require('../../assets/images/folder.png')}
+                  <View
                     style={{
-                      marginRight: 20,
-                      height: 40,
-                      width: 40,
-                    }}
-                  />
-                  <Text variant="bodyMedium">{item.name}</Text>
-                </View>
-              </Pressable>
-            ) : (
-              <Pressable
-                onPress={async () => {
-                  play(data, item);
-                  /*   const tracks = data?.map((track: TrackProps) => {
-                    if (track.hasOwnProperty('format')) {
-                      return {
-                        ...track,
-                        url: `${AUDIO_URL}${track.path}`,
-                        artwork: `${ARTWORK_URL}${track.artwork}`,
-                        waveform: `${WAVEFORM_URL}${track.waveform}`,
-                        palette: JSON.parse(track.palette as any),
-                      };
-                    }
-                  });
-
-                  // ? Remove undefined items (folders)
-                  const queue: any = tracks?.filter((track: any) => track);
-
-                  // ? Find index of currently selected track
-                  const selectedIndex = queue.findIndex(
-                    (track: TrackProps) => track.id === item.id,
-                  );
-
-                  await TrackPlayer.setQueue(queue);
-                  await TrackPlayer.skip(selectedIndex);
-                  await TrackPlayer.play();
-
-                  openNowPlaying(nowPlayingRef!); */
-                }}
-                onLongPress={() => {
-                  Vibration.vibrate(100);
-                  setHighlighted(item);
-                  setBottomSheetVisible(true);
-                  bottomSheetRef.current?.snapToIndex(0);
-                }}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingVertical: 15,
-                    paddingHorizontal: 10,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingVertical: 15,
+                      paddingHorizontal: 15,
+                    }}>
+                    <Image
+                      source={require('../../assets/images/folder.png')}
+                      style={{
+                        marginRight: 20,
+                        height: 40,
+                        width: 40,
+                      }}
+                    />
+                    <Text variant="bodyMedium">{item.name}</Text>
+                  </View>
+                </Pressable>
+              ) : (
+                <Pressable
+                  onPress={() => play(data, item)}
+                  onLongPress={() => {
+                    Vibration.vibrate(100);
+                    setHighlighted(item);
+                    setBottomSheetVisible(true);
+                    bottomSheetRef.current?.snapToIndex(0);
                   }}>
-                  {/* <MaterialIcons
-                      name="more-vert"
-                      size={25}
-                      style={{marginRight: 10}}
-                      onPress={() => onOpen(item)}
-                    /> */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingVertical: 15,
+                      paddingHorizontal: 10,
+                    }}>
+                    <Image
+                      source={{uri: `${ARTWORK_URL}${item.artwork}`}}
+                      style={{
+                        height: 45,
+                        width: 45,
+                        marginRight: 10,
+                        borderRadius: 10,
+                      }}
+                    />
+                    <View
+                      style={{
+                        justifyContent: 'center',
+                        marginTop: -2,
+                        maxWidth: WIDTH - 190,
+                      }}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 6,
+                          overflow: 'hidden',
+                        }}>
+                        <Text
+                          numberOfLines={1}
+                          style={{
+                            alignSelf: 'flex-start',
+                            backgroundColor: '#ffffff4D',
+                            borderRadius: 5,
+                            marginTop: 1,
+                            maxWidth: 'auto',
+                            paddingVertical: 1,
+                            paddingHorizontal: 5,
+                          }}>
+                          {`${(item.size / 1000000).toFixed(2)} MB`}
+                        </Text>
+
+                        <Text
+                          numberOfLines={1}
+                          style={{fontSize: 17, fontWeight: '600'}}>
+                          {item.title}
+                        </Text>
+                      </View>
+                      <Text numberOfLines={1} style={styles.artists}>
+                        {item.artists ?? 'Unknown Artist'}
+                      </Text>
+                    </View>
+                    <View style={{flex: 1}} />
+                    <View
+                      style={{
+                        justifyContent: 'center',
+                        alignItems: 'flex-end',
+                      }}>
+                      <StarRatingDisplay
+                        rating={item.rating}
+                        starSize={16}
+                        starStyle={{marginHorizontal: 0}}
+                      />
+
+                      <Text
+                        style={{
+                          fontWeight: 'bold',
+                          marginRight: 5,
+                          marginTop: 5,
+                        }}>
+                        {item.plays || 0} play{`${item.plays === 1 ? '' : 's'}`}
+                      </Text>
+                    </View>
+                  </View>
+                </Pressable>
+              )}
+            </>
+          )}
+          renderEmpty={() =>
+            isPending ? (
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: HEIGHT,
+                }}>
+                <ActivityIndicator
+                  size="large"
+                  color="#fff"
+                  style={{alignSelf: 'center'}}
+                />
+              </View>
+            ) : isError ? (
+              <View>
+                <Text variant="titleLarge" style={{fontFamily: 'Abel'}}>
+                  Empty
+                </Text>
+              </View>
+            ) : (
+              <View />
+            )
+          }
+          getItemLayout={(data, index) => ({
+            length: ITEM_HEIGHT,
+            offset: ITEM_HEIGHT * index,
+            index,
+          })}
+          renderHeader={() => <View />}
+          renderFooter={() => <View style={{flex: 1}} />}
+          itemHeight={ITEM_HEIGHT}
+          headerHeight={0}
+          footerHeight={10}
+        />
+      ) : (
+        <BigList
+          data={data}
+          numColumns={5}
+          keyExtractor={(item, index) => index.toString()}
+          refreshing={refreshing}
+          onRefresh={() => {
+            setRefreshing(true);
+            setTimeout(() => {
+              list(path);
+              setRefreshing(false);
+            }, 1000);
+          }}
+          renderItem={({item, index}: {item: TrackProps; index: number}) => (
+            <>
+              {item.hasOwnProperty('name') ? (
+                <Pressable
+                  onPress={() => {
+                    Vibration.vibrate(50);
+                    const stripedSlash = item.path === '/' ? '' : item.path;
+                    savePath(`${stripedSlash}${item.name}/`);
+                    navigation.setOptions({title: item.name});
+                    navigation.push('Folders');
+                  }}>
+                  <View
+                    style={{
+                      justifyContent: 'space-between',
+                      paddingVertical: 15,
+                      paddingHorizontal: 15,
+                    }}>
+                    <Image
+                      source={require('../../assets/images/folder.png')}
+                      style={{
+                        marginRight: 20,
+                        height: 40,
+                        width: 40,
+                      }}
+                    />
+                    <Text variant="bodyMedium">{item.name}</Text>
+                  </View>
+                </Pressable>
+              ) : (
+                <Pressable
+                  onPress={() => play(data, item)}
+                  onLongPress={() => {
+                    Vibration.vibrate(100);
+                    setHighlighted(item);
+                    setBottomSheetVisible(true);
+                    bottomSheetRef.current?.snapToIndex(0);
+                  }}
+                  style={{flexDirection: 'column'}}>
                   <Image
                     source={{uri: `${ARTWORK_URL}${item.artwork}`}}
                     style={{
-                      height: 45,
-                      width: 45,
-                      marginRight: 10,
+                      height: 80,
+                      width: 80,
                       borderRadius: 10,
                     }}
                   />
-                  {/* <Text variant="bodyMedium">{item.title}</Text> */}
-                  <View
-                    style={{
-                      justifyContent: 'center',
-                      marginTop: -2,
-                      maxWidth: WIDTH - 190,
-                    }}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 6,
-                        overflow: 'hidden',
-                      }}>
-                      <Text
-                        numberOfLines={1}
-                        style={{
-                          alignSelf: 'flex-start',
-                          backgroundColor: '#ffffff4D',
-                          borderRadius: 5,
-                          marginTop: 1,
-                          maxWidth: 'auto',
-                          paddingVertical: 1,
-                          paddingHorizontal: 5,
-                        }}>
-                        {`${(item.size / 1000000).toFixed(2)} MB`}
-                      </Text>
 
-                      <Text
-                        numberOfLines={1}
-                        style={{fontSize: 17, fontWeight: '600'}}>
-                        {item.title}
+                  {/* <View
+                      style={{
+                        justifyContent: 'center',
+                        marginTop: -2,
+                        maxWidth: WIDTH - 190,
+                      }}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 6,
+                          overflow: 'hidden',
+                        }}>
+                        <Text
+                          numberOfLines={1}
+                          style={{
+                            alignSelf: 'flex-start',
+                            backgroundColor: '#ffffff4D',
+                            borderRadius: 5,
+                            marginTop: 1,
+                            maxWidth: 'auto',
+                            paddingVertical: 1,
+                            paddingHorizontal: 5,
+                          }}>
+                          {`${(item.size / 1000000).toFixed(2)} MB`}
+                        </Text>
+
+                        <Text
+                          numberOfLines={1}
+                          style={{fontSize: 17, fontWeight: '600'}}>
+                          {item.title}
+                        </Text>
+                      </View>
+                      <Text numberOfLines={1} style={styles.artists}>
+                        {item.artists ?? 'Unknown Artist'}
                       </Text>
                     </View>
-                    <Text numberOfLines={1} style={styles.artists}>
-                      {item.artists ?? 'Unknown Artist'}
-                    </Text>
-                  </View>
-                  <View style={{flex: 1}} />
-                  <View
-                    style={{
-                      justifyContent: 'center',
-                      alignItems: 'flex-end',
-                    }}>
-                    <StarRatingDisplay
-                      rating={item.rating}
-                      starSize={16}
-                      starStyle={{marginHorizontal: 0}}
-                    />
 
-                    <Text
+                    <View
                       style={{
-                        fontWeight: 'bold',
-                        marginRight: 5,
-                        marginTop: 5,
+                        justifyContent: 'center',
+                        alignItems: 'flex-end',
                       }}>
-                      {item.plays || 0} play{`${item.plays === 1 ? '' : 's'}`}
-                    </Text>
-                  </View>
-                </View>
-              </Pressable>
-            )}
-          </>
-        )}
-        renderEmpty={() =>
-          isPending ? (
-            <View
-              style={{
-                flex: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: HEIGHT,
-              }}>
-              <ActivityIndicator
-                size="large"
-                color="#fff"
-                style={{alignSelf: 'center'}}
-              />
-            </View>
-          ) : isError ? (
-            <View>
-              <Text variant="titleLarge" style={{fontFamily: 'Abel'}}>
-                Empty
-              </Text>
-            </View>
-          ) : (
-            <View />
-          )
-        }
-        renderHeader={() => <View />}
-        renderFooter={() => <View style={{flex: 1}} />}
-        itemHeight={60}
-        headerHeight={0}
-        footerHeight={10}
-      />
+                      <StarRatingDisplay
+                        rating={item.rating}
+                        starSize={16}
+                        starStyle={{marginHorizontal: 0}}
+                      />
+
+                      <Text
+                        style={{
+                          fontWeight: 'bold',
+                          marginRight: 5,
+                          marginTop: 5,
+                        }}>
+                        {item.plays || 0} play{`${item.plays === 1 ? '' : 's'}`}
+                      </Text>
+                    </View> */}
+                </Pressable>
+              )}
+            </>
+          )}
+          renderEmpty={() =>
+            isPending ? (
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: HEIGHT,
+                }}>
+                <ActivityIndicator
+                  size="large"
+                  color="#fff"
+                  style={{alignSelf: 'center'}}
+                />
+              </View>
+            ) : isError ? (
+              <View>
+                <Text variant="titleLarge" style={{fontFamily: 'Abel'}}>
+                  Empty
+                </Text>
+              </View>
+            ) : (
+              <View />
+            )
+          }
+          renderHeader={() => <View />}
+          renderFooter={() => <View style={{flex: 1}} />}
+          itemHeight={90}
+          headerHeight={0}
+          footerHeight={10}
+        />
+      )}
 
       <BottomSheet
         ref={bottomSheetRef}
@@ -520,8 +633,6 @@ export default function Folders({navigation, route}: any) {
           contentContainerStyle={{}}
         />
       </BottomSheet>
-
-      {/* <Footer /> */}
     </>
   );
 }
