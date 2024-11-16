@@ -62,42 +62,20 @@ export default function UpNext({
                 },
               ]}>
               <View
-                style={[
-                  activeTrack?.id === item.id
-                    ? {
-                        backgroundColor: '#ffffff4d',
-                        borderRadius: 10,
-                        flexDirection: 'row',
-                        paddingBottom: 6,
-                        paddingTop: 6,
-                        paddingHorizontal: 10,
-                        marginTop: 10,
-                      }
-                    : {
-                        flexDirection: 'row',
-                        paddingVertical: 10,
-                        paddingHorizontal: 10,
-                        marginTop: 10,
-                      },
-                ]}>
+                style={{
+                  flexDirection: 'row',
+                  paddingVertical: 10,
+                  paddingHorizontal: 10,
+                  marginTop: 10,
+                }}>
                 <Image
                   source={{uri: item.artwork}}
-                  style={
-                    activeTrack?.id === item.id
-                      ? {
-                          height: 45,
-                          width: 45,
-                          marginRight: 8,
-                          borderRadius: 100,
-                          //transform: [{rotate: spin}],
-                        }
-                      : {
-                          height: 45,
-                          width: 45,
-                          marginRight: 8,
-                          borderRadius: 10,
-                        }
-                  }
+                  style={{
+                    height: 45,
+                    width: 45,
+                    marginRight: 8,
+                    borderRadius: 10,
+                  }}
                 />
                 <View
                   style={{
@@ -177,6 +155,12 @@ export default function UpNext({
       activationDistance={10}
       renderPlaceholder={() => (
         <View style={{backgroundColor: 'yellow', height: 600}} />
+      )}
+      ListEmptyComponent={() => (
+        <View
+          style={{height: 300, justifyContent: 'center', alignItems: 'center'}}>
+          <Text>No tracks</Text>
+        </View>
       )}
       containerStyle={{marginVertical: 10}}
     />

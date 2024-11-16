@@ -7,6 +7,9 @@ import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 
+/** MusX - React Native Google Cast */
+import com.google.android.gms.cast.framework.CastContext;
+
 class MainActivity : ReactActivity() {
 
   /**
@@ -24,5 +27,8 @@ class MainActivity : ReactActivity() {
 
    override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(null)
+
+    /** MusX - React Native Google Cast */
+    CastContext.getSharedInstance(this);
   }
 }

@@ -21,6 +21,7 @@ import {useDeviceOrientation} from '@react-native-community/hooks';
 import {Shadow} from 'react-native-shadow-2';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {CastButton} from 'react-native-google-cast';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -251,7 +252,7 @@ export default function NowPlaying({nowPlayingRef}: {nowPlayingRef: any}) {
           renderSectionHeader={() => (
             <>
               <LinearGradient
-                colors={[palette[1] ?? '#000', palette[0] ?? '#fff']}
+                colors={[palette[1] ?? '#000', palette[0] ?? '#000']}
                 useAngle={true}
                 angle={200}
                 style={{
@@ -450,7 +451,11 @@ export default function NowPlaying({nowPlayingRef}: {nowPlayingRef: any}) {
                       size={26}
                       onPress={() => bottomSheetRef.current?.snapToIndex(0)}
                     />
-                    <MaterialIcons name="cast" size={25} />
+                    <CastButton
+                      style={{width: 24, height: 24, tintColor: '#fff'}}
+                      //onTouchEnd={()=>console.log()}
+                    />
+                    {/* <MaterialIcons name="cast" size={25} /> */}
                   </View>
 
                   <View style={{alignItems: 'center', height: HEIGHT}}>
@@ -496,7 +501,8 @@ export default function NowPlaying({nowPlayingRef}: {nowPlayingRef: any}) {
                       <View
                         style={{
                           borderWidth: 1,
-                          borderColor: palette[1],
+                          backgroundColor: 'rgba(255, 255, 255, .3)',
+                          borderColor: 'rgba(255, 255, 255, .3)',
                           borderRadius: 7,
                           flexDirection: 'row',
                           opacity: 0.7,

@@ -2,7 +2,7 @@
 import React from 'react';
 
 // * React Native
-import {Text, View} from 'react-native';
+import {View} from 'react-native';
 
 // * Libraries
 import TextTicker from 'react-native-text-ticker';
@@ -14,54 +14,49 @@ export default function TrackInfo() {
   // ? StoreStates
   const activeTrack = usePlayerStore(state => state.activeTrack);
 
+  const extraInfo = ` (${
+    activeTrack?.year ? activeTrack?.year.slice(0, 4) : activeTrack?.encoder
+  })`;
+
   return (
-    <>
-      <Text
-        numberOfLines={1}
-        style={{
-          fontSize: 18,
-        }}>
+    <View
+      style={{marginHorizontal: 10, marginVertical: 5, alignItems: 'center'}}>
+      <TextTicker
+        style={{fontSize: 18}}
+        duration={15000}
+        loop
+        bounce
+        bounceSpeed={50}
+        repeatSpacer={30}
+        marqueeDelay={3000}>
         {activeTrack?.artists || 'No Artists'}
-      </Text>
+      </TextTicker>
 
       <TextTicker
-        style={{
-          fontSize: 24,
-          fontWeight: '800',
-          marginTop: 5,
-          marginBottom: 8,
-        }}
+        style={{fontSize: 24, fontWeight: '800', marginVertical: 10}}
         duration={20000}
         loop
         bounce
         bounceSpeed={10}
-        repeatSpacer={50}
+        repeatSpacer={30}
         marqueeDelay={3000}>
         {activeTrack?.title}
       </TextTicker>
 
-      <View style={{flexDirection: 'row', gap: 3}}>
-        <Text
-          numberOfLines={1}
-          style={{
-            fontSize: 18,
-            fontWeight: '500',
-          }}>
-          {activeTrack?.album
-            ? activeTrack?.album === activeTrack?.title
-              ? activeTrack?.albumArtist + ' Singles'
-              : activeTrack?.album
-            : 'No Album'}
-        </Text>
-
-        <Text style={{fontSize: 18, fontWeight: '400'}}>
-          (
-          {activeTrack?.year
-            ? `${activeTrack?.year.slice(0, 4)}`
-            : activeTrack?.encoder}
-          )
-        </Text>
-      </View>
-    </>
+      <TextTicker
+        style={{fontSize: 18, fontWeight: '500'}}
+        duration={25000}
+        loop
+        bounce
+        bounceSpeed={10}
+        repeatSpacer={30}
+        marqueeDelay={3000}>
+        {activeTrack?.album
+          ? activeTrack?.album === activeTrack?.title
+            ? activeTrack?.albumArtist + ' Singles' + extraInfo
+            : activeTrack?.album + extraInfo
+          : 'No Album'}
+      </TextTicker>
+    </View>
   );
 }

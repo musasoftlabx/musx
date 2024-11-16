@@ -72,6 +72,11 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'org.webkit:android-jsc:+'
 
+// ? MusX - React Native Google Cast
+def safeExtGet(prop, fallback) {
+  rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -138,6 +143,9 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+
+    // ? MusX - React Native Google Cast
+    implementation "com.google.android.gms:play-services-cast-framework:${safeExtGet('castFrameworkVersion', '+')}"
 }
 
 apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")

@@ -85,3 +85,7 @@ AAB build
 APK build
 
 > yarn android --mode release
+
+New project
+
+> npx @react-native-community/cli@latest init AwesomeProject

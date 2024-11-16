@@ -180,6 +180,12 @@ export default function BackTo({
       renderPlaceholder={() => (
         <View style={{backgroundColor: 'yellow', height: 600}} />
       )}
+      ListEmptyComponent={() => (
+        <View
+          style={{height: 300, justifyContent: 'center', alignItems: 'center'}}>
+          <Text>No tracks</Text>
+        </View>
+      )}
       containerStyle={{marginVertical: 10}}
     />
   );

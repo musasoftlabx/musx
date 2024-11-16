@@ -79,7 +79,8 @@ const Home = ({navigation, route}: any) => {
           <Pressable
             onPress={async () => {
               navigation.navigate(item.id);
-              await AsyncStorage.setItem('path', item.id);
+              if (item.id !== 'Folders')
+                await AsyncStorage.setItem('path', item.id);
             }}
             style={{
               flexDirection: 'row',

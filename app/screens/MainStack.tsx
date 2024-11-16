@@ -42,10 +42,10 @@ export default function MainStack() {
 
             return <MaterialIcons name={iconName!} size={24} color={color} />;
           },
-          tabBarStyle: {backgroundColor: `${palette?.[0]}`},
+          tabBarStyle: {backgroundColor: `${palette?.[1]}`},
           tabBarShowLabel: false,
-          tabBarActiveTintColor: palette[1],
-          tabBarInactiveTintColor: 'gray',
+          tabBarActiveTintColor: '#fff',
+          tabBarInactiveTintColor: 'rgba(255, 255, 255, .4)',
         })}>
         <Tab.Screen
           name="HomeStack"

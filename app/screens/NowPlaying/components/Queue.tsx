@@ -1,7 +1,8 @@
 // * React
-import React, {useState, useCallback} from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
 
-//import TrackPlayer from 'react-native-track-player';
+// * Library
+import TrackPlayer from 'react-native-track-player';
 
 // * Store
 import {usePlayerStore} from '../../../store';
@@ -15,19 +16,20 @@ import UpNext from './UpNext';
 
 export default function Queue() {
   // ? States
-  const [tab, setTab] = useState('upNext');
-  //const [queue, setQueue] = useState();
+  const [tab, setTab] = useState('');
+  const [queue, setQueue] = useState([]);
 
   // ? StoreStates
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
-  const queue = usePlayerStore(state => state.queue);
+  //const queue = usePlayerStore(state => state.queue);
 
   const palette = usePlayerStore(state => state.palette);
 
-  // useEffect(()=>{
-  //   TrackPlayer.getQueue()
-  // },[activeTrack])
+  useEffect(() => {
+    setTab('upNext');
+    TrackPlayer.getQueue().then((queue: any) => setQueue(queue));
+  }, []);
 
   const QueueCallback = useCallback(
     () => (
@@ -39,22 +41,26 @@ export default function Queue() {
             {value: 'backTo', label: 'BACK TO'},
             {value: 'upNext', label: 'UP NEXT'},
           ]}
-          style={{marginHorizontal: 60}}
+          style={{borderColor: '#fff', marginHorizontal: 60}}
           theme={{colors: {secondaryContainer: palette[2]}}}
         />
 
-        {tab === 'upNext' ? (
-          <UpNext
-            queue={queue}
-            activeTrack={activeTrack}
-            activeTrackIndex={activeTrackIndex}
-          />
-        ) : (
-          <BackTo
-            queue={queue}
-            activeTrack={activeTrack}
-            activeTrackIndex={activeTrackIndex}
-          />
+        {queue?.length > 0 && (
+          <>
+            {tab === 'upNext' ? (
+              <UpNext
+                queue={queue}
+                activeTrack={activeTrack}
+                activeTrackIndex={activeTrackIndex}
+              />
+            ) : (
+              <BackTo
+                queue={queue}
+                activeTrack={activeTrack}
+                activeTrackIndex={activeTrackIndex}
+              />
+            )}
+          </>
         )}
       </>
     ),

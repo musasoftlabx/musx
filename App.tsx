@@ -25,6 +25,12 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import BottomSheet from '@gorhom/bottom-sheet';
+import {
+  useCastState,
+  useMediaStatus,
+  useRemoteMediaClient,
+  useStreamPosition,
+} from 'react-native-google-cast';
 import TrackPlayer, {
   AppKilledPlaybackBehavior,
   Capability,
@@ -70,6 +76,11 @@ function App(): React.JSX.Element {
   //const nowPlayingRef = useRef<BottomSheet>(null);
 
   //const isDarkMode = useColorScheme() === 'dark';
+  const castClient = useRemoteMediaClient();
+  const castState = useCastState();
+  const castMediaStatus = useMediaStatus();
+  const streamPosition = useStreamPosition();
+
   const mode: string = useColorScheme() || 'light';
 
   const [root, setRoot] = useState('');
@@ -157,27 +168,95 @@ function App(): React.JSX.Element {
           await TrackPlayer.skip(Number(savedActiveTrackIndex));
           await TrackPlayer.seekTo(Number(playPosition));
           openNowPlaying(ref);
-          //openNowPlaying(nowPlayingRef);
         }
       } catch (err: any) {
-        console.warn(err.message);
+        console.log(err.message);
       }
     })();
-
     setNowPlayingRef(ref);
   }, []);
 
   useEffect(() => {
-    (async () => {
-      console.log('currentAppState: ', currentAppState);
+    if (castState === 'connected') {
+      TrackPlayer.setVolume(0);
+      TrackPlayer.getQueue().then(async queue => {
+        if (queue.length > 0) {
+          castClient
+            ?.loadMedia({
+              queueData: {
+                items: queue
+                  .map((track, index) => ({
+                    mediaInfo: {
+                      contentUrl: track.url,
+                      contentType: 'audio/mpeg',
+                      metadata: {
+                        type: 'musicTrack',
+                        images: [
+                          {url: track.artwork},
+                          {
+                            url: 'http://75.119.137.255/Music/Kenya/Bahati/artist.jpg',
+                          },
+                        ],
+                        title: track.title,
+                        albumTitle: track.albumArtist,
+                        albumArtist: track.albumArtist,
+                        artist: track.artists,
+                        releaseDate: track.year,
+                        trackNumber: index + 1,
+                        discNumber: 1,
+                        duration: track.duration,
+                      },
+                    },
+                  }))
+                  .slice(activeTrackIndex) as any,
+              },
+            })
+            .then(() => castClient?.play());
+        }
+      });
+    } else TrackPlayer.setVolume(1);
+  }, [castState, activeTrackIndex]);
 
+  useEffect(() => {
+    setPlaybackState({state: castMediaStatus?.playerState});
+  }, [castMediaStatus]);
+
+  useEffect(() => {
+    if (streamPosition) {
+      setProgress({
+        position: streamPosition,
+        buffered: 0,
+        duration: 180, //castMediaStatus?.mediaInfo?.metadata?.duration,
+      });
+
+      if (streamPosition >= 10 && playRegistered === false) {
+        setPlayRegistered(true);
+        setTrackPlayCount(trackPlayCount + 1);
+        TrackPlayer.updateMetadataForTrack(activeTrackIndex!, {
+          ...activeTrack,
+          plays: activeTrack?.plays + 1,
+        } as Track);
+        axios
+          .patch('updatePlayCount', {id: activeTrack?.id})
+          .then(({data}) => console.log(data));
+      }
+    }
+  }, [streamPosition]);
+
+  useEffect(() => {
+    (async () => {
       if (currentAppState !== 'active') {
         const _activeTrackIndex = await TrackPlayer.getActiveTrackIndex();
         const _queue = await TrackPlayer.getQueue();
 
-        AsyncStorage.setItem('playPosition', progress.position.toString());
-        AsyncStorage.setItem('queue', JSON.stringify(_queue));
-        AsyncStorage.setItem('activeTrackIndex', _activeTrackIndex!.toString());
+        if (_activeTrackIndex && _queue.length > 0) {
+          AsyncStorage.setItem('playPosition', progress.position.toString());
+          AsyncStorage.setItem('queue', JSON.stringify(_queue));
+          AsyncStorage.setItem(
+            'activeTrackIndex',
+            _activeTrackIndex!.toString(),
+          );
+        }
       }
     })();
   }, [currentAppState]);
@@ -222,35 +301,37 @@ function App(): React.JSX.Element {
         setQueue(_queue);
 
         // ? Defer getting and storing the queue for performance
-        // setTimeout(async () => {
-        //   // ? Store the queue and the active track index to restore state incase the app crashes or is dismissed
-        //   await AsyncStorage.setItem('queue', JSON.stringify(_queue));
-        //   await AsyncStorage.setItem(
-        //     'activeTrackIndex',
-        //     _activeTrackIndex!.toString(),
-        //   );
-        // }, 1000);
+        setTimeout(async () => {
+          // ? Store the queue and the active track index to restore state incase the app crashes or is dismissed
+          await AsyncStorage.setItem('queue', JSON.stringify(_queue));
+          await AsyncStorage.setItem(
+            'activeTrackIndex',
+            _activeTrackIndex!.toString(),
+          );
+        }, 3000);
       }
 
-      if (event.type === Event.PlaybackProgressUpdated) {
-        setProgress(progress);
+      if (castState !== 'connected') {
+        if (event.type === Event.PlaybackProgressUpdated) {
+          setProgress(progress);
 
-        if (progress.position >= 10 && playRegistered === false) {
-          setPlayRegistered(true);
-          setTrackPlayCount(trackPlayCount + 1);
-          TrackPlayer.updateMetadataForTrack(activeTrackIndex!, {
-            ...activeTrack,
-            plays: activeTrack?.plays + 1,
-          } as Track);
-          axios
-            .patch('updatePlayCount', {id: activeTrack?.id})
-            .then(({data}) => console.log(data));
+          if (progress.position >= 10 && playRegistered === false) {
+            setPlayRegistered(true);
+            setTrackPlayCount(trackPlayCount + 1);
+            TrackPlayer.updateMetadataForTrack(activeTrackIndex!, {
+              ...activeTrack,
+              plays: activeTrack?.plays + 1,
+            } as Track);
+            axios
+              .patch('updatePlayCount', {id: activeTrack?.id})
+              .then(({data}) => console.log(data));
+          }
         }
-      }
 
-      if (event.type === Event.PlaybackState) {
-        setPlaybackState(playbackState);
-        console.log(playbackState);
+        if (event.type === Event.PlaybackState) {
+          setPlaybackState(playbackState);
+          console.log('ps:', playbackState);
+        }
       }
 
       if (event.type === Event.PlaybackQueueEnded) {

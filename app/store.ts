@@ -4,6 +4,7 @@ import {Dimensions, Platform} from 'react-native';
 // * React Native Libraries
 import AsyncStorage from '@react-native-async-storage/async-storage';
 //import {MMKV} from 'react-native-mmkv';
+import tinycolor from 'tinycolor2';
 
 // * JS Libraries
 import axios, {AxiosInstance} from 'axios';
@@ -176,12 +177,22 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
         palette: string;
       }) => {
         if (track.hasOwnProperty('format')) {
+          const _palette = JSON.parse(track.palette);
+
+          const palette = _palette.map((color: string) => {
+            const brightness = tinycolor(color).getBrightness();
+
+            if (brightness >= 150)
+              return `#${tinycolor(color).darken(50).toHex()}`;
+            else return color;
+          });
+
           return {
             ...track,
             url: `${AUDIO_URL}${track.path}`,
             artwork: `${ARTWORK_URL}${track.artwork}`,
             waveform: `${WAVEFORM_URL}${track.waveform}`,
-            palette: JSON.parse(track.palette),
+            palette,
           };
         }
       },

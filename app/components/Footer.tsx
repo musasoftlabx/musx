@@ -124,7 +124,7 @@ export default function Footer() {
               <Progress.Circle
                 size={50}
                 progress={position / duration || 0}
-                color={palette[2]}
+                color="#fff"
                 style={{marginRight: -67.5, opacity: 1}}
               />
 

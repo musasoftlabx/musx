@@ -119,7 +119,7 @@ export default function Folders({navigation, route}: any) {
       let path = '';
       const value = await AsyncStorage.getItem('path');
 
-      if (value === null || value === 'Folders') {
+      if (value === null || value === 'Folders' || value === '') {
         await AsyncStorage.setItem('path', '');
         path = '';
       } else path = value;
@@ -137,8 +137,8 @@ export default function Folders({navigation, route}: any) {
       () => {
         const p = `${path.split('/').slice(0, -2).join('/')}/`;
         savePath(p);
-        console.log('pathsplit', p);
-        console.log('path', path);
+        //console.log('pathsplit', p);
+        //console.log('path', path);
         if (path === '/') navigation.push('LibraryStack');
         else navigation.push('Folders');
         return true;
