@@ -2,7 +2,7 @@
 import React from 'react';
 
 // * React Native
-import {View} from 'react-native';
+import {Pressable, Vibration} from 'react-native';
 
 // * Libraries
 import TextTicker from 'react-native-text-ticker';
@@ -10,7 +10,7 @@ import TextTicker from 'react-native-text-ticker';
 // * Store
 import {usePlayerStore} from '../../../store';
 
-export default function TrackInfo() {
+export default function TrackInfo({bottomSheetRef}: any) {
   // ? StoreStates
   const activeTrack = usePlayerStore(state => state.activeTrack);
 
@@ -19,8 +19,12 @@ export default function TrackInfo() {
   })`;
 
   return (
-    <View
-      style={{marginHorizontal: 10, marginVertical: 5, alignItems: 'center'}}>
+    <Pressable
+      style={{marginHorizontal: 10, marginBottom: 5, alignItems: 'center'}}
+      onPress={() => {
+        Vibration.vibrate(100);
+        bottomSheetRef.current?.snapToIndex(0);
+      }}>
       <TextTicker
         style={{fontSize: 18}}
         duration={15000}
@@ -33,7 +37,12 @@ export default function TrackInfo() {
       </TextTicker>
 
       <TextTicker
-        style={{fontSize: 24, fontWeight: '800', marginVertical: 10}}
+        style={{
+          fontSize: 24,
+          fontWeight: '800',
+          marginTop: 9,
+          marginBottom: 12,
+        }}
         duration={20000}
         loop
         bounce
@@ -57,6 +66,6 @@ export default function TrackInfo() {
             : activeTrack?.album + extraInfo
           : 'No Album'}
       </TextTicker>
-    </View>
+    </Pressable>
   );
 }

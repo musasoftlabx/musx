@@ -1,9 +1,8 @@
 // * React
-import React, {useEffect, useRef, useState} from 'react';
-import type {PropsWithChildren} from 'react';
+import React, {useEffect, useRef} from 'react';
 
 // * React Native
-import {StatusBar, useColorScheme} from 'react-native';
+import {Appearance, StatusBar} from 'react-native';
 
 // * Libraries
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
@@ -12,16 +11,11 @@ import {
   DarkTheme as RNDarkTheme,
   NavigationContainer,
 } from '@react-navigation/native';
-import {
-  getBrand,
-  getBuildNumber,
-  getSystemVersion,
-  getVersion,
-} from 'react-native-device-info';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {Provider, adaptNavigationTheme, useTheme} from 'react-native-paper';
+import {PaperProvider, adaptNavigationTheme} from 'react-native-paper';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {useAppState} from '@react-native-community/hooks';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import BottomSheet from '@gorhom/bottom-sheet';
@@ -42,65 +36,53 @@ import TrackPlayer, {
   Track,
 } from 'react-native-track-player';
 
-// * Components
-import AddToPlaylist from './app/screens/AddToPlaylist';
-import MainStack from './app/screens/MainStack';
+// * Screens
 import NowPlaying from './app/screens/NowPlaying';
+import TabNavigator from './app/navigators/TabNavigator';
 
 // * Utils
-import {darkTheme, lightTheme} from './app/utils';
+import {darkTheme} from './app/utils';
 
 // * Store
 import {API_URL, SERVER_URL, usePlayerStore} from './app/store';
-import {useAppState} from '@react-native-community/hooks';
 
+// * Constants
+export const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator();
-const {DarkTheme, LightTheme} = adaptNavigationTheme({
+const {DarkTheme} = adaptNavigationTheme({
   reactNavigationDark: RNDarkTheme,
   reactNavigationLight: RNLightTheme,
 });
 
-export const queryClient = new QueryClient();
+// * Axios config
+axios.defaults.baseURL = API_URL;
+axios.defaults.timeout = 60000;
+axios.defaults.headers.post['Content-Type'] = 'application/json';
+axios.defaults.headers.post['Accept'] = 'application/json';
 
-let deviceInfo: string = '';
-const info = {
-  brand: getBrand(),
-  build: getBuildNumber(),
-  appVersion: getVersion(),
-  sysVersion: getSystemVersion(),
-};
+Appearance.setColorScheme('dark'); // ? Always force dark mode
 
-function App(): React.JSX.Element {
+export default function App(): React.JSX.Element {
   // ? Refs
   const ref = useRef<BottomSheet>(null);
-  //const nowPlayingRef = useRef<BottomSheet>(null);
 
-  //const isDarkMode = useColorScheme() === 'dark';
+  // ? Hooks
+  const activeTrack = useActiveTrack();
+  const playbackState = usePlaybackState();
+  const progress = useProgress();
   const castClient = useRemoteMediaClient();
   const castState = useCastState();
   const castMediaStatus = useMediaStatus();
   const streamPosition = useStreamPosition();
-
-  const mode: string = useColorScheme() || 'light';
-
-  const [root, setRoot] = useState('');
-
-  // * Axios config
-  axios.defaults.baseURL = API_URL;
-  axios.defaults.timeout = 60000;
-  axios.defaults.headers.post['Content-Type'] = 'application/json';
-  axios.defaults.headers.post['Accept'] = 'application/json';
-
   const currentAppState = useAppState();
 
-  const progress = useProgress();
-  const playbackState = usePlaybackState();
-  const activeTrack = useActiveTrack();
-
+  // ? StoreStates
   const nowPlayingRef = usePlayerStore(state => state.nowPlayingRef);
   const trackPlayCount = usePlayerStore(state => state.trackPlayCount);
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const playRegistered = usePlayerStore(state => state.playRegistered);
+
+  // ? StoreActions
   const setPlaybackState = usePlayerStore(state => state.setPlaybackState);
   const setProgress = usePlayerStore(state => state.setProgress);
   const setPlayRegistered = usePlayerStore(state => state.setPlayRegistered);
@@ -116,15 +98,18 @@ function App(): React.JSX.Element {
   const setLyricsVisible = usePlayerStore(state => state.setLyricsVisible);
   const openNowPlaying = usePlayerStore(state => state.openNowPlaying);
   const setNowPlayingRef = usePlayerStore(state => state.setNowPlayingRef);
+  const setCastState = usePlayerStore(state => state.setCastState);
+  const setCastClient = usePlayerStore(state => state.setCastClient);
 
+  // ? Effects
   useEffect(() => {
+    setNowPlayingRef(ref); // ? Set Now Playing Bottom Sheet Ref
+
     (async () => {
       try {
-        await TrackPlayer.setupPlayer({
-          autoHandleInterruptions: true,
-        });
+        TrackPlayer.setupPlayer({autoHandleInterruptions: true});
 
-        await TrackPlayer.updateOptions({
+        TrackPlayer.updateOptions({
           android: {
             appKilledPlaybackBehavior:
               AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
@@ -170,55 +155,57 @@ function App(): React.JSX.Element {
           openNowPlaying(ref);
         }
       } catch (err: any) {
-        console.log(err.message);
+        console.log('Setup Player Error:', err.message);
       }
     })();
-    setNowPlayingRef(ref);
   }, []);
 
   useEffect(() => {
-    if (castState === 'connected') {
-      TrackPlayer.setVolume(0);
-      TrackPlayer.getQueue().then(async queue => {
-        if (queue.length > 0) {
-          castClient
-            ?.loadMedia({
-              queueData: {
-                items: queue
-                  .map((track, index) => ({
-                    mediaInfo: {
-                      contentUrl: track.url,
-                      contentType: 'audio/mpeg',
-                      metadata: {
-                        type: 'musicTrack',
-                        images: [
-                          {url: track.artwork},
-                          {
-                            url: 'http://75.119.137.255/Music/Kenya/Bahati/artist.jpg',
+    if (castState)
+      if (castState === 'connected') {
+        setCastState(castState);
+        setCastClient(castClient);
+
+        // ? Check if cast client is empty to add new tracks and play. If not empty, continue with previous queue
+        if (!castClient || JSON.stringify(castClient) === '{}') {
+          TrackPlayer.setVolume(0);
+          TrackPlayer.getQueue().then(async queue => {
+            if (queue.length > 0) {
+              castClient
+                ?.loadMedia({
+                  queueData: {
+                    items: queue
+                      .map((track, index) => ({
+                        mediaInfo: {
+                          contentUrl: track.url,
+                          contentType: 'audio/mpeg',
+                          metadata: {
+                            type: 'musicTrack',
+                            images: [{url: track.artwork}],
+                            title: track.title,
+                            albumTitle: track.albumArtist,
+                            albumArtist: track.albumArtist,
+                            artist: track.artists,
+                            releaseDate: track.year,
+                            trackNumber: index + 1,
+                            discNumber: 1,
+                            duration: track.duration,
                           },
-                        ],
-                        title: track.title,
-                        albumTitle: track.albumArtist,
-                        albumArtist: track.albumArtist,
-                        artist: track.artists,
-                        releaseDate: track.year,
-                        trackNumber: index + 1,
-                        discNumber: 1,
-                        duration: track.duration,
-                      },
-                    },
-                  }))
-                  .slice(activeTrackIndex) as any,
-              },
-            })
-            .then(() => castClient?.play());
+                        },
+                      }))
+                      .slice(activeTrackIndex) as any,
+                  },
+                })
+                .then(() => castClient?.play());
+            }
+          });
         }
-      });
-    } else TrackPlayer.setVolume(1);
+      } else TrackPlayer.setVolume(1);
   }, [castState, activeTrackIndex]);
 
   useEffect(() => {
-    setPlaybackState({state: castMediaStatus?.playerState});
+    if (castMediaStatus)
+      setPlaybackState({state: castMediaStatus?.playerState});
   }, [castMediaStatus]);
 
   useEffect(() => {
@@ -226,7 +213,7 @@ function App(): React.JSX.Element {
       setProgress({
         position: streamPosition,
         buffered: 0,
-        duration: 180, //castMediaStatus?.mediaInfo?.metadata?.duration,
+        duration: castMediaStatus?.mediaInfo?.metadata?.duration,
       });
 
       if (streamPosition >= 10 && playRegistered === false) {
@@ -349,48 +336,22 @@ function App(): React.JSX.Element {
         barStyle="light-content"
         translucent
       />
-
       <QueryClientProvider client={queryClient}>
-        <Provider theme={mode === 'dark' ? darkTheme : lightTheme}>
+        <PaperProvider theme={darkTheme}>
           <SafeAreaProvider>
-            <NavigationContainer
-              theme={mode === 'dark' ? DarkTheme : LightTheme}>
-              <Stack.Navigator initialRouteName={root}>
+            <NavigationContainer theme={DarkTheme}>
+              <Stack.Navigator>
                 <Stack.Screen
-                  name="MainStack"
-                  component={MainStack}
+                  name="TabNavigator"
+                  component={TabNavigator}
                   options={{headerShown: false}}
-                />
-
-                {/* <Stack.Group screenOptions={{presentation: 'modal'}}>
-                  <Stack.Screen
-                    name="NowPlaying"
-                    component={NowPlaying}
-                    options={{
-                      headerShown: false,
-                      gestureEnabled: true,
-                      gestureDirection: 'vertical',
-                    }}
-                  />
-                </Stack.Group> */}
-
-                <Stack.Screen
-                  name="AddToPlaylist"
-                  component={AddToPlaylist}
-                  options={{
-                    title: 'Add to playlist',
-                    headerTransparent: true,
-                  }}
                 />
               </Stack.Navigator>
             </NavigationContainer>
-
             <NowPlaying nowPlayingRef={nowPlayingRef} />
           </SafeAreaProvider>
-        </Provider>
+        </PaperProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
   );
 }
-
-export default App;

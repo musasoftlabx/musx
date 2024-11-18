@@ -9,10 +9,10 @@ import {Button, Snackbar, TextInput} from 'react-native-paper';
 import {useBackHandler} from '@react-native-community/hooks';
 
 // * Store
-import {API_URL, ARTWORK_URL} from '../store';
+import {API_URL, ARTWORK_URL} from '../../store';
 
 // * Types
-import {TrackProps} from '../types';
+import {TrackProps} from '../../types';
 import axios from 'axios';
 
 export default function AddToPlaylist({

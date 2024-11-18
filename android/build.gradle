@@ -6,7 +6,7 @@ buildscript {
         targetSdkVersion = 34
         ndkVersion = "26.1.10909125"
         kotlinVersion = "1.9.24"
-        castFrameworkVersion = "21.4.0" // <-- Cast SDK version
+        castFrameworkVersion = "21.4.0" // ? MusX - React Native Google Cast // <-- Cast SDK version
     }
     repositories {
         google()

@@ -17,7 +17,7 @@ import UpNext from './UpNext';
 export default function Queue() {
   // ? States
   const [tab, setTab] = useState('');
-  const [queue, setQueue] = useState([]);
+  const [queue, setQueue] = useState(usePlayerStore(state => state.queue));
 
   // ? StoreStates
   const activeTrack = usePlayerStore(state => state.activeTrack);
@@ -28,7 +28,8 @@ export default function Queue() {
 
   useEffect(() => {
     setTab('upNext');
-    TrackPlayer.getQueue().then((queue: any) => setQueue(queue));
+    setQueue(queue);
+    //TrackPlayer.getQueue().then((queue: any) => setQueue(queue));
   }, []);
 
   const QueueCallback = useCallback(

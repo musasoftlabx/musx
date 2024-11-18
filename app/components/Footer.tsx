@@ -6,7 +6,6 @@ import {
   View,
   StyleSheet,
   Image,
-  Text,
   Pressable,
   Vibration,
   ActivityIndicator,
@@ -14,12 +13,13 @@ import {
 
 // * Libraries
 import * as Progress from 'react-native-progress';
+import {State} from 'react-native-track-player';
+import {Text} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
-import TrackPlayer, {State} from 'react-native-track-player';
 
 // * Store
-import {usePlayerStore} from '../store';
+import {formatTrackTime, usePlayerStore} from '../store';
 
 // * Assets
 import imageFiller from '../assets/images/image-filler.png';
@@ -37,6 +37,8 @@ export default function Footer() {
   // ? StoreActions
   const openNowPlaying = usePlayerStore(state => state.openNowPlaying);
   const playPause = usePlayerStore(state => state.playPause);
+  const next = usePlayerStore(state => state.next);
+  const previous = usePlayerStore(state => state.previous);
 
   // ? Constants
   const isPlaying = state === State.Playing;
@@ -84,8 +86,8 @@ export default function Footer() {
                 activeTrack?.artwork ? {uri: activeTrack?.artwork} : imageFiller
               }
               style={{
-                height: 45,
-                width: 45,
+                height: 50,
+                width: 50,
                 marginRight: 8,
                 borderRadius: 10,
               }}
@@ -96,6 +98,9 @@ export default function Footer() {
               </Text>
               <Text numberOfLines={1} style={styles.artists}>
                 {activeTrack?.albumArtist ?? 'Unknown Artist'}
+              </Text>
+              <Text style={{fontSize: 12, marginLeft: 3, marginTop: 2}}>
+                {`${formatTrackTime(position)} / ${formatTrackTime(duration)}`}
               </Text>
             </View>
           </Pressable>
@@ -110,14 +115,13 @@ export default function Footer() {
               }}>
               <Pressable
                 disabled={activeTrackIndex === 0}
-                onPress={() => {
-                  if (position <= 10) TrackPlayer.skipToPrevious();
-                  else TrackPlayer.seekTo(0);
-                }}>
+                onPress={() => previous(position)}>
                 <Icon
                   name="play-back"
                   size={25}
-                  color={activeTrackIndex === 0 ? 'grey' : 'white'}
+                  color={
+                    activeTrackIndex === 0 ? 'rgba(255, 255, 255, .4)' : 'white'
+                  }
                 />
               </Pressable>
 
@@ -142,7 +146,7 @@ export default function Footer() {
                   }}
                 />
               ) : (
-                <Pressable onPress={playPause} style={{}}>
+                <Pressable onPress={playPause}>
                   <Icon
                     name={isPlaying ? 'pause-circle' : 'play-circle'}
                     size={45}
@@ -153,12 +157,14 @@ export default function Footer() {
 
               <Pressable
                 disabled={activeTrackIndex === queue.length - 1}
-                onPress={() => TrackPlayer.skipToNext()}>
+                onPress={next}>
                 <Icon
                   name="play-forward"
                   size={25}
                   color={
-                    activeTrackIndex === queue.length - 1 ? 'grey' : 'white'
+                    activeTrackIndex === queue.length - 1
+                      ? 'rgba(255, 255, 255, .4)'
+                      : 'white'
                   }
                 />
               </Pressable>
@@ -172,5 +178,5 @@ export default function Footer() {
 
 const styles = StyleSheet.create({
   title: {fontSize: 17, fontWeight: '800'},
-  artists: {fontSize: 14, fontWeight: '500'},
+  artists: {fontSize: 14, fontWeight: '500', marginLeft: 2},
 });

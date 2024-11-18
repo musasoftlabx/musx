@@ -1,9 +1,10 @@
 // * React Native
-import {Dimensions, Platform} from 'react-native';
+import {Dimensions, Platform, Vibration} from 'react-native';
 
 // * React Native Libraries
 import AsyncStorage from '@react-native-async-storage/async-storage';
 //import {MMKV} from 'react-native-mmkv';
+import Sound from 'react-native-sound';
 import tinycolor from 'tinycolor2';
 
 // * JS Libraries
@@ -40,6 +41,8 @@ interface IPlayerStore {
   lyrics: null | string;
   palette: string[];
   nowPlayingRef: BottomSheet | null;
+  castState: any;
+  castClient: any;
   setProgress: (queue: {
     position: number;
     buffered: number;
@@ -58,13 +61,14 @@ interface IPlayerStore {
   setLyricsVisible: (lyricsVisible: boolean) => void;
   setLyrics: (lyrics: null | string) => void;
   openNowPlaying: (nowPlayingRef: BottomSheet | {}) => void;
-  closeNowPlaying: (nowPlayingRef: BottomSheet | {}) => void;
   setNowPlayingRef: (nowPlayingRef: BottomSheet | {}) => void;
+  setCastState: (castState: any) => void;
+  setCastClient: (castClient: any) => void;
 
   play: (params: any, selected: TrackProps) => void;
   playPause: () => void;
   stop: () => void;
-  previous: () => void;
+  previous: (position: number) => void;
   next: () => void;
   seekTo: (position: number) => void;
   skipTo: (index: number) => void;
@@ -112,11 +116,12 @@ export const URL = () => {
   }
 };
 
-export const menuURL = `${URL()}public/images/menu/`;
-export const photoURL = `${URL()}public/images/photos/`;
-export const purchasesURL = `${URL()}public/docs/purchases/`;
-export const salesURL = `${URL()}public/docs/sales/`;
-export const signaturesURL = `${URL()}public/images/signatures/`;
+export const formatTrackTime = (secs: number) => {
+  secs = Math.round(secs);
+  let minutes = Math.floor(secs / 60) || 0;
+  let seconds = secs - minutes * 60 || 0;
+  return minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+};
 
 export const audioURL = `${URL()}Music/`;
 export const artworkURL = `${URL()}Artwork/`;
@@ -140,6 +145,8 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   palette: [],
   lyrics: null,
   nowPlayingRef: null,
+  castState: {},
+  castClient: {},
   setProgress: progress => set(state => ({...state, progress})),
   setPlaybackState: playbackState => set(state => ({...state, playbackState})),
   setQueue: queue => set(state => ({...state, queue})),
@@ -160,12 +167,10 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     set(state => ({...state, nowPlayingRef}));
     nowPlayingRef.current?.snapToIndex(0);
   },
-  closeNowPlaying: (nowPlayingRef: any) => {
-    set(state => ({...state, nowPlayingRef}));
-    nowPlayingRef?.current?.snapToIndex(-1);
-  },
   setNowPlayingRef: (nowPlayingRef: any) =>
     set(state => ({...state, nowPlayingRef})),
+  setCastState: (castState: any) => set(state => ({...state, castState})),
+  setCastClient: (castClient: any) => set(state => ({...state, castClient})),
 
   play: async (data: any, selected: TrackProps) => {
     const tracks = data.map(
@@ -214,19 +219,84 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     get().openNowPlaying(nowPlayingRef);
   },
   playPause: async () => {
+    Vibration.vibrate(50);
+
     const {state} = get().playbackState;
+    const castState = get().castState;
 
     if (
       state === State.Paused ||
       state === State.Stopped ||
       state === State.Ready
-    )
-      await TrackPlayer.play();
-    else await TrackPlayer.pause();
+    ) {
+      TrackPlayer.play();
+      if (castState === 'connected') get().castClient.play();
+    } else {
+      TrackPlayer.pause();
+      if (castState === 'connected') get().castClient.pause();
+    }
   },
   stop: async () => TrackPlayer.stop(),
-  previous: async () => TrackPlayer.skipToPrevious(),
-  next: async () => TrackPlayer.skipToNext(),
+  previous: (position: number) => {
+    Vibration.vibrate(50);
+
+    if (position <= 10) TrackPlayer.skipToPrevious();
+    else TrackPlayer.seekTo(0);
+  },
+  next: () => {
+    Vibration.vibrate(50);
+    TrackPlayer.skipToNext();
+    return false;
+
+    const activeTrackIndex = get().activeTrackIndex;
+    const queue = get().queue;
+
+    const crossfader = new Sound(
+      queue[activeTrackIndex + 1].url,
+      Sound.MAIN_BUNDLE,
+      e => {
+        if (e) {
+          TrackPlayer.skipToNext();
+          console.log('failed to load the sound', e);
+          return;
+        }
+
+        crossfader.setVolume(0);
+        crossfader.play();
+
+        let fadeOutInterval = setInterval(async () => {
+          const currentTrackVolume = await TrackPlayer.getVolume();
+          const crossfaderVolume = crossfader.getVolume();
+
+          await TrackPlayer.setVolume(currentTrackVolume - 0.1);
+          crossfader.setVolume(crossfaderVolume + 0.1);
+
+          if (currentTrackVolume <= 0) {
+            crossfader.getCurrentTime(async seconds => {
+              await TrackPlayer.skipToNext();
+              await TrackPlayer.seekTo(seconds + 1.8);
+              clearInterval(fadeOutInterval);
+
+              let fadeInInterval = setInterval(async () => {
+                await TrackPlayer.setVolume(
+                  (await TrackPlayer.getVolume()) + 0.5,
+                );
+
+                crossfader.setVolume(crossfader.getVolume() - 0.3);
+
+                if (crossfader.getVolume() <= 0) {
+                  await TrackPlayer.setVolume(1);
+                  crossfader.stop();
+                  clearInterval(fadeInInterval);
+                  crossfader.release();
+                }
+              }, 1000);
+            });
+          }
+        }, 1000);
+      },
+    );
+  },
   seekTo: async (position: any) => TrackPlayer.seekTo(position),
   skipTo: async (index: any) => await TrackPlayer.skip(index),
   rate: async (activeTrack: any, rating: number) => {

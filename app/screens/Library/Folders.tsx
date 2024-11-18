@@ -32,10 +32,12 @@ import {API_URL, ARTWORK_URL, HEIGHT, usePlayerStore, WIDTH} from '../../store';
 
 // * Types
 import {TrackProps, TracksProps} from '../../types';
+import SvgAnimatedLinearGradient from 'react-native-svg-animated-linear-gradient';
+import {Rect} from 'react-native-svg';
 
 const ITEM_HEIGHT = 60;
 
-export default function Folders({navigation, route}: any) {
+export default function Folders({navigation}: any) {
   // ? Refs
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -49,12 +51,11 @@ export default function Folders({navigation, route}: any) {
   const [bottomSheetVisible, setBottomSheetVisible] = useState<boolean>(false);
 
   // ? StoreStates
-  const nowPlayingRef = usePlayerStore(state => state.nowPlayingRef);
   const palette = usePlayerStore(state => state.palette);
 
   // ? StoreActions
   const activeTrack = usePlayerStore(state => state.activeTrack);
-  const openNowPlaying = usePlayerStore(state => state.openNowPlaying);
+  const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const play = usePlayerStore(state => state.play);
 
   // ? Mutations
@@ -70,30 +71,24 @@ export default function Folders({navigation, route}: any) {
     onSuccess: ({data}) => setData(data),
   });
 
-  // const list = async (path: string) => {
-  //   const res = await axios.get(`${API_URL}${path}`);
-  //   setData(res.data);
-  //   savePath(path);
-  // };
-
   // ? Effects
   useEffect(() => {
     navigation.setOptions({
-      headerStyle: {backgroundColor: palette?.[1] ?? '#000'},
-      headerRight: () => (
-        <MaterialCommunityIcons
-          name="folder-home"
-          size={24}
-          color="white"
-          style={{marginRight: 10}}
-          onPress={async () => {
-            await AsyncStorage.setItem('currentPath', ' ');
-            // getData();
-          }}
-        />
-      ),
+      headerStyle: {backgroundColor: palette?.[0] ?? '#000'},
+      headerRight: () =>
+        path && path !== '/' ? (
+          <MaterialCommunityIcons
+            name="folder-home"
+            size={24}
+            color="white"
+            style={{marginRight: 10}}
+            onPress={() => (savePath('/'), list('/'))}
+          />
+        ) : (
+          false
+        ),
     });
-  });
+  }, [path, activeTrackIndex]);
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
@@ -119,7 +114,7 @@ export default function Folders({navigation, route}: any) {
       let path = '';
       const value = await AsyncStorage.getItem('path');
 
-      if (value === null || value === 'Folders' || value === '') {
+      if (value === null || value === '') {
         await AsyncStorage.setItem('path', '');
         path = '';
       } else path = value;
@@ -139,7 +134,7 @@ export default function Folders({navigation, route}: any) {
         savePath(p);
         //console.log('pathsplit', p);
         //console.log('path', path);
-        if (path === '/') navigation.push('LibraryStack');
+        if (path === '/') navigation.push('Library');
         else navigation.push('Folders');
         return true;
       },
@@ -160,6 +155,23 @@ export default function Folders({navigation, route}: any) {
   //     bottomSheetRef.current?.snapToIndex(0);
   //   }
   // }, [highlighted]);
+
+  //console.log(HEIGHT / ITEM_HEIGHT);
+
+  const ItemPlaceholder = () => {
+    return new Array().fill(HEIGHT / ITEM_HEIGHT).map(i => (
+      <SvgAnimatedLinearGradient
+        key={i}
+        primaryColor="#e8f7ff"
+        secondaryColor="#4dadf7"
+        height={ITEM_HEIGHT}>
+        <Rect x="0" y="40" rx="4" ry="4" width="40" height="40" />
+        <Rect x="55" y="50" rx="4" ry="4" width="200" height="10" />
+        <Rect x="280" y="50" rx="4" ry="4" width="10" height="10" />
+        <Rect x="55" y="65" rx="4" ry="4" width="150" height="8" />
+      </SvgAnimatedLinearGradient>
+    ));
+  };
 
   return (
     <>
@@ -303,21 +315,29 @@ export default function Folders({navigation, route}: any) {
               )}
             </>
           )}
-          renderEmpty={() =>
-            isPending ? (
-              <View
+          /* <View
                 style={{
-                  flex: 1,
+                  flexGrow: 1,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  height: HEIGHT,
+                  height: HEIGHT * 0.8,
                 }}>
                 <ActivityIndicator
                   size="large"
-                  color="#fff"
-                  style={{alignSelf: 'center'}}
+                  color="#000"
+                  style={{
+                    position: 'absolute',
+                    alignSelf: 'center',
+                    backgroundColor: '#fff',
+                    borderRadius: 50,
+                    padding: 5,
+                    top: '50%',
+                  }}
                 />
-              </View>
+              </View> */
+          renderEmpty={() =>
+            isPending ? (
+              <ItemPlaceholder />
             ) : isError ? (
               <View>
                 <Text variant="titleLarge" style={{fontFamily: 'Abel'}}>
@@ -328,6 +348,28 @@ export default function Folders({navigation, route}: any) {
               <View />
             )
           }
+          // renderEmpty={() =>
+          //   isPending ? (
+          //     <ActivityIndicator
+          //       size="large"
+          //       color="#000"
+          //       style={{
+          //         backgroundColor: '#fff',
+          //         borderRadius: 50,
+          //         padding: 5,
+          //         marginTop: '50%',
+          //       }}
+          //     />
+          //   ) : isError ? (
+          //     <View>
+          //       <Text variant="titleLarge" style={{fontFamily: 'Abel'}}>
+          //         Empty
+          //       </Text>
+          //     </View>
+          //   ) : (
+          //     <View />
+          //   )
+          // }
           getItemLayout={(data, index) => ({
             length: ITEM_HEIGHT,
             offset: ITEM_HEIGHT * index,
@@ -630,7 +672,6 @@ export default function Folders({navigation, route}: any) {
               </View>
             </Pressable>
           )}
-          contentContainerStyle={{}}
         />
       </BottomSheet>
     </>
@@ -638,9 +679,6 @@ export default function Folders({navigation, route}: any) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   imageShadow: {
     shadowColor: '#000',
     shadowOffset: {
@@ -659,7 +697,6 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     //transform: [{rotate: spin}],
   },
-
   artists: {
     fontSize: 14,
     fontWeight: '300',
@@ -673,14 +710,5 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     fontSize: 12,
     fontWeight: '300',
-  },
-  plays: {
-    backgroundColor: 'grey',
-    borderRadius: 10,
-    height: 35,
-    margin: 10,
-    opacity: 0.6,
-    padding: 5,
-    paddingHorizontal: 15,
   },
 });

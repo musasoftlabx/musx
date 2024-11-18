@@ -9,18 +9,10 @@ import Slider from '@react-native-community/slider';
 import TrackPlayer from 'react-native-track-player';
 
 // * Store
-import {usePlayerStore, WIDTH} from '../../../store';
+import {formatTrackTime, usePlayerStore, WIDTH} from '../../../store';
 
 // * Assets
 import imageFiller from '../../../assets/images/image-filler.png';
-
-// * Functions
-const formatTrackTime = (secs: number) => {
-  secs = Math.round(secs);
-  let minutes = Math.floor(secs / 60) || 0;
-  let seconds = secs - minutes * 60 || 0;
-  return minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
-};
 
 export default function WaveformSlider() {
   // ? StoreStates
@@ -37,7 +29,7 @@ export default function WaveformSlider() {
           flexDirection: 'column',
           alignItems: 'flex-start',
           top: -5,
-          marginLeft: 10,
+          marginLeft: 8,
         }}>
         <Image
           source={
@@ -131,7 +123,6 @@ export default function WaveformSlider() {
 
       <View
         style={{
-          flex: 1,
           flexDirection: 'row',
           justifyContent: 'flex-end',
           marginTop: 60,

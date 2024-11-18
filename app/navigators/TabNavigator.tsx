@@ -1,210 +1,65 @@
-// * React Native
-import {TouchableOpacity} from 'react-native';
+// * React
+import React from 'react';
 
-// * React Native Libraries
-import {
-  AnimatedTabBarNavigator,
-  DotSize, // optional
-  TabElementDisplayOptions, // optional
-  TabButtonLayout, // optional
-  IAppearanceOptions, // optional
-} from 'react-native-animated-nav-tab-bar';
+// * Libraries
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {useTheme} from 'react-native-paper';
-import {RFPercentage as s} from 'react-native-responsive-fontsize';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 // * Screens
-import Dashboard from '../screens/Tabs/Dashboard';
-import Purchases from '../screens/Tabs/Purchases';
-import Sales from '../screens/Tabs/Sales';
-import Equity from '../screens/Tabs/Equity';
+import Downloads from '../screens/Downloads';
+import HomeStack from '../screens/Home/HomeStack';
+import Search from '../screens/Search';
+import Settings from '../screens/Settings';
+import LibraryStackNavigator from './LibraryStackNavigator';
 
-//const Tab = createBottomTabNavigator();
-const Tab = AnimatedTabBarNavigator();
+// * Store
+import {usePlayerStore} from '../store';
 
-interface ITabProps {
-  focused: boolean;
-  color: string;
-  size: number;
-}
+const Tab = createBottomTabNavigator();
 
-/* const TabNavigator = () => {
-  const theme = useTheme();
+export default function TabNavigator() {
+  // ? StoreStates
+  const palette = usePlayerStore(state => state.palette);
 
   return (
     <Tab.Navigator
-      //activeColor="#f0edf6"
-      //inactiveColor="gray"
-      //barStyle={{backgroundColor: '#694fad'}}
+      initialRouteName="LibraryStackNavigator"
       screenOptions={({route}) => ({
-        headerBackVisible: true,
-        headerShown: false,
-        headerTransparent: false,
-        shifting: true,
         tabBarIcon: ({focused, color, size}) => {
-          let iconName: string = '';
+          let iconName;
 
-          switch (route.name) {
-            case 'Dashboard':
-              iconName = focused ? 'logo-slack' : 'logo-slack';
-              break;
-            case 'Purchases':
-              iconName = focused ? 'md-wallet' : 'md-wallet-outline';
-              break;
-            case 'Sales':
-              iconName = focused ? 'calculator' : 'calculator';
-              break;
-            case 'Equity':
-              iconName = focused ? 'library' : 'library-outline';
-              break;
+          if (route.name === 'HomeStack') {
+            iconName = focused ? 'home-filled' : 'home';
+          } else if (route.name === 'Library') {
+            iconName = focused ? 'library-music' : 'library-music';
+          } else if (route.name === 'Search') {
+            iconName = focused ? 'search' : 'search-off';
+          } else if (route.name === 'Downloads') {
+            iconName = focused ? 'cloud-download' : 'cloud-download';
+          } else if (route.name === 'Settings') {
+            iconName = focused ? 'settings' : 'settings';
           }
 
-          return <Ionicons name={iconName} size={26} color={color} />;
+          return <MaterialIcons name={iconName!} size={24} color={color} />;
         },
-        tabBarShowLabel: true,
-        tabBarHideOnKeyboard: true,
-        tabBarLabelPosition: 'below-icon',
-        tabBarLabelStyle: {
-          fontFamily: theme.fonts.bodyLarge.fontFamily,
-          fontSize: s(1.6),
-          fontWeight: 'bold',
-        },
-        tabBarStyle: {
-          backgroundColor: theme.colors.primary,
-          borderTopWidth: 0,
-          elevation: 0,
-          height: 60,
-          paddingBottom: 5,
-          paddingHorizontal: 10,
-          position: 'absolute',
-          bottom: 16,
-          left: 16,
-          right: 16,
-          borderRadius: 20,
-        },
-        tabBarItemStyle: {
-          borderBottomStartRadius: 20,
-          borderBottomEndRadius: 20,
-          paddingBottom: 5,
-        },
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: '#bcaaa4',
-        tabBarActiveBackgroundColor: theme.colors.background,
-        tabBarInactiveBackgroundColor: 'transparent',
-        tabBarInactiveTopStartRadius: 20,
-        tabBarButton: props => (
-          <TouchableOpacity {...props} activeOpacity={0.1} />
-        ),
+        tabBarStyle: {backgroundColor: `${palette?.[1]}`},
+        tabBarShowLabel: false,
+        tabBarActiveTintColor: '#fff',
+        tabBarInactiveTintColor: 'rgba(255, 255, 255, .4)',
       })}>
-      <Tab.Screen name="Dashboard" component={Dashboard} />
       <Tab.Screen
-        name="Purchases"
-        options={{headerShown: false, headerTransparent: true}}
-        component={Purchases}
+        name="HomeStack"
+        component={HomeStack}
+        options={{headerShown: false}}
       />
-      <Tab.Screen name="Sales" component={Sales} />
-      <Tab.Screen name="Equity" component={Equity} />
+      <Tab.Screen
+        name="LibraryStackNavigator"
+        component={LibraryStackNavigator}
+        options={{headerShown: false}}
+      />
+      <Tab.Screen name="Search" component={Search} />
+      <Tab.Screen name="Downloads" component={Downloads} />
+      <Tab.Screen name="Settings" component={Settings} />
     </Tab.Navigator>
   );
-}; */
-const TabNavigator = () => {
-  const theme = useTheme();
-
-  return (
-    <Tab.Navigator
-      appearance={{
-        shadow: true,
-        tabBarBackground: theme.colors.primary,
-        floating: false,
-        //topPadding: 0,
-        //tabButtonLayout: 'vertical',
-        dotCornerRadius: 10,
-      }}
-      tabBarOptions={{
-        activeTintColor: theme.colors.primary,
-        inactiveTintColor: '#222222',
-        activeBackgroundColor: '#fff',
-        labelStyle: {fontFamily: 'Abel', fontSize: s(2.5)},
-
-        //tabStyle: {backgroundColor: 'transparent'},
-        /* tabBarIcon: ({focused, color, size}) => {
-          let iconName: string = '';
-
-          switch (route.name) {
-            case 'Dashboard':
-              iconName = focused ? 'logo-slack' : 'logo-slack';
-              break;
-            case 'Purchases':
-              iconName = focused ? 'md-wallet' : 'md-wallet-outline';
-              break;
-            case 'Sales':
-              iconName = focused ? 'calculator' : 'calculator';
-              break;
-            case 'Equity':
-              iconName = focused ? 'library' : 'library-outline';
-              break;
-          }
-
-          return <Ionicons name={iconName} size={26} color={color} />;
-        }, */
-      }}>
-      <Tab.Screen
-        name="Dashboard"
-        component={Dashboard}
-        options={{
-          tabBarIcon: ({focused, color, size}: ITabProps) => (
-            <Ionicons
-              name={focused ? 'logo-slack' : 'logo-slack'}
-              size={size ? size : 24}
-              color={focused ? color : '#fff'}
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Purchases"
-        options={{
-          headerShown: false,
-          headerTransparent: true,
-          tabBarIcon: ({focused, color, size}: ITabProps) => (
-            <Ionicons
-              name={focused ? 'md-wallet' : 'md-wallet-outline'}
-              size={size ? size : 24}
-              color={focused ? color : '#fff'}
-            />
-          ),
-        }}
-        component={Purchases}
-      />
-      <Tab.Screen
-        name="Sales"
-        component={Sales}
-        options={{
-          tabBarIcon: ({focused, color, size}: ITabProps) => (
-            <Ionicons
-              name={focused ? 'calculator' : 'calculator'}
-              size={size ? size : 24}
-              color={focused ? color : '#fff'}
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Equity"
-        component={Equity}
-        options={{
-          tabBarIcon: ({focused, color, size}: ITabProps) => (
-            <Ionicons
-              name={focused ? 'library' : 'library-outline'}
-              size={size ? size : 24}
-              color={focused ? color : '#fff'}
-            />
-          ),
-        }}
-      />
-    </Tab.Navigator>
-  );
-};
-
-export default TabNavigator;
+}
