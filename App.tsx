@@ -298,7 +298,7 @@ export default function App(): React.JSX.Element {
         }, 3000);
       }
 
-      if (castState !== 'connected') {
+      if (castState != 'connected') {
         if (event.type === Event.PlaybackProgressUpdated) {
           setProgress(progress);
 
