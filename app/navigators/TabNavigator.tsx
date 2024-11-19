@@ -10,6 +10,8 @@ import Downloads from '../screens/Downloads';
 import HomeStack from '../screens/Home/HomeStack';
 import Search from '../screens/Search';
 import Settings from '../screens/Settings';
+
+// * Navigator
 import LibraryStackNavigator from './LibraryStackNavigator';
 
 // * Store
@@ -23,14 +25,15 @@ export default function TabNavigator() {
 
   return (
     <Tab.Navigator
-      initialRouteName="LibraryStackNavigator"
+      initialRouteName=""
+      //initialRouteName="LibraryStackNavigator"
       screenOptions={({route}) => ({
         tabBarIcon: ({focused, color, size}) => {
           let iconName;
 
           if (route.name === 'HomeStack') {
             iconName = focused ? 'home-filled' : 'home';
-          } else if (route.name === 'Library') {
+          } else if (route.name === 'LibraryStackNavigator') {
             iconName = focused ? 'library-music' : 'library-music';
           } else if (route.name === 'Search') {
             iconName = focused ? 'search' : 'search-off';

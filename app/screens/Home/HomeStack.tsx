@@ -19,15 +19,6 @@ const Stack = createNativeStackNavigator();
 const HomeStack = ({navigation}) => {
   const [text, onChangeText] = useState('');
 
-  const filter = x => {
-    console.log(x);
-    /* return text.filter(text => {
-      if (text.length > 0) {
-        console.log(text);
-      }
-    }); */
-  };
-
   return (
     <>
       <Stack.Navigator initialRouteName="Home">

@@ -47,7 +47,7 @@ const arrayMove = (fromIndex: number, toIndex: number, palette: string[]) => {
 import imageFiller from '../../assets/images/image-filler.png';
 import WaveformSliderHorizontal from './components/WaveformSliderHorizontal';
 
-export default function NowPlaying({nowPlayingRef}: {nowPlayingRef: any}) {
+export default function NowPlaying() {
   // ? Refs
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -55,6 +55,7 @@ export default function NowPlaying({nowPlayingRef}: {nowPlayingRef: any}) {
   const [repeatMode, setRepeatMode] = useState<number>();
 
   // ? StoreStates
+  const nowPlayingRef: any = usePlayerStore(state => state.nowPlayingRef);
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const queue = usePlayerStore(state => state.queue);
@@ -66,11 +67,12 @@ export default function NowPlaying({nowPlayingRef}: {nowPlayingRef: any}) {
   // ? StoreActions
   const setLyricsVisible = usePlayerStore(state => state.setLyricsVisible);
   const setPalette = usePlayerStore(state => state.setPalette);
+  const closeNowPlaying = usePlayerStore(state => state.closeNowPlaying);
 
   // ? Hooks
   const orientation = useDeviceOrientation();
   useBackHandler(() => {
-    nowPlayingRef.current?.forceClose();
+    closeNowPlaying(nowPlayingRef!);
     return true;
   });
 

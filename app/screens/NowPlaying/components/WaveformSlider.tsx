@@ -6,7 +6,6 @@ import {Image, Text, View} from 'react-native';
 
 // * Libraries
 import Slider from '@react-native-community/slider';
-import TrackPlayer from 'react-native-track-player';
 
 // * Store
 import {formatTrackTime, usePlayerStore, WIDTH} from '../../../store';
@@ -21,6 +20,9 @@ export default function WaveformSlider() {
   );
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const palette = usePlayerStore(state => state.palette);
+
+  // ? StoreActions
+  const seekTo = usePlayerStore(state => state.seekTo);
 
   return (
     <>
@@ -113,7 +115,7 @@ export default function WaveformSlider() {
           }}
           value={Math.floor((position ?? 0 / duration) * 100)}
           thumbTintColor="transparent"
-          onValueChange={value => TrackPlayer.seekTo((value / 100) * duration)}
+          onValueChange={value => seekTo((value / 100) * duration)}
           minimumValue={0}
           maximumValue={100}
           minimumTrackTintColor={palette[0] || '#FFF'}

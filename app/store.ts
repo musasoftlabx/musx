@@ -61,6 +61,7 @@ interface IPlayerStore {
   setLyricsVisible: (lyricsVisible: boolean) => void;
   setLyrics: (lyrics: null | string) => void;
   openNowPlaying: (nowPlayingRef: BottomSheet | {}) => void;
+  closeNowPlaying: (nowPlayingRef: BottomSheet | {}) => void;
   setNowPlayingRef: (nowPlayingRef: BottomSheet | {}) => void;
   setCastState: (castState: any) => void;
   setCastClient: (castClient: any) => void;
@@ -167,6 +168,10 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     set(state => ({...state, nowPlayingRef}));
     nowPlayingRef.current?.snapToIndex(0);
   },
+  closeNowPlaying: (nowPlayingRef: any) => {
+    set(state => ({...state, nowPlayingRef}));
+    nowPlayingRef.current?.close();
+  },
   setNowPlayingRef: (nowPlayingRef: any) =>
     set(state => ({...state, nowPlayingRef})),
   setCastState: (castState: any) => set(state => ({...state, castState})),
@@ -240,12 +245,24 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   previous: (position: number) => {
     Vibration.vibrate(50);
 
-    if (position <= 10) TrackPlayer.skipToPrevious();
-    else TrackPlayer.seekTo(0);
+    const castState = get().castState;
+
+    if (position <= 10) {
+      TrackPlayer.skipToPrevious();
+      if (castState === 'connected') get().castClient?.queuePrev();
+    } else {
+      TrackPlayer.seekTo(0);
+      if (castState === 'connected') get().castClient?.seek({position: 0});
+    }
   },
   next: () => {
     Vibration.vibrate(50);
+
+    const castState = get().castState;
+
     TrackPlayer.skipToNext();
+    if (castState === 'connected') get().castClient?.queueNext();
+
     return false;
 
     const activeTrackIndex = get().activeTrackIndex;
@@ -297,7 +314,14 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
       },
     );
   },
-  seekTo: async (position: any) => TrackPlayer.seekTo(position),
+  seekTo: (position: number) => {
+    Vibration.vibrate(50);
+
+    const castState = get().castState;
+
+    TrackPlayer.seekTo(position);
+    if (castState === 'connected') get().castClient?.seek({position});
+  },
   skipTo: async (index: any) => await TrackPlayer.skip(index),
   rate: async (activeTrack: any, rating: number) => {
     const index = await TrackPlayer.getActiveTrackIndex();
@@ -311,50 +335,6 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
       console.log(res);
     } catch (err: any) {
       console.error(err.message);
-    }
-  },
-  trackChange: async ({
-    index,
-    track: {id},
-  }: {
-    index: number;
-    track: {id: number; plays: number};
-  }) => {
-    // await TrackPlayer.updateMetadataForTrack(index, {
-    //   ...track,
-    //   plays: track.plays + 1,
-    // });
-
-    set(state => ({
-      ...state,
-      currentTrack: {...state.currentTrack, plays: state.currentTrack + 1},
-    }));
-
-    // try {
-    //   const res = await axios.put(`${API_URL}updatePlayCount`, {id});
-    //   console.log(res.data);
-    // } catch (err: any) {
-    //   console.error(err.message);
-    // }
-  },
-  restoreSavedQueue: async () => {
-    const savedQueue = await AsyncStorage.getItem('queue');
-
-    if (savedQueue) {
-      const queue = JSON.parse(savedQueue);
-      set(state => ({
-        ...state,
-        currentTrack: queue[0],
-        nextTracks: queue.slice(1),
-      }));
-      //await TrackPlayer.load(queue[0]);
-      await TrackPlayer.setQueue(queue);
-      //await TrackPlayer.setQueue(queue.slice(1));
-      //console.log(queue.slice(1));
-    } else {
-      console.log('☺️');
-      const navigation = useNavigation();
-      navigation.goBack(null);
     }
   },
 }));

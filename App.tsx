@@ -34,6 +34,7 @@ import TrackPlayer, {
   useActiveTrack,
   useProgress,
   Track,
+  State,
 } from 'react-native-track-player';
 
 // * Screens
@@ -101,6 +102,20 @@ export default function App(): React.JSX.Element {
   const setCastState = usePlayerStore(state => state.setCastState);
   const setCastClient = usePlayerStore(state => state.setCastClient);
 
+  // ? Functions
+  const fetchLyrics = (path: string) => {
+    axios
+      .get(`${SERVER_URL}/Music/${path.replace('.mp3', '.lrc')}`)
+      .then(({data: lyrics}) => {
+        setLyrics(lyrics);
+        setLyricsVisible(true);
+      })
+      .catch(() => {
+        setLyrics('');
+        setLyricsVisible(false);
+      });
+  };
+
   // ? Effects
   useEffect(() => {
     setNowPlayingRef(ref); // ? Set Now Playing Bottom Sheet Ref
@@ -147,12 +162,11 @@ export default function App(): React.JSX.Element {
 
         if (savedQueue) {
           const _queue = JSON.parse(savedQueue);
-          setQueue(_queue);
-
           await TrackPlayer.setQueue(_queue);
           await TrackPlayer.skip(Number(savedActiveTrackIndex));
           await TrackPlayer.seekTo(Number(playPosition));
           openNowPlaying(ref);
+          setQueue(_queue);
         }
       } catch (err: any) {
         console.log('Setup Player Error:', err.message);
@@ -161,47 +175,105 @@ export default function App(): React.JSX.Element {
   }, []);
 
   useEffect(() => {
-    if (castState)
-      if (castState === 'connected') {
-        setCastState(castState);
-        setCastClient(castClient);
+    if (castState === 'connected') {
+      setCastState(castState);
+      setCastClient(castClient);
+      //TrackPlayer.pause();
+      TrackPlayer.setVolume(0);
 
-        // ? Check if cast client is empty to add new tracks and play. If not empty, continue with previous queue
-        if (!castClient || JSON.stringify(castClient) === '{}') {
-          TrackPlayer.setVolume(0);
-          TrackPlayer.getQueue().then(async queue => {
-            if (queue.length > 0) {
-              castClient
-                ?.loadMedia({
-                  queueData: {
-                    items: queue
-                      .map((track, index) => ({
-                        mediaInfo: {
-                          contentUrl: track.url,
-                          contentType: 'audio/mpeg',
-                          metadata: {
-                            type: 'musicTrack',
-                            images: [{url: track.artwork}],
-                            title: track.title,
-                            albumTitle: track.albumArtist,
-                            albumArtist: track.albumArtist,
-                            artist: track.artists,
-                            releaseDate: track.year,
-                            trackNumber: index + 1,
-                            discNumber: 1,
-                            duration: track.duration,
-                          },
-                        },
-                      }))
-                      .slice(activeTrackIndex) as any,
-                  },
-                })
-                .then(() => castClient?.play());
-            }
-          });
-        }
-      } else TrackPlayer.setVolume(1);
-  }, [castState, activeTrackIndex]);
+      // ? Check if cast client is empty to add new tracks and play. If not empty, continue with previous queue
+      if (!castClient || JSON.stringify(castClient) === '{}') {
+        TrackPlayer.getQueue().then(queue => {
+          castClient
+            ?.loadMedia({
+              queueData: {
+                items: queue
+                  .map((track, index) => ({
+                    mediaInfo: {
+                      contentUrl: track.url,
+                      contentType: 'audio/mpeg',
+                      metadata: {
+                        type: 'musicTrack',
+                        images: [{url: track.artwork}],
+                        title: track.title,
+                        albumTitle: track.albumArtist,
+                        albumArtist: track.albumArtist,
+                        artist: track.artists,
+                        releaseDate: track.year,
+                        trackNumber: index + 1,
+                        discNumber: 1,
+                      },
+                      customData: {
+                        id: track.id,
+                        title: track.title,
+                        albumArtist: track.albumArtist,
+                        duration: track.duration,
+                        artists: track.artists,
+                        album: track.album,
+                        rating: track.rating ?? 0,
+                        plays: track.plays,
+                        year: track.year,
+                        waveform: track.waveform,
+                        sampleRate: track.sampleRate,
+                        palette: track.palette,
+                        genre: track.genre,
+                        format: track.format,
+                        encoder: track.encoder,
+                        bitrate: track.bitrate,
+                        artwork: track.artwork,
+                      },
+                    },
+                  }))
+                  .slice(activeTrackIndex) as any,
+              },
+            })
+            .then(() => castClient?.play());
+        });
+      } else TrackPlayer.setVolume(0);
+      //} //else playbackState.state === State.Paused && TrackPlayer.play();
+    } else TrackPlayer.setVolume(1);
+  }, [castClient, castState]);
+
+  useEffect(() => {
+    if (castMediaStatus?.currentItemId) {
+      const {mediaInfo} = castMediaStatus as any;
+      // const {rating, plays, palette, duration, path} =
+      //   mediaInfo?.customData as any;
+
+      // ? Save variables to store to be accessed by components
+      setLyricsVisible(false);
+      setPlayRegistered(false);
+      setActiveTrack(mediaInfo?.customData);
+      setTrackRating(mediaInfo?.customData?.rating);
+      setTrackPlayCount(mediaInfo?.customData?.plays);
+      setPalette(mediaInfo?.customData?.palette);
+      setProgress({
+        position: 0,
+        buffered: 0,
+        duration: mediaInfo?.customData?.duration,
+      });
+
+      // ? Get active track lyrics. Display the lyrics if found else display artwork
+      fetchLyrics(mediaInfo?.contentUrl);
+
+      TrackPlayer.getQueue().then(async queue => {
+        // ? Get the active track index
+        const activeTrackIndex = queue.findIndex(
+          track => track.id === mediaInfo?.customData.id,
+        );
+
+        // ? Set the track index
+        setActiveTrackIndex(activeTrackIndex);
+
+        // ? Set the queue
+        setQueue(queue);
+
+        // ? Store the queue and the active track index to restore state incase the app crashes or is dismissed
+        AsyncStorage.setItem('activeTrackIndex', activeTrackIndex!.toString());
+        AsyncStorage.setItem('queue', JSON.stringify(queue));
+      });
+    }
+  }, [castMediaStatus?.currentItemId]);
 
   useEffect(() => {
     if (castMediaStatus)
@@ -213,7 +285,7 @@ export default function App(): React.JSX.Element {
       setProgress({
         position: streamPosition,
         buffered: 0,
-        duration: castMediaStatus?.mediaInfo?.metadata?.duration,
+        duration: castMediaStatus?.mediaInfo?.streamDuration as number,
       });
 
       if (streamPosition >= 10 && playRegistered === false) {
@@ -256,49 +328,41 @@ export default function App(): React.JSX.Element {
       Event.PlaybackQueueEnded,
     ],
     async event => {
-      if (event.type === Event.PlaybackActiveTrackChanged) {
-        setLyricsVisible(false);
+      if (castState && castState !== 'connected') {
+        if (event.type === Event.PlaybackActiveTrackChanged) {
+          setLyricsVisible(false);
 
-        // ? Save variables to store to be accessed by components
-        setPlayRegistered(false);
-        setActiveTrack(activeTrack);
-        setProgress(progress);
-        setTrackRating(activeTrack?.rating);
-        setTrackPlayCount(activeTrack?.plays);
-        setPalette(activeTrack?.palette);
-
-        // ? Get active track lyrics. Display the lyrics if found else display artwork
-        axios
-          .get(
-            `${SERVER_URL}/Music/${activeTrack?.path.replace('.mp3', '.lrc')}`,
-          )
-          .then(({data: lyrics}) => {
-            setLyrics(lyrics);
-            setLyricsVisible(true);
-          })
-          .catch(() => {
-            setLyrics('');
-            setLyricsVisible(false);
+          // ? Save variables to store to be accessed by components
+          setPlayRegistered(false);
+          setActiveTrack(activeTrack);
+          setTrackRating(activeTrack?.rating);
+          setTrackPlayCount(activeTrack?.plays);
+          setPalette(activeTrack?.palette);
+          setProgress({
+            position: 0,
+            buffered: 0,
+            duration: activeTrack?.duration!,
           });
 
-        const _activeTrackIndex = await TrackPlayer.getActiveTrackIndex();
-        setActiveTrackIndex(_activeTrackIndex);
+          // ? Get active track lyrics. Display the lyrics if found else display artwork
+          fetchLyrics(activeTrack?.path);
 
-        const _queue = await TrackPlayer.getQueue();
-        setQueue(_queue);
+          // ? Set the active track index
+          const _activeTrackIndex = await TrackPlayer.getActiveTrackIndex();
+          setActiveTrackIndex(_activeTrackIndex);
 
-        // ? Defer getting and storing the queue for performance
-        setTimeout(async () => {
-          // ? Store the queue and the active track index to restore state incase the app crashes or is dismissed
-          await AsyncStorage.setItem('queue', JSON.stringify(_queue));
-          await AsyncStorage.setItem(
-            'activeTrackIndex',
-            _activeTrackIndex!.toString(),
-          );
-        }, 3000);
-      }
+          // ? Set the queue
+          TrackPlayer.getQueue().then(queue => {
+            setQueue(queue);
+            // ? Store the queue and the active track index to restore state incase the app crashes or is dismissed
+            AsyncStorage.setItem('queue', JSON.stringify(queue));
+            AsyncStorage.setItem(
+              'activeTrackIndex',
+              _activeTrackIndex!.toString(),
+            );
+          });
+        }
 
-      if (castState != 'connected') {
         if (event.type === Event.PlaybackProgressUpdated) {
           setProgress(progress);
 
@@ -311,19 +375,20 @@ export default function App(): React.JSX.Element {
             } as Track);
             axios
               .patch('updatePlayCount', {id: activeTrack?.id})
-              .then(({data}) => console.log(data));
+              .then(({data}) => console.log(data))
+              .catch(error => console.log(error));
           }
         }
 
         if (event.type === Event.PlaybackState) {
           setPlaybackState(playbackState);
-          console.log('ps:', playbackState);
+          console.log('trackplayer:', playbackState);
         }
-      }
 
-      if (event.type === Event.PlaybackQueueEnded) {
-        await AsyncStorage.removeItem('queue');
-        await AsyncStorage.removeItem('activeTrackIndex');
+        if (event.type === Event.PlaybackQueueEnded) {
+          await AsyncStorage.removeItem('queue');
+          await AsyncStorage.removeItem('activeTrackIndex');
+        }
       }
     },
   );
@@ -348,7 +413,7 @@ export default function App(): React.JSX.Element {
                 />
               </Stack.Navigator>
             </NavigationContainer>
-            <NowPlaying nowPlayingRef={nowPlayingRef} />
+            <NowPlaying />
           </SafeAreaProvider>
         </PaperProvider>
       </QueryClientProvider>
