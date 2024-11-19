@@ -140,17 +140,10 @@ const Home = ({navigation}: any) => {
       />
 
       <LinearGradient
-        colors={[palette[1] ?? '#000', palette[0] ?? '#000']}
+        colors={[palette[0] ?? '#000', palette[1] ?? '#000']}
         useAngle={true}
-        angle={200}
-        style={{
-          position: 'absolute',
-          opacity: 1,
-          top: 0,
-          left: 0,
-          bottom: 0,
-          right: 0,
-        }}
+        angle={180}
+        style={{position: 'absolute', top: 0, left: 0, bottom: 0, right: 0}}
       />
 
       <SectionList
@@ -305,8 +298,6 @@ const Home = ({navigation}: any) => {
         )}
         style={{marginTop: 40}}
       />
-
-      {/* <Footer /> */}
     </>
   );
 };
