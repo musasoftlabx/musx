@@ -13,7 +13,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import {ARTWORK_URL, usePlayerStore} from '../../../store';
 
 // * Types
-import {SectionProps} from '../Home';
+import {SectionProps} from '..';
 import {TrackProps} from '../../../types';
 
 dayjs.extend(relativeTime);

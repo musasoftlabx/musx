@@ -21,6 +21,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import {API_URL, ARTWORK_URL, AUDIO_URL, usePlayerStore} from '../../store';
 
 import {TrackProps} from '../../types';
+import {useBackHandler} from '@react-native-community/hooks';
 
 const spinValue = new Animated.Value(0);
 
@@ -61,7 +62,16 @@ export default function Artist({
     {title: 'Singles', data: [1]},
   ]);
 
+  // ? StoreStates
   const palette = usePlayerStore(state => state.palette);
+
+  // ? StoreActions
+  const play = usePlayerStore(state => state.play);
+
+  useBackHandler(() => {
+    navigation.goBack();
+    return true;
+  });
 
   // ? Effects
   useEffect(() => {
@@ -79,7 +89,7 @@ export default function Artist({
   return (
     <>
       <LinearGradient
-        colors={[palette[0] ?? '#000', palette[1] ?? '#fff']}
+        colors={[palette[0] ?? '#000', palette[1] ?? '#000']}
         useAngle={true}
         angle={290}
         style={{position: 'absolute', top: 0, left: 0, bottom: 0, right: 0}}
@@ -206,7 +216,7 @@ export default function Artist({
                 data={artist && artist.singles}
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={({item, index}) => (
-                  <Pressable>
+                  <Pressable onPress={() => play([item], item)}>
                     <View style={styles.item}>
                       <Image
                         source={{uri: `${ARTWORK_URL}${item.artwork}`}}

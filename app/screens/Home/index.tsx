@@ -236,7 +236,7 @@ const Home = ({navigation}: any) => {
                       {section.dataset?.map((item, i) => (
                         <Pressable
                           key={i}
-                          //onPress={() => navigation.navigate(item.name)}
+                          onPress={() => navigation.navigate(item.name)}
                           style={{
                             flexGrow: 1,
                             borderRadius: 10,

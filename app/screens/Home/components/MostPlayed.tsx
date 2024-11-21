@@ -20,7 +20,7 @@ import SvgAnimatedLinearGradient from 'react-native-svg-animated-linear-gradient
 import {ARTWORK_URL, AUDIO_URL, usePlayerStore, WIDTH} from '../../../store';
 
 // * Types
-import {SectionProps} from '../Home';
+import {SectionProps} from '..';
 import {TrackProps} from '../../../types';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {StarRatingDisplay} from 'react-native-star-rating-widget';

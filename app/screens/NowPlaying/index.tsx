@@ -25,9 +25,6 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import SelectDropdown from 'react-native-select-dropdown';
 import TrackPlayer, {RepeatMode} from 'react-native-track-player';
 
-// * Store
-import {ASPECT_RATIO, HEIGHT, usePlayerStore, WIDTH} from '../../store';
-
 // * Components
 import Controls from './components/Controls';
 import Lyrics from './components/Lyrics';
@@ -35,17 +32,16 @@ import Queue from './components/Queue';
 import Rating from './components/Rating';
 import TrackInfo from './components/TrackInfo';
 import WaveformSlider from './components/WaveformSlider';
+import WaveformSliderHorizontal from './components/WaveformSliderHorizontal';
+
+// * Store
+import {ASPECT_RATIO, HEIGHT, usePlayerStore, WIDTH} from '../../store';
 
 // * Functions
-const arrayMove = (fromIndex: number, toIndex: number, palette: string[]) => {
-  let element = palette[fromIndex];
-  palette.splice(fromIndex, 1);
-  palette.splice(toIndex, 0, element);
-};
+import {arrayMove} from '../../functions';
 
 // * Assets
 import imageFiller from '../../assets/images/image-filler.png';
-import WaveformSliderHorizontal from './components/WaveformSliderHorizontal';
 
 export default function NowPlaying() {
   // ? Refs

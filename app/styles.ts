@@ -52,4 +52,10 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   helperText: {alignSelf: 'flex-end', marginTop: -25},
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+  },
 });

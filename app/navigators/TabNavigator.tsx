@@ -7,7 +7,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 // * Screens
 import Downloads from '../screens/Downloads';
-import HomeStack from '../screens/Home/HomeStack';
+import HomeStackNavigator from './HomeStackNavigator';
 import Search from '../screens/Search';
 import Settings from '../screens/Settings';
 
@@ -25,13 +25,13 @@ export default function TabNavigator() {
 
   return (
     <Tab.Navigator
-      initialRouteName=""
-      //initialRouteName="LibraryStackNavigator"
+      //initialRouteName=""
+      initialRouteName="LibraryStackNavigator"
       screenOptions={({route}) => ({
         tabBarIcon: ({focused, color, size}) => {
           let iconName;
 
-          if (route.name === 'HomeStack') {
+          if (route.name === 'HomeStackNavigator') {
             iconName = focused ? 'home-filled' : 'home';
           } else if (route.name === 'LibraryStackNavigator') {
             iconName = focused ? 'library-music' : 'library-music';
@@ -51,8 +51,8 @@ export default function TabNavigator() {
         tabBarInactiveTintColor: 'rgba(255, 255, 255, .4)',
       })}>
       <Tab.Screen
-        name="HomeStack"
-        component={HomeStack}
+        name="HomeStackNavigator"
+        component={HomeStackNavigator}
         options={{headerShown: false}}
       />
       <Tab.Screen

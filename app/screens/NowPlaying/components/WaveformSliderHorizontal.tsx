@@ -11,16 +11,11 @@ import TrackPlayer from 'react-native-track-player';
 // * Store
 import {usePlayerStore, WIDTH} from '../../../store';
 
+// * Functions
+import {formatTrackTime} from '../../../functions';
+
 // * Assets
 import imageFiller from '../../../assets/images/image-filler.png';
-
-// * Functions
-const formatTrackTime = (secs: number) => {
-  secs = Math.round(secs);
-  let minutes = Math.floor(secs / 60) || 0;
-  let seconds = secs - minutes * 60 || 0;
-  return minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
-};
 
 export default function WaveformSlider() {
   // ? StoreStates

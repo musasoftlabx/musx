@@ -5,6 +5,7 @@ import React from 'react';
 import {ActivityIndicator, Pressable, Vibration, View} from 'react-native';
 
 // * Libraries
+import {MediaPlayerState} from 'react-native-google-cast';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import TrackPlayer, {State} from 'react-native-track-player';
 
@@ -27,6 +28,8 @@ export default function Controls() {
   const isPlaying = state === State.Playing;
   const isBuffering = state === State.Buffering;
   const isLoading = state === State.Loading;
+  const isEnded = state === State.Ended;
+  const isIdle = state === MediaPlayerState.IDLE;
 
   return (
     <View
@@ -49,13 +52,13 @@ export default function Controls() {
       </Pressable>
 
       <Pressable
-        disabled={activeTrackIndex === 0 && position <= 10}
+        disabled={(activeTrackIndex === 0 && position <= 10) || isIdle}
         onPress={() => previous(position)}>
         <Ionicons
           name="play-back-circle"
           size={70}
           color={
-            activeTrackIndex === 0 && position <= 10
+            (activeTrackIndex === 0 && position <= 10) || isIdle
               ? 'rgba(255, 255, 255, .4)'
               : 'white'
           }
@@ -76,11 +79,11 @@ export default function Controls() {
           }}
         />
       ) : (
-        <Pressable onPress={playPause}>
+        <Pressable disabled={isEnded || isIdle} onPress={playPause}>
           <Ionicons
             name={isPlaying ? 'pause-circle' : 'play-circle'}
             size={100}
-            color="white"
+            color={isEnded || isIdle ? 'rgba(255, 255, 255, .4)' : 'white'}
           />
         </Pressable>
       )}

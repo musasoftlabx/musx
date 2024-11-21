@@ -9,7 +9,6 @@ import {
   NavigatorScreenParams,
 } from '@react-navigation/native';
 import {StackScreenProps} from '@react-navigation/stack';
-import {Track} from 'react-native-track-player';
 
 declare global {
   namespace ReactNavigation {
@@ -48,6 +47,8 @@ export interface IAxiosError {
 }
 
 export type TrackProps = {
+  id: number;
+  url: string;
   album: string;
   albumArtist: string;
   artists: string;
@@ -59,13 +60,12 @@ export type TrackProps = {
   encoder: string;
   format: string;
   genre: string;
-  id: number;
   lyrics: string;
   name?: string;
-  palette: string[];
+  palette: string;
   path: string;
   plays: number;
-  rating: number;
+  rating: any; //RatingType;
   sampleRate: number;
   size: number;
   syncDate: string;
@@ -73,7 +73,25 @@ export type TrackProps = {
   track: number;
   waveform: string;
   year: string;
-} & Track;
+
+  type?: any; //TrackType;
+  /** The user agent HTTP header */
+  userAgent?: string;
+  /** Mime type of the media file */
+  contentType?: string;
+  /** (iOS only) The pitch algorithm to apply to the sound. */
+  pitchAlgorithm?: any; //PitchAlgorithm;
+  headers?: {[key: string]: any};
+  [key: string]: any;
+  artist?: string;
+  description?: string;
+  date?: string;
+  /**
+   * (iOS only) Whether the track is presented in the control center as being
+   * live
+   **/
+  isLiveStream?: boolean;
+};
 
 export type TracksProps = TrackProps[];
 

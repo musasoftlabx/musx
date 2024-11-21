@@ -13,13 +13,17 @@ import {
 
 // * Libraries
 import * as Progress from 'react-native-progress';
+import {MediaPlayerState} from 'react-native-google-cast';
 import {State} from 'react-native-track-player';
 import {Text} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
 
 // * Store
-import {formatTrackTime, usePlayerStore} from '../store';
+import {usePlayerStore} from '../store';
+
+// * Functions
+import {formatTrackTime} from '../functions';
 
 // * Assets
 import imageFiller from '../assets/images/image-filler.png';
@@ -44,6 +48,8 @@ export default function Footer() {
   const isPlaying = state === State.Playing;
   const isBuffering = state === State.Buffering;
   const isLoading = state === State.Loading;
+  const isEnded = state === State.Ended;
+  const isIdle = state === MediaPlayerState.IDLE;
   const activeStates = [
     State.Playing,
     State.Paused,
@@ -114,13 +120,15 @@ export default function Footer() {
                 gap: 20,
               }}>
               <Pressable
-                disabled={activeTrackIndex === 0}
+                disabled={(activeTrackIndex === 0 && position <= 10) || isIdle}
                 onPress={() => previous(position)}>
                 <Icon
                   name="play-back"
                   size={25}
                   color={
-                    activeTrackIndex === 0 ? 'rgba(255, 255, 255, .4)' : 'white'
+                    (activeTrackIndex === 0 && position <= 10) || isIdle
+                      ? 'rgba(255, 255, 255, .4)'
+                      : 'white'
                   }
                 />
               </Pressable>
@@ -146,11 +154,13 @@ export default function Footer() {
                   }}
                 />
               ) : (
-                <Pressable onPress={playPause}>
+                <Pressable disabled={isEnded || isIdle} onPress={playPause}>
                   <Icon
                     name={isPlaying ? 'pause-circle' : 'play-circle'}
                     size={45}
-                    color="#fff"
+                    color={
+                      isEnded || isIdle ? 'rgba(255, 255, 255, .4)' : 'white'
+                    }
                   />
                 </Pressable>
               )}

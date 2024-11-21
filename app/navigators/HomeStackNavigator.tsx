@@ -1,24 +1,20 @@
-import React, {useState} from 'react';
-import {TextInput, View, Text} from 'react-native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {HeaderBackContext} from '@react-navigation/elements';
+import React from 'react';
 
-import Home from './Home';
-import RecentlyAdded from './RecentlyAdded';
-import RecentlyPlayed from './RecentlyPlayed';
-import Folders from '../Library/Folders';
-import Playlists from '../Library/Playlists';
-import Playlist from '../Library/Playlist';
-import Artists from '../Library/Artists';
-import Artist from '../Library/Artist';
-import Footer from '../../components/Footer';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+
+import Home from '../screens/Home/';
+import RecentlyAdded from '../screens/Home/RecentlyAdded';
+import RecentlyPlayed from '../screens/Home/RecentlyPlayed';
+import Folders from '../screens/Library/Folders';
+import Playlists from '../screens/Library/Playlists';
+import Playlist from '../screens/Library/Playlist';
+import Artists from '../screens/Library/Artists';
+import Artist from '../screens/Library/Artist';
+import Footer from '../components/Footer';
 
 const Stack = createNativeStackNavigator();
 
-const HomeStack = ({navigation}) => {
-  const [text, onChangeText] = useState('');
-
+export default function HomeStackNavigator() {
   return (
     <>
       <Stack.Navigator initialRouteName="Home">
@@ -27,18 +23,21 @@ const HomeStack = ({navigation}) => {
           component={Home}
           options={{headerShown: false}}
         />
+        <Stack.Screen name="Playlists" component={Playlists} />
+        <Stack.Screen
+          name="Folders"
+          component={Folders}
+          options={{
+            headerTransparent: true,
+            headerBlurEffect: 'dark',
+            headerShadowVisible: false,
+          }}
+        />
+        <Stack.Screen name="Artist" component={Artist} />
         {/* <Stack.Screen name="RecentlyAdded" component={RecentlyAdded} />
       <Stack.Screen name="RecentlyPlayed" component={RecentlyPlayed} />
-      <Stack.Screen
-        name="Folders"
-        component={Folders}
-        options={{
-          headerTransparent: true,
-          headerBlurEffect: 'dark',
-          headerShadowVisible: false,
-        }}
-      />
-      <Stack.Screen name="Playlists" component={Playlists} />
+     
+      
       <Stack.Screen
         name="Playlist"
         component={Playlist}
@@ -62,16 +61,10 @@ const HomeStack = ({navigation}) => {
           ),
         }}
       />
-      <Stack.Screen
-        name="Artist"
-        component={Artist}
-        options={{headerShown: false}}
-      /> */}
+       */}
       </Stack.Navigator>
 
       <Footer />
     </>
   );
-};
-
-export default HomeStack;
+}

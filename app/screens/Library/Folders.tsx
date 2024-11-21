@@ -235,35 +235,31 @@ export default function Folders({navigation}: any) {
                     setHighlighted(item);
                     setBottomSheetVisible(true);
                     bottomSheetRef.current?.snapToIndex(0);
+                  }}
+                  style={{
+                    flex: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    margin: 5,
                   }}>
+                  {/* Track details */}
                   <View
                     style={{
+                      flex: 1,
                       flexDirection: 'row',
                       alignItems: 'center',
-                      paddingVertical: 15,
-                      paddingHorizontal: 10,
+                      gap: 10,
                     }}>
                     <Image
                       source={{uri: `${ARTWORK_URL}${item.artwork}`}}
-                      style={{
-                        height: 45,
-                        width: 45,
-                        marginRight: 10,
-                        borderRadius: 10,
-                      }}
+                      style={{borderRadius: 10, height: 45, width: 45}}
                     />
-                    <View
-                      style={{
-                        justifyContent: 'center',
-                        marginTop: -2,
-                        maxWidth: WIDTH - 190,
-                      }}>
+                    <View>
                       <View
                         style={{
                           flexDirection: 'row',
                           alignItems: 'center',
                           gap: 6,
-                          overflow: 'hidden',
                         }}>
                         <Text
                           numberOfLines={1}
@@ -278,38 +274,48 @@ export default function Folders({navigation}: any) {
                           }}>
                           {`${(item.size / 1000000).toFixed(2)} MB`}
                         </Text>
-
                         <Text
                           numberOfLines={1}
-                          style={{fontSize: 17, fontWeight: '600'}}>
+                          style={{
+                            fontSize: 16,
+                            fontWeight: '600',
+                            width: '97%',
+                          }}>
                           {item.title}
                         </Text>
                       </View>
-                      <Text numberOfLines={1} style={styles.artists}>
+                      <Text
+                        numberOfLines={1}
+                        style={{
+                          fontSize: 14,
+                          fontWeight: '300',
+                          fontStyle: 'italic',
+                        }}>
                         {item.artists ?? 'Unknown Artist'}
                       </Text>
                     </View>
-                    <View style={{flex: 1}} />
-                    <View
-                      style={{
-                        justifyContent: 'center',
-                        alignItems: 'flex-end',
-                      }}>
-                      <StarRatingDisplay
-                        rating={item.rating}
-                        starSize={16}
-                        starStyle={{marginHorizontal: 0}}
-                      />
-
-                      <Text
-                        style={{
-                          fontWeight: 'bold',
-                          marginRight: 5,
-                          marginTop: 5,
-                        }}>
-                        {item.plays || 0} play{`${item.plays === 1 ? '' : 's'}`}
-                      </Text>
-                    </View>
+                  </View>
+                  {/* Spacer */}
+                  <View style={{flex: 0.7}} />
+                  {/* Rating & Plays */}
+                  <View
+                    style={{
+                      flex: 1,
+                      alignItems: 'flex-end',
+                      justifyContent: 'center',
+                      gap: 3,
+                    }}>
+                    <StarRatingDisplay
+                      rating={item.rating}
+                      starSize={16}
+                      starStyle={{marginHorizontal: 0}}
+                    />
+                    <Text
+                      numberOfLines={1}
+                      style={{fontWeight: 'bold', marginRight: 3}}>
+                      {item.plays || 0} play
+                      {`${item.plays === 1 ? '' : 's'}`}
+                    </Text>
                   </View>
                 </Pressable>
               )}
@@ -375,7 +381,11 @@ export default function Folders({navigation}: any) {
             offset: ITEM_HEIGHT * index,
             index,
           })}
-          renderHeader={() => <View />}
+          renderHeader={() => (
+            <View style={{marginVertical: 60}}>
+              <Text>{data?.length}</Text>
+            </View>
+          )}
           renderFooter={() => <View style={{flex: 1}} />}
           itemHeight={ITEM_HEIGHT}
           headerHeight={0}
@@ -696,19 +706,5 @@ const styles = StyleSheet.create({
     marginRight: 8,
     borderRadius: 100,
     //transform: [{rotate: spin}],
-  },
-  artists: {
-    fontSize: 14,
-    fontWeight: '300',
-    fontStyle: 'italic',
-  },
-  album: {
-    backgroundColor: '#ffffff4D',
-    borderStyle: 'solid',
-    borderWidth: 1,
-    borderColor: '#fff',
-    borderRadius: 5,
-    fontSize: 12,
-    fontWeight: '300',
   },
 });

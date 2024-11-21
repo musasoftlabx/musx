@@ -6,13 +6,14 @@ import {FlatList, Image, Pressable, Text, View} from 'react-native';
 
 // * Libraries
 import {Circle, Rect} from 'react-native-svg';
+import {useNavigation} from '@react-navigation/native';
 import SvgAnimatedLinearGradient from 'react-native-svg-animated-linear-gradient';
 
 // * Store
 import {AUDIO_URL} from '../../../store';
 
 // * Types
-import {SectionProps} from '../Home';
+import {SectionProps} from '..';
 import {TrackProps} from '../../../types';
 
 export default function FavouriteArtists({
@@ -22,6 +23,8 @@ export default function FavouriteArtists({
   loading: boolean;
   dataset: SectionProps['dataset'];
 }) {
+  const navigation = useNavigation();
+
   return (
     <>
       {loading ? (
@@ -50,7 +53,15 @@ export default function FavouriteArtists({
           data={dataset}
           renderItem={({item}: {item: TrackProps}) => {
             return (
-              <View style={{alignItems: 'center', margin: 10, width: 100}}>
+              <Pressable
+                onPress={() =>
+                  navigation.navigate('Artist', {
+                    albumArtist: item.albumArtist,
+                    tracks: item.tracks,
+                    path: item.path,
+                  })
+                }
+                style={{alignItems: 'center', margin: 10, width: 100}}>
                 <Image
                   source={{
                     uri: `${AUDIO_URL}${item.path
@@ -74,7 +85,7 @@ export default function FavouriteArtists({
                 <Text style={{fontSize: 14, opacity: 0.5}}>
                   {item.rating.toFixed(2)} rating
                 </Text>
-              </View>
+              </Pressable>
             );
           }}
           showsHorizontalScrollIndicator={false}
