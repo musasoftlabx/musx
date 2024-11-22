@@ -11,6 +11,8 @@ import Playlist from '../screens/Library/Playlist';
 import Artists from '../screens/Library/Artists';
 import Artist from '../screens/Library/Artist';
 import Footer from '../components/Footer';
+import {View} from 'react-native';
+import Album from '../screens/Library/Album';
 
 const Stack = createNativeStackNavigator();
 
@@ -33,7 +35,20 @@ export default function HomeStackNavigator() {
             headerShadowVisible: false,
           }}
         />
-        <Stack.Screen name="Artist" component={Artist} />
+        <Stack.Screen
+          name="Artist"
+          component={Artist}
+          options={{
+            title: 'Artist',
+            headerBackVisible: true,
+            headerTransparent: true,
+          }}
+        />
+        <Stack.Screen
+          name="Album"
+          component={Album}
+          options={{title: '', headerBackVisible: true}}
+        />
         {/* <Stack.Screen name="RecentlyAdded" component={RecentlyAdded} />
       <Stack.Screen name="RecentlyPlayed" component={RecentlyPlayed} />
      

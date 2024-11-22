@@ -85,6 +85,18 @@ export default function FavouriteArtists({
                 <Text style={{fontSize: 14, opacity: 0.5}}>
                   {item.rating.toFixed(2)} rating
                 </Text>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    borderColor: '#ffffff4D',
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    fontSize: 14,
+                    marginTop: 1,
+                    paddingHorizontal: 5,
+                  }}>
+                  {item.tracks} tracks
+                </Text>
               </Pressable>
             );
           }}

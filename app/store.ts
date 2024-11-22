@@ -20,6 +20,7 @@ export const WAVEFORM_URL = `${SERVER_URL}/Waveform/`;
 export const WIDTH = Dimensions.get('window').width;
 export const HEIGHT = Dimensions.get('window').height;
 export const ASPECT_RATIO = WIDTH / HEIGHT;
+export const LIST_ITEM_HEIGHT = 60;
 
 interface IPlayerStore {
   progress: Progress;
@@ -126,8 +127,12 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
         return {
           ...track,
           url: `${AUDIO_URL}${track.path}`,
-          artwork: `${ARTWORK_URL}${track.artwork}`,
-          waveform: `${WAVEFORM_URL}${track.waveform}`,
+          artwork: track.artwork.includes(ARTWORK_URL)
+            ? track.artwork
+            : `${ARTWORK_URL}${track.artwork}`,
+          waveform: track.waveform.includes(WAVEFORM_URL)
+            ? track.waveform
+            : `${WAVEFORM_URL}${track.waveform}`,
           palette,
         };
       }
@@ -146,8 +151,6 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
 
     if (castState === 'connected') {
       set({queue});
-      set({activeTrackIndex: selectedIndex});
-      set({activeTrack: selected});
 
       castClient
         .loadMedia({

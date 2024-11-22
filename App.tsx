@@ -21,7 +21,9 @@ import axios from 'axios';
 import BottomSheet from '@gorhom/bottom-sheet';
 import {
   CastState,
+  MediaInfo,
   MediaPlayerState,
+  MediaStatus,
   useCastSession,
   useCastState,
   useDevices,
@@ -57,6 +59,7 @@ import {
   usePlayerStore,
   WAVEFORM_URL,
 } from './app/store';
+import {TrackProps} from './app/types';
 
 // * Constants
 export const queryClient = new QueryClient();
@@ -146,14 +149,14 @@ export default function App(): React.JSX.Element {
             alwaysPauseOnInterruption: true,
           },
           progressUpdateEventInterval: 1,
-          ratingType: RatingType.Heart,
+          //ratingType: RatingType.Heart,
           capabilities: [
             Capability.Play,
             Capability.Pause,
             Capability.SkipToNext,
             Capability.SkipToPrevious,
             Capability.Stop,
-            Capability.SeekTo,
+            //Capability.SeekTo,
           ],
           compactCapabilities: [
             Capability.Play,
@@ -161,15 +164,14 @@ export default function App(): React.JSX.Element {
             Capability.SkipToNext,
             Capability.SkipToPrevious,
             Capability.Stop,
-            Capability.SeekTo,
+            //Capability.SeekTo,
           ],
           notificationCapabilities: [
             Capability.Play,
             Capability.Pause,
-            Capability.SeekTo,
             Capability.SkipToNext,
             Capability.SkipToPrevious,
-            Capability.SeekTo,
+            //Capability.SeekTo,
           ],
         });
 
@@ -196,45 +198,7 @@ export default function App(): React.JSX.Element {
         console.log('Setup Player Error:', err.message);
       }
     })();
-    //AsyncStorage.removeItem('queue');
-    //AsyncStorage.removeItem('activeTrackIndex');
   }, []);
-
-  castClient?.onMediaStatusUpdated(({mediaInfo}: any) => {
-    let set = false;
-
-    if (!set) {
-      console.log('onc', mediaInfo.customData.title);
-      // ? Save variables to store to be accessed by components
-      setLyricsVisible(false);
-      setPlayRegistered(false);
-      setActiveTrack(mediaInfo.customData);
-      setTrackRating(mediaInfo.customData.rating);
-      setTrackPlayCount(mediaInfo.customData.plays);
-      setPalette(mediaInfo.customData.palette);
-
-      // ? Get active track lyrics. Display the lyrics if found else display artwork
-      fetchLyrics(mediaInfo.contentUrl);
-
-      // ? Get the active track index
-      const activeTrackIndex = queue.findIndex(
-        track => track.id === mediaInfo.customData.id,
-      );
-
-      // console.log('currentItemId', castMediaStatus?.currentItemId);
-      // console.log('id', mediaInfo?.customData.id);
-      console.log('title', mediaInfo.customData.title);
-      console.log('activeTrackIndex', activeTrackIndex);
-
-      // ? Set the track index
-      setActiveTrackIndex(activeTrackIndex);
-
-      // ? Store the queue and the active track index to restore state incase the app crashes or is dismissed
-      AsyncStorage.setItem('activeTrackIndex', activeTrackIndex.toString());
-
-      set = true;
-    }
-  });
 
   useEffect(() => {
     if (castSession) {
@@ -244,8 +208,8 @@ export default function App(): React.JSX.Element {
         play(
           queue.slice(activeTrackIndex).map(track => ({
             ...track,
-            artwork: track.artwork?.replace(ARTWORK_URL, ''),
-            waveform: track.waveform?.replace(WAVEFORM_URL, ''),
+            artwork: track.artwork,
+            waveform: track.waveform,
           })),
           _activeTrack,
           progress.position,
@@ -253,14 +217,36 @@ export default function App(): React.JSX.Element {
     }
   }, [castSession]);
 
-  // useEffect(() => {
-  //   if (castMediaStatus?.currentItemId) {
-  //     const {mediaInfo} = castMediaStatus as any;
-  //     // const {rating, plays, palette, duration, path} =
-  //     //   mediaInfo?.customData as any;
+  useEffect(() => {
+    if (castMediaStatus?.currentItemId) {
+      castClient?.getMediaStatus().then(status => {
+        const {mediaInfo} = status as MediaStatus;
+        const {contentUrl, customData} = mediaInfo as MediaInfo;
+        const {id, rating, plays, palette, duration} = customData as any;
 
-  //   }
-  // }, [castMediaStatus?.currentItemId]);
+        // ? Save variables to store to be accessed by components
+        setLyricsVisible(false);
+        setPlayRegistered(false);
+        setActiveTrack(customData as any);
+        setTrackRating(rating);
+        setTrackPlayCount(plays);
+        setPalette(palette);
+        setProgress({position: 0, buffered: 0, duration});
+
+        // ? Get active track lyrics. Display the lyrics if found else display artwork
+        fetchLyrics(contentUrl);
+
+        // ? Get the active track index
+        const activeTrackIndex = queue.findIndex(track => track.id === id);
+
+        // ? Set the track index
+        setActiveTrackIndex(activeTrackIndex);
+
+        // ? Store the queue and the active track index to restore state incase the app crashes or is dismissed
+        AsyncStorage.setItem('activeTrackIndex', activeTrackIndex.toString());
+      });
+    }
+  }, [castMediaStatus?.currentItemId]);
 
   useEffect(() => {
     if (castMediaStatus) {
@@ -312,10 +298,10 @@ export default function App(): React.JSX.Element {
     }
   }, [streamPosition]);
 
-  // useEffect(() => {
-  //   if (currentAppState !== 'active')
-  //     AsyncStorage.setItem('playPosition', progress.position.toString());
-  // }, [currentAppState]);
+  useEffect(() => {
+    if (currentAppState !== 'active')
+      AsyncStorage.setItem('playPosition', progress.position.toString());
+  }, [currentAppState]);
 
   useTrackPlayerEvents(
     [
@@ -405,7 +391,6 @@ export default function App(): React.JSX.Element {
                 />
               </Stack.Navigator>
             </NavigationContainer>
-            <NowPlaying />
           </SafeAreaProvider>
         </PaperProvider>
       </QueryClientProvider>

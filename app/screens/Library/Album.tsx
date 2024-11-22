@@ -1,22 +1,28 @@
-import React, {useState, useEffect} from 'react';
+// * React
+import React, {useState, useEffect, useRef} from 'react';
 
-import {
-  Image,
-  Dimensions,
-  View,
-  Pressable,
-  Text,
-  FlatList,
-  StyleSheet,
-} from 'react-native';
+// * React Native
+import {View, Text, ActivityIndicator, StatusBar} from 'react-native';
 
-import {StarRatingDisplay} from 'react-native-star-rating-widget';
+// * Libraries
+import {CastButton} from 'react-native-google-cast';
+import {useBackHandler} from '@react-native-community/hooks';
+import {useMutation} from '@tanstack/react-query';
 import axios from 'axios';
+import BigList from 'react-native-big-list';
+import BottomSheet from '@gorhom/bottom-sheet';
 import LinearGradient from 'react-native-linear-gradient';
 
-import {API_URL, ARTWORK_URL, usePlayerStore} from '../../store';
+// * Components
+import ListItem from '../../components/ListItem';
+import TrackDetails from '../../components/TrackDetails';
 
-import {TracksProps} from '../../types';
+// * Store
+import {API_URL, LIST_ITEM_HEIGHT, usePlayerStore} from '../../store';
+
+// * Types
+import {TrackProps, TracksProps} from '../../types';
+import {ArtistProps} from './Artist';
 
 export default function Album({
   navigation,
@@ -24,131 +30,125 @@ export default function Album({
     params: {albumArtist, album},
   },
 }: any) {
-  const [tracks, setTracks] = useState<TracksProps>();
+  // ? Refs
+  const bottomSheetRef = useRef<BottomSheet>(null);
 
+  // ? Hooks
+  useBackHandler(() => {
+    navigation.goBack();
+    return true;
+  });
+
+  // ? States
+  const [tracks, setTracks] = useState<TracksProps>([]);
+  const [artist, setArtist] = useState<ArtistProps>({albums: [], singles: []});
+  const [highlighted, setHighlighted] = useState<TrackProps | null>();
+  const [_, setBottomSheetVisible] = useState<boolean>(false);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  // ? Mutations
+  const {
+    mutate: list,
+    isError,
+    isPending,
+  } = useMutation({
+    mutationFn: () => axios(`${API_URL}artist/${albumArtist}/album/${album}`),
+    onSuccess: ({data}) => setTracks(data),
+  });
+
+  // ? StoreStates
   const palette = usePlayerStore(state => state.palette);
 
   // ? Effects
+  useEffect(list, []);
   useEffect(() => {
     navigation.setOptions({
       headerStyle: {backgroundColor: palette?.[1] ?? '#000'},
+      headerLeft: () => (
+        <View style={{justifyContent: 'center'}}>
+          <Text style={{color: '#fff', fontSize: 20}}>{album}</Text>
+          <Text>{tracks.length} tracks</Text>
+        </View>
+      ),
+      headerRight: () => (
+        <CastButton
+          style={{
+            height: 24,
+            width: 24,
+            marginRight: 5,
+            tintColor: 'rgba(255, 255, 255, .7)',
+          }}
+        />
+      ),
     });
   });
 
-  useEffect(() => {
-    axios(`${API_URL}artist/${albumArtist}/album/${album}`)
-      .then(({data}) => setTracks(data))
-      .catch(err => console.log(err.message));
-  }, []);
-
   return (
     <>
+      <StatusBar
+        animated
+        backgroundColor={palette[0] ?? '#000'}
+        barStyle="light-content"
+        translucent={false}
+      />
+
       <LinearGradient
-        colors={[palette[0] ?? '#000', palette[1] ?? '#fff']}
+        colors={[palette[0] ?? '#000', palette[1] ?? '#000']}
         useAngle={true}
-        angle={290}
+        angle={180}
         style={{position: 'absolute', top: 0, left: 0, bottom: 0, right: 0}}
       />
 
-      <FlatList
-        scrollEnabled={false}
+      <BigList
         data={tracks}
         keyExtractor={(item, index) => index.toString()}
-        renderItem={({item, index}) => (
-          <Pressable>
-            <View style={styles.item}>
-              <Image
-                source={{uri: `${ARTWORK_URL}${item.artwork}`}}
-                style={styles.image}
-              />
-              <View
-                style={{
-                  justifyContent: 'center',
-                  marginTop: -2,
-                  maxWidth: Dimensions.get('window').width - 175,
-                }}>
-                <Text numberOfLines={1} style={styles.title}>
-                  {item.title}
-                </Text>
-                <Text numberOfLines={1} style={styles.artists}>
-                  {item.artists || 'Unknown Artist'}
-                </Text>
-              </View>
-              <View style={{flex: 1}} />
-              <View
-                style={{
-                  justifyContent: 'center',
-                  alignItems: 'flex-end',
-                }}>
-                <StarRatingDisplay
-                  rating={item.rating}
-                  starSize={16}
-                  starStyle={{marginHorizontal: 0}}
-                />
-                <Text style={{fontWeight: 'bold', marginRight: 5}}>
-                  {item.plays || 0} plays
-                </Text>
-              </View>
-            </View>
-          </Pressable>
+        refreshing={refreshing}
+        onRefresh={() => {
+          setRefreshing(true);
+          setTimeout(() => setRefreshing(false), 1000);
+        }}
+        renderItem={({item}: {item: TrackProps}) => (
+          <ListItem
+            data={tracks}
+            item={item}
+            display="bitrate"
+            bottomSheetRef={bottomSheetRef}
+            setHighlighted={setHighlighted}
+            setBottomSheetVisible={setBottomSheetVisible}
+          />
         )}
+        renderEmpty={() =>
+          isPending ? (
+            <ActivityIndicator
+              size="large"
+              color="#fff"
+              style={{marginTop: '50%'}}
+            />
+          ) : isError ? (
+            <View>
+              <Text style={{fontFamily: 'Abel'}}>Empty</Text>
+            </View>
+          ) : (
+            <View />
+          )
+        }
+        getItemLayout={(_, index) => ({
+          length: LIST_ITEM_HEIGHT,
+          offset: LIST_ITEM_HEIGHT * index,
+          index,
+        })}
+        renderHeader={() => <View />}
+        renderFooter={() => <View style={{flex: 1}} />}
+        itemHeight={LIST_ITEM_HEIGHT}
+        headerHeight={10}
+        footerHeight={10}
+      />
+
+      <TrackDetails
+        navigation={navigation}
+        highlighted={highlighted}
+        bottomSheetRef={bottomSheetRef}
       />
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  item: {
-    flexDirection: 'row',
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-  },
-  imageShadow: {
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 12,
-      height: 12,
-    },
-    shadowOpacity: 0.58,
-    shadowRadius: 16.0,
-    elevation: 24,
-    justifyContent: 'center',
-  },
-  isPlaying: {
-    height: 45,
-    width: 45,
-    marginRight: 8,
-    borderRadius: 100,
-  },
-  image: {
-    height: 45,
-    width: 45,
-    marginRight: 8,
-    borderRadius: 10,
-  },
-  title: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  artists: {
-    fontSize: 14,
-    fontWeight: '300',
-    fontStyle: 'italic',
-  },
-  album: {
-    fontSize: 12,
-    fontWeight: '300',
-  },
-  plays: {
-    backgroundColor: 'grey',
-    borderRadius: 10,
-    height: 35,
-    margin: 10,
-    opacity: 0.6,
-    padding: 5,
-    paddingHorizontal: 15,
-  },
-});

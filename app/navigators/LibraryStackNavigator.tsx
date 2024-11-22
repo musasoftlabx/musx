@@ -48,7 +48,11 @@ export default function LibraryStackNavigator() {
         />
         <Stack.Screen name="Album" component={Album} />
         <Stack.Screen name="Artists" component={Artists} />
-        <Stack.Screen name="Artist" component={Artist} />
+        <Stack.Screen
+          name="Artist"
+          component={Artist}
+          options={{headerTransparent: true}}
+        />
         <Stack.Screen
           name="Folders"
           component={Folders}
