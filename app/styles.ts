@@ -58,4 +58,10 @@ export const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 10,
   },
+  listItemImage: {
+    height: 45,
+    width: 45,
+    marginRight: 10,
+    borderRadius: 10,
+  },
 });

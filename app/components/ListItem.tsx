@@ -32,14 +32,14 @@ export default function ListItem({
   item,
   display,
   bottomSheetRef,
-  setHighlighted,
+  setTrack,
   setBottomSheetVisible,
 }: {
   data: TracksProps | ArtistProps['albums'];
   item: TrackProps;
   display?: 'size' | 'bitrate' | 'duration';
   bottomSheetRef?: any;
-  setHighlighted: (highlighted: TrackProps) => void;
+  setTrack: (highlighted: TrackProps) => void;
   setBottomSheetVisible: (visible: boolean) => void;
 }) {
   // ? StoreStates
@@ -69,7 +69,7 @@ export default function ListItem({
       onPress={() => play(data, item)}
       onLongPress={() => {
         Vibration.vibrate(100);
-        setHighlighted(item);
+        setTrack(item);
         setBottomSheetVisible(true);
         bottomSheetRef.current?.snapToIndex(0);
       }}
@@ -87,6 +87,7 @@ export default function ListItem({
           flex: 1,
           flexDirection: 'row',
           alignItems: 'center',
+          paddingVertical: 7,
         },
       ]}>
       {/* Track details */}

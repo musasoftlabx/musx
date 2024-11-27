@@ -1,118 +1,40 @@
 // * React
-import React, {useState, useCallback, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 
 // * React Native
-import {Image, Text, TouchableOpacity, View} from 'react-native';
+import {Text, View} from 'react-native';
 
 // * Libraries
-import DraggableFlatList, {
-  OpacityDecorator,
-  RenderItemParams,
-  ScaleDecorator,
-  ShadowDecorator,
-} from 'react-native-draggable-flatlist';
-import {StarRatingDisplay} from 'react-native-star-rating-widget';
-
-// * Store
-import {usePlayerStore, WIDTH} from '../../../store';
-
-// * Types
-import {QueueProps, TrackProps, TracksProps} from '../../../types';
+import DraggableFlatList from 'react-native-draggable-flatlist';
+import BottomSheet from '@gorhom/bottom-sheet';
 import TrackPlayer from 'react-native-track-player';
 
-export default function UpNext({
-  queue,
-  activeTrack,
-  activeTrackIndex,
-}: QueueProps) {
-  // ? States
-  const [data, setData] = useState<TracksProps>(queue);
+// * Store
+import {usePlayerStore} from '../../../store';
 
-  // ? StoreActions
+// * Types
+import {TrackProps} from '../../../types';
+
+export default function UpNext({RenderQueueListItem}: any) {
+  // ? Refs
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
+  const queue = usePlayerStore(state => state.queue);
+
+  // ? States
+  const [bottomSheetVisible, setBottomSheetVisible] = useState<boolean>(false);
+  const [data, setData] = useState<any>(queue);
+  const [track, setTrack] = useState<TrackProps>();
+
+  // ? StoreStates
+  const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
+
   const setQueue = usePlayerStore(state => state.setQueue);
 
   // ? Effects
   useEffect(() => {
     setData(queue.slice(activeTrackIndex + 1, activeTrackIndex! + 10));
-  }, [activeTrackIndex]);
-
-  // ? Callbacks
-  const renderItem = useCallback(
-    ({item, drag, isActive}: RenderItemParams<any>) => (
-      <ShadowDecorator>
-        <ScaleDecorator>
-          <OpacityDecorator>
-            <TouchableOpacity
-              activeOpacity={1}
-              onPress={() =>
-                TrackPlayer.skip(
-                  queue.findIndex(({id}: {id: string}) => id === item.id),
-                )
-              }
-              onLongPress={drag}
-              disabled={isActive}
-              style={[
-                {
-                  height: 60,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                },
-                {
-                  backgroundColor: isActive ? 'blue' : item.backgroundColor,
-                },
-              ]}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  paddingVertical: 10,
-                  paddingHorizontal: 10,
-                  marginTop: 10,
-                }}>
-                <Image
-                  source={{uri: item.artwork}}
-                  style={{
-                    height: 45,
-                    width: 45,
-                    marginRight: 8,
-                    borderRadius: 10,
-                  }}
-                />
-                <View
-                  style={{
-                    justifyContent: 'center',
-                    maxWidth: WIDTH - 175,
-                  }}>
-                  <Text
-                    numberOfLines={1}
-                    style={{fontSize: 17, fontWeight: '600'}}>
-                    {item.title}
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    style={{fontSize: 13, fontWeight: '300'}}>
-                    {item.artists || 'Unknown Artist'}
-                  </Text>
-                </View>
-                <View style={{flex: 1}} />
-                <View
-                  style={{justifyContent: 'center', alignItems: 'flex-end'}}>
-                  <StarRatingDisplay
-                    rating={item.rating}
-                    starSize={16}
-                    starStyle={{marginHorizontal: 0}}
-                  />
-                  <Text style={{fontWeight: 'bold', marginRight: 5}}>
-                    {item.plays || 0} play{item.plays === 1 ? '' : 's'}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          </OpacityDecorator>
-        </ScaleDecorator>
-      </ShadowDecorator>
-    ),
-    [],
-  );
+  }, [queue]);
 
   return (
     <DraggableFlatList
@@ -137,21 +59,9 @@ export default function UpNext({
               track.id === data.find((x, i) => i === to)?.id,
           ),
         );
-
-        // console.log(restoredQueue.map(t => t.title));
-        // console.error(
-        //   restoredQueue.findIndex(
-        //     (track: TrackProps) =>
-        //       track.title === data.find((x, i) => i === from)?.title,
-        //   ),
-        //   restoredQueue.findIndex(
-        //     (track: TrackProps) =>
-        //       track.title === data.find((x, i) => i === to)?.title,
-        //   ),
-        // );
       }}
       keyExtractor={({id}) => id.toString()}
-      renderItem={renderItem}
+      renderItem={RenderQueueListItem}
       activationDistance={10}
       renderPlaceholder={() => (
         <View style={{backgroundColor: 'yellow', height: 600}} />

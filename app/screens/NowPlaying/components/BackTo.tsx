@@ -20,11 +20,12 @@ import {usePlayerStore, WIDTH} from '../../../store';
 import {QueueProps, TrackProps, TracksProps} from '../../../types';
 import TrackPlayer from 'react-native-track-player';
 
-export default function BackTo({
-  queue,
-  activeTrack,
-  activeTrackIndex,
-}: QueueProps) {
+export default function BackTo({RenderQueueListItem}: any) {
+  // ? StoreStates
+  const activeTrack = usePlayerStore(state => state.activeTrack);
+  const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
+  const queue = usePlayerStore(state => state.queue);
+
   // ? States
   const [data, setData] = useState<TracksProps>(queue);
 
@@ -36,107 +37,7 @@ export default function BackTo({
     const x = activeTrackIndex! - 5;
 
     setData(queue.slice(x > 0 ? x : 0, activeTrackIndex).reverse());
-  }, [activeTrackIndex]);
-
-  // ? Callbacks
-  const renderItem = useCallback(
-    ({item, drag, isActive}: RenderItemParams<any>) => (
-      <ShadowDecorator>
-        <ScaleDecorator>
-          <OpacityDecorator>
-            <TouchableOpacity
-              activeOpacity={1}
-              onPress={() =>
-                TrackPlayer.skip(
-                  queue.findIndex(({id}: {id: string}) => id === item.id),
-                )
-              }
-              onLongPress={drag}
-              disabled={isActive}
-              style={[
-                {
-                  height: 60,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                },
-                {
-                  backgroundColor: isActive ? 'blue' : item.backgroundColor,
-                },
-              ]}>
-              <View
-                style={[
-                  activeTrack?.id === item.id
-                    ? {
-                        backgroundColor: '#ffffff4d',
-                        borderRadius: 10,
-                        flexDirection: 'row',
-                        paddingBottom: 6,
-                        paddingTop: 6,
-                        paddingHorizontal: 10,
-                        marginTop: 10,
-                      }
-                    : {
-                        flexDirection: 'row',
-                        paddingVertical: 10,
-                        paddingHorizontal: 10,
-                        marginTop: 10,
-                      },
-                ]}>
-                <Image
-                  source={{uri: item.artwork}}
-                  style={
-                    activeTrack?.id === item.id
-                      ? {
-                          height: 45,
-                          width: 45,
-                          marginRight: 8,
-                          borderRadius: 100,
-                          //transform: [{rotate: spin}],
-                        }
-                      : {
-                          height: 45,
-                          width: 45,
-                          marginRight: 8,
-                          borderRadius: 10,
-                        }
-                  }
-                />
-                <View
-                  style={{
-                    justifyContent: 'center',
-                    maxWidth: WIDTH - 175,
-                  }}>
-                  <Text
-                    numberOfLines={1}
-                    style={{fontSize: 17, fontWeight: '600'}}>
-                    {item.title}
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    style={{fontSize: 13, fontWeight: '300'}}>
-                    {item.artists || 'Unknown Artist'}
-                  </Text>
-                </View>
-                <View style={{flex: 1}} />
-                <View
-                  style={{justifyContent: 'center', alignItems: 'flex-end'}}>
-                  <StarRatingDisplay
-                    rating={item.rating}
-                    starSize={16}
-                    starStyle={{marginHorizontal: 0}}
-                  />
-                  <Text style={{fontWeight: 'bold', marginRight: 5}}>
-                    {item.plays || 0} play{item.plays === 1 ? '' : 's'}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          </OpacityDecorator>
-        </ScaleDecorator>
-      </ShadowDecorator>
-    ),
-    [],
-  );
+  }, [queue]);
 
   return (
     <DraggableFlatList
@@ -175,7 +76,7 @@ export default function BackTo({
         // );
       }}
       keyExtractor={({id}) => id.toString()}
-      renderItem={renderItem}
+      renderItem={RenderQueueListItem}
       activationDistance={10}
       renderPlaceholder={() => (
         <View style={{backgroundColor: 'yellow', height: 600}} />

@@ -18,6 +18,7 @@ import History from '../screens/Library/History';
 import Library from '../screens/Library';
 import Playlists from '../screens/Library/Playlists';
 import Playlist from '../screens/Library/Playlist';
+import {CastButton} from 'react-native-google-cast';
 
 const Stack = createNativeStackNavigator();
 
@@ -46,12 +47,29 @@ export default function LibraryStackNavigator() {
           component={AddToPlaylist}
           options={{title: 'Add to playlist', headerTransparent: true}}
         />
-        <Stack.Screen name="Album" component={Album} />
+        <Stack.Screen
+          name="Album"
+          component={Album}
+          options={{
+            title: '',
+            headerBackVisible: true,
+            headerRight: () => (
+              <CastButton style={{height: 24, width: 24, marginRight: 5}} />
+            ),
+          }}
+        />
         <Stack.Screen name="Artists" component={Artists} />
         <Stack.Screen
           name="Artist"
           component={Artist}
-          options={{headerTransparent: true}}
+          options={{
+            title: 'Artist',
+            headerBackVisible: true,
+            headerTransparent: true,
+            headerRight: () => (
+              <CastButton style={{height: 24, width: 24, marginRight: 5}} />
+            ),
+          }}
         />
         <Stack.Screen
           name="Folders"

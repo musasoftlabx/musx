@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useLayoutEffect} from 'react';
+import React, {useState, useEffect, useLayoutEffect, useRef} from 'react';
 
 import {
   Button,
@@ -25,6 +25,10 @@ import {API_URL, usePlayerStore, WIDTH} from '../../store';
 
 import {TrackProps} from '../../types';
 import {CastButton} from 'react-native-google-cast';
+import StatusBarX from '../../components/StatusBarX';
+import LinearGradientX from '../../components/LinearGradientX';
+import TrackDetails from '../../components/TrackDetails';
+import BottomSheet from '@gorhom/bottom-sheet';
 
 export type SectionProps = {
   data?: [number];
@@ -37,12 +41,17 @@ const wait = (timeout: number) => {
   return new Promise(resolve => setTimeout(resolve, timeout));
 };
 
-const Home = ({navigation}: any) => {
+export default function Home({navigation}: any) {
+  // ? Refs
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
   // ? StoreStates
   const {state} = usePlayerStore(state => state.playbackState);
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const palette = usePlayerStore(state => state.palette);
 
+  const [track, setTrack] = useState<TrackProps>();
+  const [bottomSheetVisible, setBottomSheetVisible] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<{tracks: number}>();
@@ -132,19 +141,9 @@ const Home = ({navigation}: any) => {
 
   return (
     <>
-      <StatusBar
-        animated
-        backgroundColor={palette[1]}
-        barStyle="light-content"
-        translucent
-      />
+      <StatusBarX />
 
-      <LinearGradient
-        colors={[palette[0] ?? '#000', palette[1] ?? '#000']}
-        useAngle={true}
-        angle={180}
-        style={{position: 'absolute', top: 0, left: 0, bottom: 0, right: 0}}
-      />
+      <LinearGradientX />
 
       <SectionList
         stickySectionHeadersEnabled={false}
@@ -208,7 +207,12 @@ const Home = ({navigation}: any) => {
 
                 {(section.title === 'Recently Added' ||
                   section.title === 'Recently Played') && (
-                  <RecentlyAddedAndPlayed section={section} />
+                  <RecentlyAddedAndPlayed
+                    section={section}
+                    bottomSheetRef={bottomSheetRef}
+                    setTrack={setTrack}
+                    setBottomSheetVisible={setBottomSheetVisible}
+                  />
                 )}
 
                 {/* {section.title === 'Most Played' && (
@@ -298,8 +302,12 @@ const Home = ({navigation}: any) => {
         )}
         style={{marginTop: 40}}
       />
+
+      <TrackDetails
+        track={track}
+        navigation={navigation}
+        bottomSheetRef={bottomSheetRef}
+      />
     </>
   );
-};
-
-export default Home;
+}

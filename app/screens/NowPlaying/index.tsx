@@ -42,6 +42,7 @@ import {arrayMove} from '../../functions';
 
 // * Assets
 import imageFiller from '../../assets/images/image-filler.png';
+import StatusBarX from '../../components/StatusBarX';
 
 export default function NowPlaying() {
   // ? Refs
@@ -215,12 +216,7 @@ export default function NowPlaying() {
 
   return (
     <>
-      <StatusBar
-        animated
-        backgroundColor={activeTrack?.palette?.[0] ?? '#000'}
-        barStyle="light-content"
-        translucent={false}
-      />
+      <StatusBarX />
 
       <BottomSheet
         ref={nowPlayingRef}
@@ -238,7 +234,7 @@ export default function NowPlaying() {
           renderSectionHeader={() => (
             <>
               <LinearGradient
-                colors={[palette[0] ?? '#000', palette[1] ?? '#000']}
+                colors={[palette[1] ?? '#000', palette[0] ?? '#000']}
                 useAngle={true}
                 angle={180}
                 style={{
@@ -447,6 +443,7 @@ export default function NowPlaying() {
 
                       <View
                         style={{
+                          alignItems: 'center',
                           borderWidth: 1,
                           backgroundColor: 'rgba(255, 255, 255, .3)',
                           borderColor: 'rgba(255, 255, 255, .3)',
@@ -473,7 +470,10 @@ export default function NowPlaying() {
 
                       <View style={{flexDirection: 'row', gap: 5}}>
                         <Text style={{fontSize: 18, fontWeight: 'bold'}}>
-                          {`${activeTrackIndex! + 1} / ${queue.length}`}
+                          {`${String(activeTrackIndex! + 1).padStart(
+                            2,
+                            '0',
+                          )} / ${queue.length}`}
                         </Text>
 
                         <Ionicons name="disc" size={21} />

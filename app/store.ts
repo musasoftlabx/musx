@@ -62,6 +62,7 @@ interface IPlayerStore {
   previous: (position: number) => void;
   next: () => void;
   seekTo: (position: number) => void;
+  skipTo: (track: TrackProps) => void;
 }
 
 export const usePlayerStore = create<IPlayerStore>((set, get) => ({
@@ -309,5 +310,17 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     castState === 'connected'
       ? get().castClient?.seek({position})
       : TrackPlayer.seekTo(position);
+  },
+  skipTo: (track: TrackProps) => {
+    Vibration.vibrate(50);
+
+    const castState = get().castState;
+    const queue = get().queue;
+
+    castState === 'connected'
+      ? get().castClient?.skip()
+      : TrackPlayer.skip(
+          queue.findIndex(({id}: {id: number}) => id === track.id),
+        );
   },
 }));

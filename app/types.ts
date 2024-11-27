@@ -95,4 +95,4 @@ export type TrackProps = {
 
 export type TracksProps = TrackProps[];
 
-export type QueueProps = {queue: any; activeTrack: any; activeTrackIndex: any};
+export type QueueProps = {queue: any};

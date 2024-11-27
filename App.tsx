@@ -15,18 +15,15 @@ import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {PaperProvider, adaptNavigationTheme} from 'react-native-paper';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
-import {useAppState} from '@react-native-community/hooks';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import BottomSheet from '@gorhom/bottom-sheet';
 import {
-  CastState,
   MediaInfo,
   MediaPlayerState,
   MediaStatus,
   useCastSession,
   useCastState,
-  useDevices,
   useMediaStatus,
   useRemoteMediaClient,
   useStreamPosition,
@@ -40,26 +37,17 @@ import TrackPlayer, {
   useActiveTrack,
   useProgress,
   Track,
-  State,
   RatingType,
 } from 'react-native-track-player';
 
 // * Screens
-import NowPlaying from './app/screens/NowPlaying';
 import TabNavigator from './app/navigators/TabNavigator';
 
 // * Utils
 import {darkTheme} from './app/utils';
 
 // * Store
-import {
-  API_URL,
-  ARTWORK_URL,
-  SERVER_URL,
-  usePlayerStore,
-  WAVEFORM_URL,
-} from './app/store';
-import {TrackProps} from './app/types';
+import {API_URL, SERVER_URL, usePlayerStore} from './app/store';
 
 // * Constants
 export const queryClient = new QueryClient();
@@ -69,13 +57,17 @@ const {DarkTheme} = adaptNavigationTheme({
   reactNavigationLight: RNLightTheme,
 });
 
-// * Axios config
+// ? Axios config
 axios.defaults.baseURL = API_URL;
 axios.defaults.timeout = 60000;
 axios.defaults.headers.post['Content-Type'] = 'application/json';
 axios.defaults.headers.post['Accept'] = 'application/json';
 
-Appearance.setColorScheme('dark'); // ? Always force dark mode
+// ? Always force dark mode
+Appearance.setColorScheme('dark');
+
+// ? Setup Track Player
+TrackPlayer.setupPlayer({autoHandleInterruptions: true});
 
 export default function App(): React.JSX.Element {
   // ? Refs
@@ -90,13 +82,10 @@ export default function App(): React.JSX.Element {
   const castState = useCastState();
   const castSession = useCastSession();
   const streamPosition = useStreamPosition();
-  const currentAppState = useAppState();
 
   // ? StoreStates
   const _activeTrack = usePlayerStore(state => state.activeTrack);
   const queue = usePlayerStore(state => state.queue);
-  const nowPlayingRef = usePlayerStore(state => state.nowPlayingRef);
-  const trackPlayCount = usePlayerStore(state => state.trackPlayCount);
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const playRegistered = usePlayerStore(state => state.playRegistered);
 
@@ -139,63 +128,58 @@ export default function App(): React.JSX.Element {
     setNowPlayingRef(ref); // ? Set Now Playing Bottom Sheet Ref
 
     (async () => {
-      try {
-        TrackPlayer.setupPlayer({autoHandleInterruptions: true});
+      // ? Update Track Player options
+      TrackPlayer.updateOptions({
+        android: {
+          appKilledPlaybackBehavior:
+            AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
+          alwaysPauseOnInterruption: true,
+        },
+        progressUpdateEventInterval: 1,
+        ratingType: RatingType.FiveStars,
+        capabilities: [
+          Capability.Play,
+          Capability.Pause,
+          Capability.SkipToNext,
+          Capability.SkipToPrevious,
+          Capability.Stop,
+          Capability.SeekTo,
+        ],
+        compactCapabilities: [
+          Capability.Play,
+          Capability.Pause,
+          Capability.SkipToNext,
+          Capability.SkipToPrevious,
+          Capability.Stop,
+          Capability.SeekTo,
+        ],
+        notificationCapabilities: [
+          Capability.Play,
+          Capability.Pause,
+          Capability.SkipToNext,
+          Capability.SkipToPrevious,
+          Capability.SeekTo,
+        ],
+      });
 
-        TrackPlayer.updateOptions({
-          android: {
-            appKilledPlaybackBehavior:
-              AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
-            alwaysPauseOnInterruption: true,
-          },
-          progressUpdateEventInterval: 1,
-          //ratingType: RatingType.Heart,
-          capabilities: [
-            Capability.Play,
-            Capability.Pause,
-            Capability.SkipToNext,
-            Capability.SkipToPrevious,
-            Capability.Stop,
-            //Capability.SeekTo,
-          ],
-          compactCapabilities: [
-            Capability.Play,
-            Capability.Pause,
-            Capability.SkipToNext,
-            Capability.SkipToPrevious,
-            Capability.Stop,
-            //Capability.SeekTo,
-          ],
-          notificationCapabilities: [
-            Capability.Play,
-            Capability.Pause,
-            Capability.SkipToNext,
-            Capability.SkipToPrevious,
-            //Capability.SeekTo,
-          ],
-        });
+      const playPosition = await AsyncStorage.getItem('playPosition');
+      const savedQueue = await AsyncStorage.getItem('queue');
+      const savedActiveTrackIndex = await AsyncStorage.getItem(
+        'activeTrackIndex',
+      );
 
-        const playPosition = await AsyncStorage.getItem('playPosition');
-        const savedQueue = await AsyncStorage.getItem('queue');
-        const savedActiveTrackIndex = await AsyncStorage.getItem(
-          'activeTrackIndex',
-        );
+      if (savedQueue) {
+        const _queue = JSON.parse(savedQueue);
 
-        if (savedQueue) {
-          const _queue = JSON.parse(savedQueue);
-
-          if (!castSession) {
-            await TrackPlayer.setQueue(_queue);
-            await TrackPlayer.skip(Number(savedActiveTrackIndex));
-            playPosition && TrackPlayer.seekTo(Number(playPosition));
-          }
-
-          setQueue(_queue);
-          setActiveTrackIndex(Number(savedActiveTrackIndex));
-          openNowPlaying(ref);
+        if (!castSession) {
+          await TrackPlayer.setQueue(_queue);
+          await TrackPlayer.skip(Number(savedActiveTrackIndex));
+          playPosition && TrackPlayer.seekTo(Number(playPosition));
         }
-      } catch (err: any) {
-        console.log('Setup Player Error:', err.message);
+
+        setQueue(_queue);
+        setActiveTrackIndex(Number(savedActiveTrackIndex));
+        openNowPlaying(ref);
       }
     })();
   }, []);
@@ -298,11 +282,6 @@ export default function App(): React.JSX.Element {
     }
   }, [streamPosition]);
 
-  useEffect(() => {
-    if (currentAppState !== 'active')
-      AsyncStorage.setItem('playPosition', progress.position.toString());
-  }, [currentAppState]);
-
   useTrackPlayerEvents(
     [
       Event.PlaybackActiveTrackChanged,
@@ -345,6 +324,7 @@ export default function App(): React.JSX.Element {
           if (progress.position >= 10 && playRegistered === false) {
             setPlayRegistered(true);
 
+            return false;
             axios
               .patch('updatePlayCount', {id: activeTrack?.id})
               .then(({data: {plays}}) => {

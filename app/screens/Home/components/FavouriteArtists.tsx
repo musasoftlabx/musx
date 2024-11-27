@@ -2,15 +2,16 @@
 import React from 'react';
 
 // * React Native
-import {FlatList, Image, Pressable, Text, View} from 'react-native';
+import {Image, Pressable, Text, View} from 'react-native';
 
 // * Libraries
 import {Circle, Rect} from 'react-native-svg';
+import {FlashList} from '@shopify/flash-list';
 import {useNavigation} from '@react-navigation/native';
 import SvgAnimatedLinearGradient from 'react-native-svg-animated-linear-gradient';
 
 // * Store
-import {AUDIO_URL} from '../../../store';
+import {ARTWORK_URL, AUDIO_URL} from '../../../store';
 
 // * Types
 import {SectionProps} from '..';
@@ -48,11 +49,13 @@ export default function FavouriteArtists({
           ))}
         </View>
       ) : (
-        <FlatList
-          horizontal
-          data={dataset}
-          renderItem={({item}: {item: TrackProps}) => {
-            return (
+        dataset && (
+          <FlashList
+            data={dataset}
+            horizontal
+            keyExtractor={(_, index) => index.toString()}
+            estimatedItemSize={20}
+            renderItem={({item}: {item: TrackProps}) => (
               <Pressable
                 onPress={() =>
                   navigation.navigate('Artist', {
@@ -62,16 +65,39 @@ export default function FavouriteArtists({
                   })
                 }
                 style={{alignItems: 'center', margin: 10, width: 100}}>
-                <Image
-                  source={{
-                    uri: `${AUDIO_URL}${item.path
-                      .split('/')
-                      .slice(0, -1)
-                      .join('/')}/artist.jpg`,
-                  }}
-                  style={{width: 100, height: 100, borderRadius: 100}}
-                  resizeMode="cover"
-                />
+                {item.hasOwnProperty('artworks') ? (
+                  <View
+                    style={{
+                      borderRadius: 200,
+                      overflow: 'hidden',
+                      flexDirection: 'row',
+                      flexBasis: '50%',
+                      flexWrap: 'wrap',
+                      width: 100,
+                      height: 100,
+                    }}>
+                    {item.artworks.map((artwork: string, i: number) => (
+                      <Image
+                        key={i}
+                        source={{uri: `${ARTWORK_URL}${artwork}`}}
+                        style={{width: 50, height: 50}}
+                        resizeMode="cover"
+                      />
+                    ))}
+                  </View>
+                ) : (
+                  <Image
+                    source={{
+                      uri: `${AUDIO_URL}${item.path
+                        .split('/')
+                        .slice(0, -1)
+                        .join('/')}/artist.jpg`,
+                    }}
+                    style={{width: 100, height: 100, borderRadius: 100}}
+                    resizeMode="cover"
+                  />
+                )}
+
                 <Text
                   numberOfLines={1}
                   style={{
@@ -82,9 +108,11 @@ export default function FavouriteArtists({
                   }}>
                   {item.albumArtist}
                 </Text>
+
                 <Text style={{fontSize: 14, opacity: 0.5}}>
                   {item.rating.toFixed(2)} rating
                 </Text>
+
                 <Text
                   numberOfLines={1}
                   style={{
@@ -98,10 +126,9 @@ export default function FavouriteArtists({
                   {item.tracks} tracks
                 </Text>
               </Pressable>
-            );
-          }}
-          showsHorizontalScrollIndicator={false}
-        />
+            )}
+          />
+        )
       )}
     </>
   );

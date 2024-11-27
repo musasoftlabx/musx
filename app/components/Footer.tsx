@@ -62,7 +62,6 @@ export default function Footer() {
     activeStates.includes(state) && (
       <View
         style={{
-          borderRadius: 50,
           borderTopColor: palette?.[2],
           borderTopWidth: 0.5,
           paddingVertical: 10,
@@ -71,16 +70,16 @@ export default function Footer() {
           colors={[palette?.[1] ?? '#fff', palette?.[0] ?? '#000']}
           useAngle={true}
           angle={290}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            bottom: 0,
-            right: 0,
-          }}
+          style={{position: 'absolute', top: 0, left: 0, bottom: 0, right: 0}}
         />
 
-        <View style={{flexDirection: 'row', gap: 10, paddingHorizontal: 20}}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+            paddingHorizontal: 20,
+          }}>
           <Pressable
             style={{flexGrow: 0.8, flexDirection: 'row', alignItems: 'center'}}
             onPress={() => {
@@ -98,7 +97,7 @@ export default function Footer() {
                 borderRadius: 10,
               }}
             />
-            <View style={{flex: 1}}>
+            <View>
               <Text numberOfLines={1} style={styles.title}>
                 {activeTrack?.title}
               </Text>
