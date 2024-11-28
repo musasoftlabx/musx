@@ -470,10 +470,7 @@ export default function NowPlaying() {
 
                       <View style={{flexDirection: 'row', gap: 5}}>
                         <Text style={{fontSize: 18, fontWeight: 'bold'}}>
-                          {`${String(activeTrackIndex! + 1).padStart(
-                            2,
-                            '0',
-                          )} / ${queue.length}`}
+                          {`${activeTrackIndex! + 1} / ${queue.length}`}
                         </Text>
 
                         <Ionicons name="disc" size={21} />

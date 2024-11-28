@@ -1,48 +1,40 @@
 // * React
-import React, {useState, useCallback, useEffect} from 'react';
+import React, {useState, useEffect} from 'react';
 
 // * React Native
-import {Image, Text, TouchableOpacity, View} from 'react-native';
+import {Text, View} from 'react-native';
 
 // * Libraries
-import DraggableFlatList, {
-  OpacityDecorator,
-  RenderItemParams,
-  ScaleDecorator,
-  ShadowDecorator,
-} from 'react-native-draggable-flatlist';
-import {StarRatingDisplay} from 'react-native-star-rating-widget';
+import DraggableFlatList from 'react-native-draggable-flatlist';
+import TrackPlayer, {Track} from 'react-native-track-player';
 
 // * Store
-import {usePlayerStore, WIDTH} from '../../../store';
+import {usePlayerStore} from '../../../store';
 
 // * Types
-import {QueueProps, TrackProps, TracksProps} from '../../../types';
-import TrackPlayer from 'react-native-track-player';
+import {TrackProps} from '../../../types';
 
 export default function BackTo({RenderQueueListItem}: any) {
   // ? StoreStates
-  const activeTrack = usePlayerStore(state => state.activeTrack);
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const queue = usePlayerStore(state => state.queue);
-
-  // ? States
-  const [data, setData] = useState<TracksProps>(queue);
 
   // ? StoreActions
   const setQueue = usePlayerStore(state => state.setQueue);
 
+  // ? States
+  const [data, setData] = useState<Track[]>(queue);
+
   // ? Effects
   useEffect(() => {
-    const x = activeTrackIndex! - 5;
-
+    const x = activeTrackIndex - 10;
     setData(queue.slice(x > 0 ? x : 0, activeTrackIndex).reverse());
   }, [queue]);
 
   return (
     <DraggableFlatList
       data={data}
-      onDragEnd={async ({data, from, to}) => {
+      onDragEnd={({data, from, to}) => {
         setData(data);
 
         const restoredQueue = [
@@ -52,13 +44,13 @@ export default function BackTo({RenderQueueListItem}: any) {
 
         setQueue(restoredQueue);
 
-        await TrackPlayer.move(
+        TrackPlayer.move(
           restoredQueue.findIndex(
-            (track: TrackProps) =>
+            (track: Omit<TrackProps, ''>) =>
               track.id === data.find((x, i) => i === from)?.id,
           ),
           restoredQueue.findIndex(
-            (track: TrackProps) =>
+            (track: Omit<TrackProps, ''>) =>
               track.id === data.find((x, i) => i === to)?.id,
           ),
         );

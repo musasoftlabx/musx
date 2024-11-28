@@ -2,44 +2,49 @@
 import React, {useState, useEffect, useRef} from 'react';
 
 // * React Native
-import {Text, View} from 'react-native';
+import {Text, TouchableOpacity, View} from 'react-native';
 
 // * Libraries
-import DraggableFlatList from 'react-native-draggable-flatlist';
 import BottomSheet from '@gorhom/bottom-sheet';
-import TrackPlayer from 'react-native-track-player';
+import DraggableFlatList from 'react-native-draggable-flatlist';
+import TrackPlayer, {Track} from 'react-native-track-player';
 
 // * Store
 import {usePlayerStore} from '../../../store';
 
 // * Types
 import {TrackProps} from '../../../types';
+import {arrayMove} from '../../../functions';
 
 export default function UpNext({RenderQueueListItem}: any) {
   // ? Refs
   const bottomSheetRef = useRef<BottomSheet>(null);
 
+  // ? StoreStates
+  const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const queue = usePlayerStore(state => state.queue);
+
+  // ? StoreActions
+  const setActiveTrackIndex = usePlayerStore(
+    state => state.setActiveTrackIndex,
+  );
+  const setActiveTrack = usePlayerStore(state => state.setActiveTrack);
+  const setQueue = usePlayerStore(state => state.setQueue);
 
   // ? States
   const [bottomSheetVisible, setBottomSheetVisible] = useState<boolean>(false);
-  const [data, setData] = useState<any>(queue);
+  const [data, setData] = useState<Track[]>(queue);
   const [track, setTrack] = useState<TrackProps>();
-
-  // ? StoreStates
-  const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
-
-  const setQueue = usePlayerStore(state => state.setQueue);
 
   // ? Effects
   useEffect(() => {
-    setData(queue.slice(activeTrackIndex + 1, activeTrackIndex! + 10));
+    setData(queue.slice(activeTrackIndex + 1, activeTrackIndex + 10));
   }, [queue]);
 
   return (
     <DraggableFlatList
       data={data}
-      onDragEnd={async ({data, from, to}) => {
+      onDragEnd={({data, from, to}) => {
         setData(data);
 
         const restoredQueue = [
@@ -47,25 +52,31 @@ export default function UpNext({RenderQueueListItem}: any) {
           ...data,
         ];
 
+        console.log(restoredQueue.map(track => track.title));
         setQueue(restoredQueue);
 
-        await TrackPlayer.move(
+        TrackPlayer.move(
           restoredQueue.findIndex(
-            (track: TrackProps) =>
-              track.id === data.find((x, i) => i === from)?.id,
+            track => track.id === data.find((_, i) => i === from)?.id,
           ),
           restoredQueue.findIndex(
-            (track: TrackProps) =>
-              track.id === data.find((x, i) => i === to)?.id,
+            track => track.id === data.find((_, i) => i === to)?.id,
           ),
-        );
+        ).then(async () => {
+          const _queue = await TrackPlayer.getQueue();
+          //console.log(queue.map(track => track.title));
+          console.log(_queue.map(track => track.title));
+
+          // let element = queue[from];
+          // queue.splice(from, 1);
+          // queue.splice(to, 0, element);
+
+          //setQueue(_queue);
+        });
       }}
       keyExtractor={({id}) => id.toString()}
       renderItem={RenderQueueListItem}
-      activationDistance={10}
-      renderPlaceholder={() => (
-        <View style={{backgroundColor: 'yellow', height: 600}} />
-      )}
+      activationDistance={0}
       ListEmptyComponent={() => (
         <View
           style={{height: 300, justifyContent: 'center', alignItems: 'center'}}>
