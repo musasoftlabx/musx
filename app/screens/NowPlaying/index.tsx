@@ -2,7 +2,7 @@
 import React, {useState, useCallback, useRef, useEffect} from 'react';
 
 // * React Native
-import {Image, Pressable, StatusBar, StyleSheet, View} from 'react-native';
+import {Image, Pressable, StyleSheet, View} from 'react-native';
 
 // * Libraries
 import BottomSheet, {
@@ -30,6 +30,7 @@ import Controls from './components/Controls';
 import Lyrics from './components/Lyrics';
 import Queue from './components/Queue';
 import Rating from './components/Rating';
+import StatusBarX from '../../components/StatusBarX';
 import TrackInfo from './components/TrackInfo';
 import WaveformSlider from './components/WaveformSlider';
 import WaveformSliderHorizontal from './components/WaveformSliderHorizontal';
@@ -42,7 +43,32 @@ import {arrayMove} from '../../functions';
 
 // * Assets
 import imageFiller from '../../assets/images/image-filler.png';
-import StatusBarX from '../../components/StatusBarX';
+
+type LyricsButtonProps = {
+  palette: string[];
+  lyrics: string | null;
+  lyricsVisible: boolean;
+  setLyricsVisible: (lyricsVisible: boolean) => void;
+};
+
+export const LyricsButton = ({
+  palette,
+  lyrics,
+  lyricsVisible,
+  setLyricsVisible,
+}: LyricsButtonProps) =>
+  lyrics && (
+    <Pressable
+      style={{
+        ...styles.chip,
+        backgroundColor: `${palette[1]}`,
+        position: 'absolute',
+        right: 1,
+      }}
+      onPress={() => setLyricsVisible(!lyricsVisible)}>
+      <MaterialIcons name="lyrics" size={25} color="white" />
+    </Pressable>
+  );
 
 export default function NowPlaying() {
   // ? Refs
@@ -255,7 +281,10 @@ export default function NowPlaying() {
                     paddingHorizontal: 10,
                   }}>
                   {lyrics && lyricsVisible ? (
-                    <Lyrics />
+                    <Lyrics
+                      lyricsVisible={lyricsVisible}
+                      setLyricsVisible={setLyricsVisible}
+                    />
                   ) : (
                     <View
                       style={{
@@ -401,12 +430,18 @@ export default function NowPlaying() {
                     <MaterialCommunityIcons name="drag-horizontal" size={30} />
 
                     {lyrics && lyricsVisible ? (
-                      <Lyrics />
+                      <Lyrics
+                        lyricsVisible={lyricsVisible}
+                        setLyricsVisible={setLyricsVisible}
+                      />
                     ) : (
                       <>
                         {/* <CarouselQueue /> */}
                         <View style={{flex: 1}}>
-                          <Shadow startColor="#00000066" distance={3}>
+                          <Shadow
+                            startColor="#00000066"
+                            distance={2}
+                            style={{borderRadius: 20, height: WIDTH * 0.95}}>
                             <Image
                               source={
                                 activeTrack?.artwork
@@ -418,6 +453,12 @@ export default function NowPlaying() {
                                 width: WIDTH * 0.95,
                                 borderRadius: 20,
                               }}
+                            />
+                            <LyricsButton
+                              palette={palette}
+                              lyrics={lyrics}
+                              lyricsVisible={lyricsVisible}
+                              setLyricsVisible={setLyricsVisible}
                             />
                           </Shadow>
                         </View>
@@ -525,20 +566,6 @@ export default function NowPlaying() {
                           }}
                         />
                       </View>
-                      {/* <Pressable
-                        style={{
-                          ...styles.chip,
-                          backgroundColor: `${palette[1]}66`,
-                        }}
-                        onPress={() => setLyricsVisible(!lyricsVisible)}>
-                        <MaterialIcons
-                          name="lyrics"
-                          size={25}
-                          style={{
-                            color: lyrics ? 'yellow' : 'rgba(255,255,255,.5)',
-                          }}
-                        />
-                      </Pressable> */}
                     </View>
 
                     <WaveformSlider />

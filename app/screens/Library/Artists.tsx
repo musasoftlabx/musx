@@ -72,7 +72,7 @@ export default function Artists({navigation}: any) {
             <View style={{paddingVertical: 12, alignItems: 'center'}}>
               <Image
                 source={{
-                  uri: `${AUDIO_URL}${item?.path
+                  uri: `${item?.path
                     .split('/')
                     .slice(0, -1)
                     .join('/')}/artist.jpg`,

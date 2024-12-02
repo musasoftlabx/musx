@@ -11,11 +11,11 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
 // * Store
-import {ARTWORK_URL, usePlayerStore} from '../../../store';
+import {usePlayerStore} from '../../../store';
 
 // * Types
 import {SectionProps} from '..';
-import {TrackProps} from '../../../types';
+import {TrackProps, TracksProps} from '../../../types';
 
 dayjs.extend(relativeTime);
 
@@ -36,7 +36,7 @@ export default function RecentlyAddedAndPlayed({
   return (
     dataset && (
       <FlashList
-        data={dataset}
+        data={dataset as TracksProps}
         horizontal
         keyExtractor={(_, index) => index.toString()}
         estimatedItemSize={20}
@@ -51,7 +51,7 @@ export default function RecentlyAddedAndPlayed({
             }}
             style={{margin: 10, width: 100}}>
             <Image
-              source={{uri: `${ARTWORK_URL}${item.artwork}`}}
+              source={{uri: item.artwork}}
               style={{width: 100, height: 100, borderRadius: 10}}
               resizeMode="cover"
             />
@@ -94,8 +94,10 @@ export default function RecentlyAddedAndPlayed({
               numberOfLines={1}
               style={{
                 alignSelf: 'flex-start',
-                backgroundColor: '#ffffff4D',
-                borderRadius: 5,
+                backgroundColor: '#ffffff1A',
+                borderColor: '#fff',
+                borderWidth: 0.5,
+                borderRadius: 3,
                 marginTop: 5,
                 maxWidth: 'auto',
                 paddingVertical: 1,

@@ -1,19 +1,21 @@
+// * React
 import React from 'react';
 
+// * Libraries
+import {CastButton} from 'react-native-google-cast';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
-import Home from '../screens/Home/';
-import RecentlyAdded from '../screens/Home/RecentlyAdded';
-import RecentlyPlayed from '../screens/Home/RecentlyPlayed';
-import Folders from '../screens/Library/Folders';
-import Playlists from '../screens/Library/Playlists';
-import Playlist from '../screens/Library/Playlist';
-import Artists from '../screens/Library/Artists';
-import Artist from '../screens/Library/Artist';
+// * Components
 import Footer from '../components/Footer';
-import {View} from 'react-native';
+
+// * Screens
+import AddToPlaylist from '../screens/Library/AddToPlaylist';
 import Album from '../screens/Library/Album';
-import {CastButton} from 'react-native-google-cast';
+import Artist from '../screens/Library/Artist';
+import Folders from '../screens/Library/Folders';
+import Home from '../screens/Home/';
+import Playlists from '../screens/Library/Playlists';
+import TrackMetadata from '../screens/Library/TrackMetadata';
 
 const Stack = createNativeStackNavigator();
 
@@ -59,6 +61,18 @@ export default function HomeStackNavigator() {
             ),
           }}
         />
+        <Stack.Group>
+          <Stack.Screen
+            name="AddToPlaylist"
+            component={AddToPlaylist}
+            options={{title: 'Add to playlist', headerTransparent: true}}
+          />
+          <Stack.Screen
+            name="TrackMetadata"
+            component={TrackMetadata}
+            options={{title: 'Metadata'}}
+          />
+        </Stack.Group>
         {/* <Stack.Screen name="RecentlyAdded" component={RecentlyAdded} />
       <Stack.Screen name="RecentlyPlayed" component={RecentlyPlayed} />
      

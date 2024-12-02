@@ -9,7 +9,9 @@ import {useQuery} from '@tanstack/react-query';
 import {Avatar, Text} from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import LinearGradient from 'react-native-linear-gradient';
+
+// * Components
+import LinearGradientX from '../../components/LinearGradientX';
 
 // * Store
 import {usePlayerStore} from '../../store';
@@ -33,12 +35,7 @@ export default function Library({navigation}: any) {
 
   return (
     <>
-      <LinearGradient
-        colors={[palette[0] ?? '#000', palette[1] ?? '#000']}
-        useAngle={true}
-        angle={180}
-        style={{position: 'absolute', top: 0, left: 0, bottom: 0, right: 0}}
-      />
+      <LinearGradientX />
 
       <FlatList
         data={[

@@ -80,9 +80,7 @@ export default function Playlist({
       />
 
       <ImageBackground
-        source={{
-          uri: `${ARTWORK_URL}${tracks[0].artwork}`,
-        }}
+        source={{uri: tracks[0].artwork}}
         resizeMode="cover"
         blurRadius={20}>
         <View style={{flexDirection: 'row', padding: 20}}>
@@ -100,7 +98,7 @@ export default function Playlist({
                   i < 4 && (
                     <Image
                       key={i}
-                      source={{uri: `${ARTWORK_URL}${track.artwork}`}}
+                      source={{uri: track.artwork}}
                       style={{width: 50, height: 50}}
                       resizeMode="cover"
                     />
@@ -160,7 +158,7 @@ export default function Playlist({
               {index + 1}.{' '}
             </Text>
             <Image
-              source={{uri: `${ARTWORK_URL}${item.artwork}`}}
+              source={{uri: item.artwork}}
               // style={
               //   state.currentlyPlaying &&
               //   state.currentlyPlaying._id === item._id

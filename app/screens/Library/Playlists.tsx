@@ -4,7 +4,7 @@ import {Image, View, Pressable, Text, FlatList, StyleSheet} from 'react-native';
 
 import axios from 'axios';
 
-import {API_URL, ARTWORK_URL, usePlayerStore, WIDTH} from '../../store';
+import {API_URL, usePlayerStore, WIDTH} from '../../store';
 
 import {TrackProps} from '../../types';
 import LinearGradient from 'react-native-linear-gradient';
@@ -72,7 +72,7 @@ export default function Playlists({navigation}: any) {
                     {item.tracks.map((track: TrackProps, i: number) => (
                       <Image
                         key={i}
-                        source={{uri: `${ARTWORK_URL}${track.artwork}`}}
+                        source={{uri: track.artwork}}
                         style={{width: 50, height: 50}}
                         resizeMode="cover"
                       />
@@ -106,7 +106,7 @@ export default function Playlists({navigation}: any) {
               <Pressable onPress={() => navigation.navigate('NowPlaying')}>
                 <View style={styles.item}>
                   <Image
-                    source={{uri: `${ARTWORK_URL}${item.artwork}`}}
+                    source={{uri: item.artwork}}
                     style={{
                       width: 100,
                       height: 100,

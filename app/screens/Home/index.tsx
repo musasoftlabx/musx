@@ -1,34 +1,37 @@
-import React, {useState, useEffect, useLayoutEffect, useRef} from 'react';
+// * React
+import React, {useState, useEffect, useRef} from 'react';
 
+// * React Native
 import {
-  Button,
   View,
   Pressable,
   RefreshControl,
   SectionList,
   Text,
-  StatusBar,
   SectionListData,
   Image,
 } from 'react-native';
 
-import _ from 'lodash';
-import LinearGradient from 'react-native-linear-gradient';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-
-import {GradientText} from '../../components/TextX';
-import RecentlyAddedAndPlayed from './components/RecentlyAddedAndPlayed';
-import FavouriteArtists from './components/FavouriteArtists';
-import MostPlayed from './components/MostPlayed';
-
-import {API_URL, usePlayerStore, WIDTH} from '../../store';
-
-import {TrackProps} from '../../types';
+// * Libraries
 import {CastButton} from 'react-native-google-cast';
-import StatusBarX from '../../components/StatusBarX';
-import LinearGradientX from '../../components/LinearGradientX';
-import TrackDetails from '../../components/TrackDetails';
+import _ from 'lodash';
 import BottomSheet from '@gorhom/bottom-sheet';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+
+// * Components
+import {GradientText} from '../../components/TextX';
+import FavouriteArtists from './components/FavouriteArtists';
+import LinearGradientX from '../../components/LinearGradientX';
+import MostPlayed from './components/MostPlayed';
+import RecentlyAddedAndPlayed from './components/RecentlyAddedAndPlayed';
+import StatusBarX from '../../components/StatusBarX';
+import TrackDetails from '../../components/TrackDetails';
+
+// * Store
+import {API_URL, WIDTH} from '../../store';
+
+// * Types
+import {TrackProps} from '../../types';
 
 export type SectionProps = {
   data?: [number];
@@ -46,15 +49,12 @@ export default function Home({navigation}: any) {
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   // ? StoreStates
-  const {state} = usePlayerStore(state => state.playbackState);
-  const activeTrack = usePlayerStore(state => state.activeTrack);
-  const palette = usePlayerStore(state => state.palette);
 
-  const [track, setTrack] = useState<TrackProps>();
   const [bottomSheetVisible, setBottomSheetVisible] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<{tracks: number}>();
+  const [track, setTrack] = useState<TrackProps>();
   const [sections, setSections] = useState<
     SectionListData<number, SectionProps>[]
   >([
@@ -102,9 +102,7 @@ export default function Home({navigation}: any) {
     },
   ]);
 
-  useEffect(() => {
-    fetchDashboard();
-  }, []);
+  useEffect(() => fetchDashboard(), []);
 
   const fetchDashboard = () => {
     let updated: any = [];
@@ -154,7 +152,7 @@ export default function Home({navigation}: any) {
         }
         renderSectionHeader={({section}) => (
           <>
-            {section.title === 'Libraries' && (
+            {section.title === 'Libraries' ? (
               <View
                 style={{
                   flexDirection: 'row',
@@ -179,19 +177,27 @@ export default function Home({navigation}: any) {
                   }}
                 />
               </View>
-            )}
+            ) : (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginTop: 20,
+                  marginBottom: 5,
+                  marginHorizontal: 10,
+                }}>
+                <Text style={{fontSize: 18, fontWeight: '800', color: '#fff'}}>
+                  {section.title}
+                </Text>
 
-            <Text
-              style={{
-                fontWeight: '800',
-                fontSize: 18,
-                color: '#fff',
-                marginTop: 20,
-                marginBottom: 5,
-                marginLeft: 10,
-              }}>
-              {section.title}
-            </Text>
+                <FontAwesome
+                  name="chevron-right"
+                  size={12}
+                  style={{marginTop: 7}}
+                />
+              </View>
+            )}
           </>
         )}
         renderItem={({section}) => (
@@ -303,11 +309,14 @@ export default function Home({navigation}: any) {
         style={{marginTop: 40}}
       />
 
-      <TrackDetails
-        track={track}
-        navigation={navigation}
-        bottomSheetRef={bottomSheetRef}
-      />
+      {track && (
+        <TrackDetails
+          track={track}
+          navigation={navigation}
+          bottomSheetRef={bottomSheetRef}
+          queriesToRefetch={['']}
+        />
+      )}
     </>
   );
 }

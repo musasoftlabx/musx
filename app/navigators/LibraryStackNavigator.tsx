@@ -2,6 +2,7 @@
 import React, {useEffect, useState} from 'react';
 
 // * Libraries
+import {CastButton} from 'react-native-google-cast';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -18,7 +19,7 @@ import History from '../screens/Library/History';
 import Library from '../screens/Library';
 import Playlists from '../screens/Library/Playlists';
 import Playlist from '../screens/Library/Playlist';
-import {CastButton} from 'react-native-google-cast';
+import TrackMetadata from '../screens/Library/TrackMetadata';
 
 const Stack = createNativeStackNavigator();
 
@@ -42,11 +43,7 @@ export default function LibraryStackNavigator() {
           component={Library}
           options={{headerShown: false}}
         />
-        <Stack.Screen
-          name="AddToPlaylist"
-          component={AddToPlaylist}
-          options={{title: 'Add to playlist', headerTransparent: true}}
-        />
+
         <Stack.Screen
           name="Album"
           component={Album}
@@ -79,6 +76,19 @@ export default function LibraryStackNavigator() {
         <Stack.Screen name="History" component={History} />
         <Stack.Screen name="Playlists" component={Playlists} />
         <Stack.Screen name="Playlist" component={Playlist} />
+
+        <Stack.Group>
+          <Stack.Screen
+            name="AddToPlaylist"
+            component={AddToPlaylist}
+            options={{title: 'Add to playlist', headerTransparent: true}}
+          />
+          <Stack.Screen
+            name="TrackMetadata"
+            component={TrackMetadata}
+            options={{title: 'Metadata'}}
+          />
+        </Stack.Group>
       </Stack.Navigator>
 
       <Footer />

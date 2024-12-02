@@ -20,6 +20,9 @@ import TrackDetails from '../../components/TrackDetails';
 // * Store
 import {API_URL, usePlayerStore} from '../../store';
 
+// * Constants
+import {queryClient} from '../../../App';
+
 // * Types
 import {TrackProps} from '../../types';
 
@@ -84,7 +87,9 @@ export default function Album({
         refreshing={refreshing}
         onRefresh={() => {
           setRefreshing(true);
-          setTimeout(() => setRefreshing(false), 1000);
+          queryClient
+            .refetchQueries({queryKey: ['album', albumArtist, album]})
+            .then(() => setRefreshing(false));
         }}
         renderItem={({item}: {item: TrackProps}) => (
           <ListItem

@@ -2,20 +2,19 @@
 import React, {useState} from 'react';
 
 // * React Native
-import {View, Image, Pressable, Vibration, Alert} from 'react-native';
+import {View, Image, Pressable, Text, Alert, Vibration} from 'react-native';
 
 // * Libraries
 import {StarRatingDisplay} from 'react-native-star-rating-widget';
 import {useMutation, useQueryClient} from '@tanstack/react-query';
-import {Snackbar, Text} from 'react-native-paper';
+import {Avatar, Chip, Snackbar} from 'react-native-paper';
 import axios, {AxiosError} from 'axios';
 import BottomSheet, {BottomSheetFlatList} from '@gorhom/bottom-sheet';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import TrackPlayer, {State} from 'react-native-track-player';
 
 // * Store
-import {ARTWORK_URL, usePlayerStore} from '../store';
+import {usePlayerStore} from '../store';
 
 // * Assets
 import {TrackProps} from '../types';
@@ -47,6 +46,10 @@ export default function TrackDetails({
   const queue = usePlayerStore(state => state.queue);
 
   // ? StoreActions
+  const addAsNextTrack = usePlayerStore(state => state.addAsNextTrack);
+  const addTrackToEndOfQueue = usePlayerStore(
+    state => state.addTrackToEndOfQueue,
+  );
   const play = usePlayerStore(state => state.play);
   const next = usePlayerStore(state => state.next);
   const setQueue = usePlayerStore(state => state.setQueue);
@@ -61,7 +64,7 @@ export default function TrackDetails({
         enablePanDownToClose
         handleIndicatorStyle={{backgroundColor: '#fff'}}
         backgroundStyle={{
-          backgroundColor: 'rgba(0, 0, 0, .85)',
+          backgroundColor: 'rgba(0, 0, 0, .9)',
           borderRadius: 20,
         }}>
         <BottomSheetFlatList
@@ -70,57 +73,89 @@ export default function TrackDetails({
               text: 'Play',
               icon: 'play-arrow',
               action: () => {
+                bottomSheetRef.current?.close();
                 play([track], track);
               },
             },
             {
               text: 'Play Next',
               icon: 'queue-play-next',
-              action: async () => {
-                await TrackPlayer.add(track, activeTrackIndex + 1);
-                const queue = await TrackPlayer.getQueue();
-                setQueue(queue);
+              action: () => {
+                bottomSheetRef.current?.close();
+                addAsNextTrack(track, activeTrackIndex + 1);
               },
             },
             {
               text: 'Add to queue',
               icon: 'add-to-queue',
-              action: () => async () => {
-                await TrackPlayer.add(track);
-                const queue = await TrackPlayer.getQueue();
-                setQueue(queue);
+              action: () => {
+                bottomSheetRef.current?.close();
+                addTrackToEndOfQueue(track);
               },
             },
             {
               text: 'Add to playlist',
               icon: 'playlist-add',
-              action: ({id}: {id: number}) =>
-                navigation.navigate('AddToPlaylist', {id}),
+              action: ({id}: {id: number}) => {
+                bottomSheetRef.current?.close();
+                navigation.navigate('AddToPlaylist', {id});
+              },
             },
             {
-              text: 'Go to artist',
+              text: (
+                <View
+                  style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
+                  <Text style={{fontSize: 16.5, color: '#fff'}}>
+                    Go to artist
+                  </Text>
+                  <View>
+                    <Chip
+                      avatar={
+                        <Avatar.Image
+                          size={24}
+                          source={{
+                            uri: `${track.url
+                              .split('/')
+                              .slice(0, -1)
+                              .join('/')}/artist.jpg`,
+                          }}
+                        />
+                      }
+                      style={{
+                        backgroundColor: 'transparent',
+                        borderColor: '#fff',
+                        borderRadius: 20,
+                        borderWidth: 1,
+                      }}
+                      textStyle={{color: '#fff'}}
+                      onPress={() => {
+                        bottomSheetRef.current?.close();
+                        Vibration.vibrate(100);
+                        navigation.navigate('Artist', {
+                          albumArtist: track?.albumArtist,
+                          tracks: track?.tracks,
+                          path: track.path,
+                          url: track.url,
+                        });
+                      }}>
+                      {track?.albumArtist}
+                    </Chip>
+                  </View>
+                </View>
+              ),
               icon: 'account-music-outline',
               iconSource: 'material-community-icons',
-              action: () =>
-                navigation.navigate('Artist', {
-                  albumArtist: track.albumArtist,
-                  tracks: track.tracks,
-                  path: track.path,
-                }),
             },
             {
               text: 'View Metadata',
-              icon: 'database-outline',
-              iconSource: 'material-community-icons',
-              action: ({id}: {id: number}) =>
-                navigation.navigate('Artist', {id}),
-            },
-            {
-              text: 'Refresh Metadata',
               icon: 'database-refresh-outline',
               iconSource: 'material-community-icons',
-              action: ({id}: {id: number}) =>
-                navigation.navigate('Artist', {id}),
+              action: (track: TrackProps) =>
+                navigation.navigate('TrackMetadata', track),
+              /* {
+                id,
+                path: path.split('/').slice(0, -1),
+              } */
             },
             {
               text: 'Delete from library',
@@ -173,7 +208,7 @@ export default function TrackDetails({
               },
             },
           ]}
-          keyExtractor={i => i.text}
+          keyExtractor={(_, i) => i.toString()}
           ListHeaderComponent={
             <View
               style={{
@@ -184,7 +219,7 @@ export default function TrackDetails({
                 marginHorizontal: 20,
               }}>
               <Image
-                source={{uri: `${ARTWORK_URL}${track?.artwork}`}}
+                source={{uri: track?.artwork}}
                 style={{
                   height: 45,
                   width: 45,
@@ -204,16 +239,15 @@ export default function TrackDetails({
             item,
           }: {
             item: {
-              text: string;
+              text: string | React.ReactNode;
               icon: string;
               iconSource?: string;
-              action: (track: TrackProps) => void;
+              action?: (track: TrackProps) => void;
             };
           }) => (
             <Pressable
               onPress={() => {
-                bottomSheetRef.current?.snapToIndex(-1);
-                item.action(track);
+                item.action && item.action(track);
               }}>
               <View
                 style={{

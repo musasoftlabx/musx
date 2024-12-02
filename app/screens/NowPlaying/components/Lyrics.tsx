@@ -1,28 +1,61 @@
 // * React
-import React, {useCallback} from 'react';
+import React, {useCallback, useEffect} from 'react';
 
 // * React Native
-import {Image, Text, View} from 'react-native';
+import {Image, ImageBackground, Text, View} from 'react-native';
 
 // * Libraries
-import * as Animatable from 'react-native-animatable';
 import {Lyric} from 'react-native-lyric';
 import {Shadow} from 'react-native-shadow-2';
-import TrackPlayer, {isPlaying, State} from 'react-native-track-player';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+import TrackPlayer, {State} from 'react-native-track-player';
 
 // * Store
-import {usePlayerStore, WIDTH} from '../../../store';
+import {LIST_ITEM_HEIGHT, usePlayerStore, WIDTH} from '../../../store';
 
+// * Types
+import {LyricsButton} from '..';
+
+// * Constants
 const millisecondsMultiplier = 1010;
+const duration = 1000;
+const easing = Easing.bezier(0.25, 0.5, 0.75, 1);
+//const easing = Easing.linear((t)=>t);
 
-export default function Lyrics() {
+console.log(easing);
+
+export default function Lyrics({
+  lyricsVisible,
+  setLyricsVisible,
+}: {
+  lyricsVisible: boolean;
+  setLyricsVisible: (lyricsVisible: boolean) => void;
+}) {
+  // ? Hooks
+  const sv = useSharedValue<number>(0);
+
+  useEffect(() => {
+    sv.value = withRepeat(withTiming(1, {duration, easing}), -1);
+    //sv.value = withRepeat(withSpring(1, {mass: 1, stiffness: 1}), -1);
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{rotate: `${sv.value * 360}deg`}],
+  }));
+
   // ? StoreStates
   const {position} = usePlayerStore(state => state.progress);
   const {state} = usePlayerStore(state => state.playbackState);
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const lyrics = usePlayerStore(state => state.lyrics);
   const palette = usePlayerStore(state => state.palette);
-  const trackPlayCount = usePlayerStore(state => state.trackPlayCount);
 
   // ? Constants
   const isPlaying = state === State.Playing;
@@ -45,96 +78,101 @@ export default function Lyrics() {
   );
 
   return (
-    <Shadow
-      distance={20}
-      //sides={{top: false}}
-      //corners={{topStart: false, topEnd: false}}
-      startColor="#00000020"
-      containerStyle={{
-        flex: 1,
-        marginVertical: 15,
-        marginBottom: 0,
-        width: WIDTH * 0.95,
-      }}>
-      <View
-        style={{
-          backgroundColor: palette[1],
-          borderRadius: 20,
+    <View style={{flex: 1}}>
+      <Shadow
+        distance={20}
+        startColor="#00000020"
+        containerStyle={{
+          marginBottom: 0,
           width: WIDTH * 0.95,
-          height: WIDTH * 0.95,
         }}>
         <View
           style={{
-            flexDirection: 'row',
-            paddingVertical: 10,
-            paddingLeft: 15,
-            paddingRight: 20,
+            backgroundColor: palette[1],
+            borderRadius: 20,
+            width: WIDTH * 0.95,
+            height: WIDTH * 0.95,
+            overflow: 'hidden',
           }}>
-          <Image
+          <ImageBackground
             source={{uri: activeTrack?.artwork}}
-            style={[
-              {
-                height: 45,
-                width: 45,
-                marginRight: 8,
-                borderRadius: 50,
-              },
-            ]}
-          />
-          {/* <Animatable.Image
-            animation={isPlaying ? 'rotate' : ''}
-            easing="linear"
-            iterationCount="infinite"
-            iterationDelay={3000}
-            source={{uri: activeTrack?.artwork}}
-            style={[
-              {
-                height: 45,
-                width: 45,
-                marginRight: 8,
-                borderRadius: 50,
-              },
-            ]}
-          /> */}
-          <View
-            style={{
-              justifyContent: 'center',
-              marginTop: -2,
-              maxWidth: WIDTH - 175,
-            }}>
-            <Text numberOfLines={1} style={{fontSize: 17, fontWeight: '600'}}>
-              {activeTrack?.title}
-            </Text>
-            <Text
-              numberOfLines={1}
+            resizeMode="contain"
+            blurRadius={15}
+            style={{marginTop: -50}}>
+            <View
               style={{
-                fontSize: 14,
-                fontWeight: '300',
-                fontStyle: 'italic',
-              }}>
-              {activeTrack?.artists || 'Unknown Artist'}
-            </Text>
-          </View>
-          <View style={{flex: 1}} />
-          <View style={{justifyContent: 'center', alignItems: 'flex-end'}}>
-            <Text style={{fontWeight: 'bold', marginRight: 5}}>
-              {trackPlayCount || 0} play
-              {trackPlayCount === 1 ? '' : 's'}
-            </Text>
-          </View>
-        </View>
+                backgroundColor: palette[0],
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                right: 0,
+                left: 0,
+                opacity: 0.8,
+              }}
+            />
 
-        <Lyric
-          style={{marginBottom: 30}}
-          lrc={lyrics}
-          autoScroll
-          autoScrollAfterUserScroll={300}
-          currentTime={position * millisecondsMultiplier}
-          lineHeight={60}
-          height={200}
-          lineRenderer={lineRenderer}
-        />
-      </View>
-    </Shadow>
+            <View
+              style={{
+                backgroundColor: `${palette[0]}CC`,
+                flexWrap: 'nowrap',
+                flexDirection: 'row',
+                alignItems: 'center',
+                height: LIST_ITEM_HEIGHT,
+                position: 'absolute',
+                marginTop: 50,
+                paddingLeft: 10,
+                zIndex: 1,
+              }}>
+              <View
+                style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                {isPlaying ? (
+                  <Animated.Image
+                    source={{uri: activeTrack?.artwork}}
+                    style={[
+                      {borderRadius: 50, height: 45, width: 45},
+                      animatedStyle,
+                    ]}
+                  />
+                ) : (
+                  <Image
+                    source={{uri: activeTrack?.artwork}}
+                    style={[{borderRadius: 50, height: 45, width: 45}]}
+                  />
+                )}
+
+                <View style={{flex: 1, gap: 2}}>
+                  <Text
+                    numberOfLines={1}
+                    style={{fontSize: 16, fontWeight: '600', width: '97%'}}>
+                    {activeTrack?.title}
+                  </Text>
+                  <Text
+                    numberOfLines={1}
+                    style={{fontSize: 14, color: '#ffffff80'}}>
+                    {activeTrack?.artists ?? 'Unknown Artist'}
+                  </Text>
+                </View>
+              </View>
+
+              <LyricsButton
+                palette={palette}
+                lyrics={lyrics}
+                lyricsVisible={lyricsVisible}
+                setLyricsVisible={setLyricsVisible}
+              />
+            </View>
+
+            <Lyric
+              lrc={lyrics}
+              autoScroll
+              autoScrollAfterUserScroll={300}
+              currentTime={position * millisecondsMultiplier}
+              lineHeight={60}
+              lineRenderer={lineRenderer}
+            />
+          </ImageBackground>
+        </View>
+      </Shadow>
+    </View>
   );
 }

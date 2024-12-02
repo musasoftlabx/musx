@@ -29,10 +29,11 @@ import TrackDetails from '../../components/TrackDetails';
 import imageFiller from '../../assets/images/image-filler.png';
 
 // * Store
-import {API_URL, ARTWORK_URL, AUDIO_URL, HEIGHT, WIDTH} from '../../store';
+import {API_URL, HEIGHT, WIDTH} from '../../store';
 
 // * Types
 import {TrackProps, TracksProps} from '../../types';
+import {queryClient} from '../../../App';
 
 export type ArtistProps = {
   albums: {
@@ -47,7 +48,7 @@ export type ArtistProps = {
 export default function Artist({
   navigation,
   route: {
-    params: {albumArtist, path, tracks},
+    params: {albumArtist, artworks, url, tracks},
   },
 }: any) {
   // ? Refs
@@ -102,17 +103,36 @@ export default function Artist({
             paddingBottom: 10,
             justifyContent: 'center',
           }}>
-          <Image
-            source={{
-              uri: `${AUDIO_URL}${path
-                .split('/')
-                .slice(0, -1)
-                .join('/')}/artist.jpg`,
-            }}
-            defaultSource={require('../../assets/images/musician.png')}
-            style={{borderRadius: 100, height: 100, width: 100}}
-            resizeMode="cover"
-          />
+          {artworks?.length > 0 ? (
+            <View
+              style={{
+                borderRadius: 100,
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                marginTop: 0.5,
+                width: 100,
+                height: 100,
+                overflow: 'hidden',
+              }}>
+              {artworks.map((artwork: string, i: number) => (
+                <Image
+                  key={i}
+                  source={{uri: artwork}}
+                  style={{width: 50, height: 50}}
+                  resizeMode="cover"
+                />
+              ))}
+            </View>
+          ) : (
+            <Image
+              source={{
+                uri: `${url.split('/').slice(0, -1).join('/')}/artist.jpg`,
+              }}
+              defaultSource={require('../../assets/images/musician.png')}
+              style={{width: 100, height: 100, borderRadius: 100}}
+              resizeMode="cover"
+            />
+          )}
 
           <Text style={{fontSize: 30}}>{albumArtist}</Text>
           <Text style={{fontSize: 15}}>{tracks} tracks</Text>
@@ -142,7 +162,9 @@ export default function Artist({
           refreshing={refreshing}
           onRefresh={() => {
             setRefreshing(true);
-            setTimeout(() => setRefreshing(false), 1000);
+            queryClient
+              .refetchQueries({queryKey: ['artist', albumArtist]})
+              .then(() => setRefreshing(false));
           }}
           renderSectionHeader={({section: {title}}) =>
             artist.albums.length > 0 ? (
@@ -187,7 +209,7 @@ export default function Artist({
                         }
                         style={{margin: 10, width: 100}}>
                         <Image
-                          source={{uri: `${ARTWORK_URL}${item.artwork}`}}
+                          source={{uri: item.artwork}}
                           style={{
                             width: 100,
                             height: 100,

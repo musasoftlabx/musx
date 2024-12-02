@@ -64,6 +64,9 @@ interface IPlayerStore {
   seekTo: (position: number) => void;
   skipTo: (track: TrackProps) => void;
   remove: (track: TrackProps) => void;
+  moveTrack: (from: number, to: number) => void;
+  addAsNextTrack: (track: TrackProps, index: number) => void;
+  addTrackToEndOfQueue: (track: TrackProps) => void;
 }
 
 export const usePlayerStore = create<IPlayerStore>((set, get) => ({
@@ -126,17 +129,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
           else return color;
         });
 
-        return {
-          ...track,
-          url: `${AUDIO_URL}${track.path}`,
-          artwork: track.artwork.includes(ARTWORK_URL)
-            ? track.artwork
-            : `${ARTWORK_URL}${track.artwork}`,
-          waveform: track.waveform.includes(WAVEFORM_URL)
-            ? track.waveform
-            : `${WAVEFORM_URL}${track.waveform}`,
-          palette,
-        };
+        return {...track, palette};
       }
     });
 
@@ -334,5 +327,56 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     castState === 'connected'
       ? {}
       : TrackPlayer.remove(queue.findIndex(_track => _track.id === track.id));
+  },
+  moveTrack: async (from: number, to: number) => {
+    const castState = get().castState;
+
+    if (castState === 'connected') {
+    } else {
+      await TrackPlayer.move(from, to);
+      await TrackPlayer.move(to, from);
+      await TrackPlayer.move(from, to);
+      // await TrackPlayer.move(_to, _from);
+      // const __queue = await TrackPlayer.getQueue();
+      // console.log(__queue.map(track => track.title));
+      // await TrackPlayer.move(_from, _to);
+      // const ___queue = await TrackPlayer.getQueue();
+      // console.log(___queue.map(track => track.title));
+    }
+  },
+  addAsNextTrack: async (track: TrackProps, index: number) => {
+    // ? Convert the palette from string to array
+    track.palette = JSON.parse(track.palette);
+
+    // ? Retrieve castState state
+    const castState = get().castState;
+
+    // ? Retrieve setQueue action
+    const setQueue = get().setQueue;
+
+    if (castState === 'connected') {
+      get().castClient?.queueInsertItem(track, index);
+    } else {
+      await TrackPlayer.add(track, index);
+      const queue = await TrackPlayer.getQueue();
+      setQueue(queue);
+    }
+  },
+  addTrackToEndOfQueue: async (track: TrackProps) => {
+    // ? Convert the palette from string to array
+    track.palette = JSON.parse(track.palette);
+
+    // ? Retrieve castState state
+    const castState = get().castState;
+
+    // ? Retrieve setQueue action
+    const setQueue = get().setQueue;
+
+    if (castState === 'connected') get().castClient?.queueInsertItem(track);
+    else {
+      await TrackPlayer.add(track);
+      const queue = await TrackPlayer.getQueue();
+      setQueue(queue);
+    }
   },
 }));

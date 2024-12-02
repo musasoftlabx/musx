@@ -17,11 +17,13 @@ import Animated, {
 } from 'react-native-reanimated';
 
 // * Store
-import {ARTWORK_URL, usePlayerStore} from '../store';
+import {usePlayerStore} from '../store';
 
 // * Types
 import {ArtistProps} from '../screens/Library/Artist';
 import {TrackProps, TracksProps} from '../types';
+
+// * Functions
 import {formatTrackTime} from '../functions';
 
 const duration = 2000;
@@ -102,7 +104,7 @@ export default function ListItem({
           <>
             {isPlaying ? (
               <Animated.Image
-                source={{uri: `${ARTWORK_URL}${item.artwork}`}}
+                source={{uri: item.artwork}}
                 style={[
                   {borderRadius: 100, height: 45, width: 45},
                   animatedStyle,
@@ -110,14 +112,14 @@ export default function ListItem({
               />
             ) : (
               <Image
-                source={{uri: `${ARTWORK_URL}${item.artwork}`}}
+                source={{uri: item.artwork}}
                 style={[{borderRadius: 100, height: 45, width: 45}]}
               />
             )}
           </>
         ) : (
           <Image
-            source={{uri: `${ARTWORK_URL}${item.artwork}`}}
+            source={{uri: item.artwork}}
             style={[{borderRadius: 10, height: 45, width: 45}, animatedStyle]}
           />
         )}

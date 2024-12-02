@@ -69,6 +69,8 @@ Appearance.setColorScheme('dark');
 // ? Setup Track Player
 TrackPlayer.setupPlayer({autoHandleInterruptions: true});
 
+AsyncStorage.removeItem('queue');
+
 export default function App(): React.JSX.Element {
   // ? Refs
   const ref = useRef<BottomSheet>(null);
