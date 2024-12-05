@@ -13,13 +13,11 @@ import {
 } from 'react-native';
 
 // * Libraries
-import {CastButton} from 'react-native-google-cast';
 import _ from 'lodash';
 import BottomSheet from '@gorhom/bottom-sheet';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 // * Components
-import {GradientText} from '../../components/TextX';
 import FavouriteArtists from './components/FavouriteArtists';
 import LinearGradientX from '../../components/LinearGradientX';
 import MostPlayed from './components/MostPlayed';
@@ -49,11 +47,10 @@ export default function Home({navigation}: any) {
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   // ? StoreStates
-
   const [bottomSheetVisible, setBottomSheetVisible] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<{tracks: number}>();
+  const [stats, setStats] = useState<any>();
   const [track, setTrack] = useState<TrackProps>();
   const [sections, setSections] = useState<
     SectionListData<number, SectionProps>[]
@@ -152,32 +149,7 @@ export default function Home({navigation}: any) {
         }
         renderSectionHeader={({section}) => (
           <>
-            {section.title === 'Libraries' ? (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  paddingLeft: 12,
-                  paddingRight: 20,
-                }}>
-                <GradientText
-                  bold
-                  font="Laila-Bold"
-                  gradient={['#fff59d', '#fff']}
-                  numberOfLines={1}
-                  scale={5}>
-                  MusX Player
-                </GradientText>
-                <View style={{flex: 1}} />
-                <CastButton
-                  style={{
-                    width: 24,
-                    height: 24,
-                    tintColor: 'rgba(255, 255, 255, .7)',
-                  }}
-                />
-              </View>
-            ) : (
+            {section.title !== 'Libraries' && (
               <View
                 style={{
                   flexDirection: 'row',
@@ -221,92 +193,79 @@ export default function Home({navigation}: any) {
                   />
                 )}
 
-                {/* {section.title === 'Most Played' && (
-                  <MostPlayed loading={loading} dataset={section.dataset} />
-                )} */}
+                {section.title === 'Most Played' && (
+                  <MostPlayed
+                    loading={loading}
+                    dataset={section.dataset}
+                    setTrack={setTrack}
+                    bottomSheetRef={bottomSheetRef}
+                    setBottomSheetVisible={setBottomSheetVisible}
+                  />
+                )}
               </>
             ) : (
               <>
                 {section.title === 'Libraries' && (
-                  <>
-                    <Text
-                      style={{fontSize: 15, marginLeft: 10, marginBottom: 10}}>
-                      Consists of{' '}
-                      <Text style={{fontWeight: '900'}}>
-                        {(stats &&
-                          stats.tracks
-                            .toString()
-                            .replace(/\B(?=(\d{3})+(?!\d))/g, ',')) ||
-                          0}
-                      </Text>{' '}
-                      tracks
-                    </Text>
-
-                    <View style={{flexDirection: 'row', flexWrap: 'wrap'}}>
-                      {section.dataset?.map((item, i) => (
-                        <Pressable
-                          key={i}
-                          onPress={() => navigation.navigate(item.name)}
+                  <View style={{flexDirection: 'row', flexWrap: 'wrap'}}>
+                    {section.dataset?.map((item, i) => (
+                      <Pressable
+                        key={i}
+                        onPress={() => navigation.navigate(item.name)}
+                        style={{
+                          flexGrow: 1,
+                          borderRadius: 10,
+                          backgroundColor: 'rgba(10, 10, 20, 0.5)',
+                          width: WIDTH / 2.5,
+                          margin: 5,
+                        }}>
+                        <View
                           style={{
-                            flexGrow: 1,
-                            borderRadius: 10,
-                            backgroundColor: 'rgba(10, 10, 20, 0.5)',
-                            width: WIDTH / 2.5,
-                            margin: 5,
+                            flexDirection: 'row',
+                            paddingHorizontal: 6,
+                            paddingVertical: 12,
+                            overflow: 'hidden',
                           }}>
-                          <View
-                            style={{
-                              flexDirection: 'row',
-                              paddingHorizontal: 6,
-                              paddingVertical: 12,
-                              overflow: 'hidden',
-                            }}>
-                            <Image
-                              source={item.icon}
-                              style={{
-                                width: 45,
-                                height: 45,
-                                marginRight: 5,
-                              }}
-                            />
-                            <View>
-                              <Text style={{fontSize: 20, fontWeight: 'bold'}}>
-                                {item.name}
-                              </Text>
-                              <Text style={{fontSize: 16}}>
-                                {stats
-                                  ? Object.keys(stats).map(
-                                      k =>
-                                        k === item.name?.toLowerCase() &&
-                                        stats[k].toLocaleString(),
-                                    )
-                                  : 0}
-                              </Text>
-                            </View>
-                            <View style={{flex: 1}} />
-                            <Image
-                              source={item.icon}
-                              style={{
-                                width: 75,
-                                height: 75,
-                                position: 'absolute',
-                                right: -20,
-                                top: 20,
-                                tintColor: 'gray',
-                                opacity: 0.5,
-                              }}
-                            />
+                          <Image
+                            source={item.icon}
+                            style={{height: 45, marginRight: 5, width: 45}}
+                          />
+                          <View>
+                            <Text style={{fontSize: 20, fontWeight: 'bold'}}>
+                              {item.name}
+                            </Text>
+
+                            <Text style={{fontSize: 16}}>
+                              {stats
+                                ? Object.keys(stats).map(stat => {
+                                    if (stat === item.name?.toLowerCase())
+                                      return stats[stat].toLocaleString();
+                                  })
+                                : 0}
+                            </Text>
                           </View>
-                        </Pressable>
-                      ))}
-                    </View>
-                  </>
+                          <View style={{flex: 1}} />
+                          <Image
+                            source={item.icon}
+                            style={{
+                              width: 75,
+                              height: 75,
+                              position: 'absolute',
+                              right: -20,
+                              top: 20,
+                              tintColor: 'gray',
+                              opacity: 0.5,
+                            }}
+                          />
+                        </View>
+                      </Pressable>
+                    ))}
+                  </View>
                 )}
               </>
             )}
           </>
         )}
-        style={{marginTop: 40}}
+        style={{marginTop: 100}}
       />
 
       {track && (

@@ -17,7 +17,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 // * Store
-import {usePlayerStore} from '../store';
+import {usePlayerStore, WIDTH} from '../store';
 
 // * Types
 import {ArtistProps} from '../screens/Library/Artist';
@@ -85,21 +85,10 @@ export default function ListItem({
               paddingHorizontal: 5,
             }
           : {marginHorizontal: 10},
-        {
-          flex: 1,
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingVertical: 7,
-        },
+        {alignItems: 'center', flexDirection: 'row', paddingVertical: 7},
       ]}>
       {/* Track details */}
-      <View
-        style={{
-          flex: 1,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 10,
-        }}>
+      <View style={{alignItems: 'center', flexDirection: 'row', gap: 10}}>
         {isActive ? (
           <>
             {isPlaying ? (
@@ -123,8 +112,8 @@ export default function ListItem({
             style={[{borderRadius: 10, height: 45, width: 45}, animatedStyle]}
           />
         )}
-        <View style={{gap: 2}}>
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+        <View style={{flexBasis: `${WIDTH * 0.12}%`, gap: 2}}>
+          <View style={{alignItems: 'center', flexDirection: 'row', gap: 6}}>
             <Text
               numberOfLines={1}
               style={{
@@ -157,8 +146,6 @@ export default function ListItem({
           </Text>
         </View>
       </View>
-      {/* Spacer */}
-      <View style={{flex: 0.7}} />
       {/* Rating & Plays */}
       <View
         style={{

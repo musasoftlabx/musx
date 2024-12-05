@@ -2,95 +2,72 @@
 import React, {useEffect, useState} from 'react';
 
 // * React Native
-import {
-  Image,
-  FlatList,
-  Pressable,
-  Text,
-  View,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import {Text, View, Alert} from 'react-native';
 
 // * Libraries
 import * as Yup from 'yup';
-import {
-  Button,
-  HelperText,
-  Snackbar,
-  TextInput,
-  useTheme,
-} from 'react-native-paper';
+import {HelperText, Snackbar, TextInput, useTheme} from 'react-native-paper';
+import {FlashList} from '@shopify/flash-list';
 import {Formik} from 'formik';
 import {useBackHandler} from '@react-native-community/hooks';
+import {useMutation} from '@tanstack/react-query';
 import axios from 'axios';
 
+// * Components
+import ButtonX from '../../components/ButtonX';
+import LinearGradientX from '../../components/LinearGradientX';
+
 // * Store
-import {API_URL, ARTWORK_URL} from '../../store';
+import {API_URL, usePlayerStore} from '../../store';
 
 // * Types
 import {TrackProps} from '../../types';
-import {FlashList} from '@shopify/flash-list';
-import LinearGradientX from '../../components/LinearGradientX';
+
 import {formatTrackTime} from '../../functions';
-import ButtonX from '../../components/ButtonX';
-import TextX from '../../components/TextX';
-import {useMutation} from '@tanstack/react-query';
 
 import {styles} from '../../styles';
 
 export default function TrackMetadata({
   navigation,
-  route: {params},
+  route: {params: _params},
 }: {
   navigation: any;
   route: {params: TrackProps};
 }) {
   const theme = useTheme();
 
-  const [playlists, setPlaylists] = useState(null);
-  const [name, setName] = useState('');
+  // ? StoreStates
+  const palette = usePlayerStore(state => state.palette);
+
   const [snackbar, setSnackbar] = useState(false);
-  const [displayForm, setDisplayForm] = useState<boolean>(false);
+  const [refreshMetadataLoading, setRefreshMetadataLoading] = useState(false);
+  const [params, setParams] = useState<TrackProps>(_params);
 
   const {mutate: updateMetadata} = useMutation({
     mutationFn: (data: HTMLFormElement) => axios.post('updateMetadata', data),
   });
 
   const {mutate: refreshMetadata} = useMutation({
-    mutationFn: () => axios.get('refreshMetadata'),
+    mutationFn: () => axios.post(`refreshMetadata`, {path: params.path}),
+    onSuccess: () => {
+      axios.get(`trackMetadata/${params.id}`).then(({data}) => {
+        setParams(data);
+        setRefreshMetadataLoading(false);
+      });
+    },
+  });
+
+  // ? Effects
+  useEffect(() => {
+    navigation.setOptions({
+      headerStyle: {backgroundColor: palette?.[1] ?? '#000'},
+    });
   });
 
   useBackHandler(() => {
     navigation.goBack();
     return true;
   });
-
-  // const {data, isSuccess, isFetching, isFetched} = useQuery({
-  //   queryKey: ['playlists'],
-  //   queryFn: ({queryKey}) => axios.get(`${API_URL}${queryKey[0]}`),
-  //   select: ({data}) => data,
-  // });
-
-  const createPlaylist = async () => {
-    const {data} = await axios.post(`${API_URL}createPlaylist`, {
-      name,
-      trackId: id,
-    });
-    setPlaylists(data);
-    setName('');
-    navigation.goBack();
-  };
-
-  const addPlaylistTrack = async (playlistId: number) => {
-    await axios.post(`${API_URL}addPlaylistTrack`, {
-      playlistId,
-      trackId: id,
-      startsAt: null,
-      endsAt: null,
-    });
-    navigation.goBack();
-  };
 
   return (
     <>
@@ -143,7 +120,13 @@ export default function TrackMetadata({
         )}
         ListFooterComponent={
           <>
-            <ButtonX style={{marginTop: 10}} onPress={() => refreshMetadata()}>
+            <ButtonX
+              loading={refreshMetadataLoading}
+              style={{marginTop: 10}}
+              onPress={() => {
+                setRefreshMetadataLoading(true);
+                refreshMetadata();
+              }}>
               REFRESH METADATA
             </ButtonX>
 

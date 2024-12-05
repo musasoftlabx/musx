@@ -11,6 +11,7 @@ import tinycolor from 'tinycolor2';
 
 // * Types
 import {TrackProps, TracksProps} from './types';
+import {MediaQueueData, RemoteMediaClient} from 'react-native-google-cast';
 
 export const SERVER_URL = `http://75.119.137.255`;
 export const API_URL = `${SERVER_URL}:3000/`;
@@ -33,12 +34,13 @@ interface IPlayerStore {
   trackRating: number;
   trackPlayCount: number;
   playRegistered: boolean;
+  isCrossFading: boolean;
   lyricsVisible: boolean;
   lyrics: null | string;
   palette: string[];
   nowPlayingRef: BottomSheet | null;
   castState: any;
-  castClient: any;
+  castClient: RemoteMediaClient | null;
   setProgress: (queue: Progress) => void;
   setPlaybackState: (playbackState: any) => void;
   setQueue: (queue: Track[]) => void;
@@ -49,6 +51,7 @@ interface IPlayerStore {
   setTrackRating: (trackRating?: number) => void;
   setTrackPlayCount: (trackPlayCount: number) => void;
   setPlayRegistered: (playRegistered: boolean) => void;
+  setIsCrossFading: (isCrossFading: boolean) => void;
   setPalette: (palette: string[]) => void;
   setLyricsVisible: (lyricsVisible: boolean) => void;
   setLyrics: (lyrics: null | string) => void;
@@ -80,12 +83,13 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   trackRating: 0,
   trackPlayCount: 0,
   playRegistered: false,
+  isCrossFading: false,
   lyricsVisible: false,
   palette: [],
   lyrics: null,
   nowPlayingRef: null,
   castState: {},
-  castClient: {},
+  castClient: null,
   setProgress: progress => set(state => ({...state, progress})),
   setPlaybackState: playbackState => set(state => ({...state, playbackState})),
   setQueue: queue => set(state => ({...state, queue})),
@@ -99,6 +103,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     set(state => ({...state, trackPlayCount})),
   setPlayRegistered: playRegistered =>
     set(state => ({...state, playRegistered})),
+  setIsCrossFading: isCrossFading => set(state => ({...state, isCrossFading})),
   setPalette: palette => set(state => ({...state, palette})),
   setLyricsVisible: lyricsVisible => set(state => ({...state, lyricsVisible})),
   setLyrics: lyrics => set(state => ({...state, lyrics})),
@@ -114,6 +119,8 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     set(state => ({...state, nowPlayingRef})),
   setCastState: (castState: any) => set(state => ({...state, castState})),
   setCastClient: (castClient: any) => set(state => ({...state, castClient})),
+
+  // ? Player actions
   play: async (data: TracksProps, selected: TrackProps, position?: number) => {
     const tracks = data.map((track: TrackProps) => {
       if (track.hasOwnProperty('format')) {
@@ -148,46 +155,46 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
       set({queue});
 
       castClient
-        .loadMedia({
+        ?.loadMedia({
           queueData: {
-            items: queue
-              .slice(selectedIndex)
-              .map((track: TrackProps, index: number) => ({
-                mediaInfo: {
-                  contentUrl: track.url,
-                  contentType: 'audio/mpeg',
-                  metadata: {
-                    type: 'musicTrack',
-                    images: [{url: track.artwork}],
-                    title: track.title,
-                    albumTitle: track.albumArtist,
-                    albumArtist: track.albumArtist,
-                    artist: track.artists,
-                    releaseDate: track.year,
-                    trackNumber: index + 1,
-                    discNumber: 1,
-                  },
-                  customData: {
-                    id: track.id,
-                    title: track.title,
-                    albumArtist: track.albumArtist,
-                    duration: track.duration,
-                    artists: track.artists,
-                    album: track.album,
-                    rating: track.rating ?? 0,
-                    plays: track.plays,
-                    year: track.year,
-                    waveform: track.waveform,
-                    sampleRate: track.sampleRate,
-                    palette: track.palette,
-                    genre: track.genre,
-                    format: track.format,
-                    encoder: track.encoder,
-                    bitrate: track.bitrate,
-                    artwork: track.artwork,
-                  },
+            name: 'MusX Queue',
+            startIndex: selectedIndex,
+            items: queue.map((track: TrackProps, index: number) => ({
+              mediaInfo: {
+                contentUrl: track.url,
+                contentType: 'audio/mpeg',
+                metadata: {
+                  type: 'musicTrack',
+                  images: [{url: track.artwork}],
+                  title: track.title,
+                  albumTitle: track.albumArtist,
+                  albumArtist: track.albumArtist,
+                  artist: track.artists,
+                  releaseDate: track.year,
+                  trackNumber: index + 1,
+                  discNumber: 1,
                 },
-              })),
+                customData: {
+                  id: track.id,
+                  title: track.title,
+                  albumArtist: track.albumArtist,
+                  duration: track.duration,
+                  artists: track.artists,
+                  album: track.album,
+                  rating: track.rating ?? 0,
+                  plays: track.plays,
+                  year: track.year,
+                  waveform: track.waveform,
+                  sampleRate: track.sampleRate,
+                  palette: track.palette,
+                  genre: track.genre,
+                  format: track.format,
+                  encoder: track.encoder,
+                  bitrate: track.bitrate,
+                  artwork: track.artwork,
+                },
+              },
+            })),
           },
         })
         .then(() => {
@@ -209,6 +216,9 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     Vibration.vibrate(50);
 
     const {state} = get().playbackState;
+
+    // ? Retrieve castClient & castState state
+    const castClient = get().castClient;
     const castState = get().castState;
 
     if (
@@ -216,123 +226,215 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
       state === State.Stopped ||
       state === State.Ready
     )
-      castState === 'connected' ? get().castClient.play() : TrackPlayer.play();
-    else
-      castState === 'connected'
-        ? get().castClient.pause()
-        : TrackPlayer.pause();
+      castState === 'connected' ? castClient?.play() : TrackPlayer.play();
+    else castState === 'connected' ? castClient?.pause() : TrackPlayer.pause();
   },
   previous: (position: number) => {
     Vibration.vibrate(50);
 
+    // ? Retrieve castClient & castState state
+    const castClient = get().castClient;
     const castState = get().castState;
 
     if (position <= 10)
       castState === 'connected'
-        ? get().castClient?.queuePrev()
+        ? castClient?.queuePrev()
         : TrackPlayer.skipToPrevious();
     else
       castState === 'connected'
-        ? get().castClient?.seek({position: 0})
+        ? castClient?.seek({position: 0})
         : TrackPlayer.seekTo(0);
   },
   next: () => {
     Vibration.vibrate(50);
 
+    // ? Retrieve castClient & castState state
+    const castClient = get().castClient;
     const castState = get().castState;
 
-    castState === 'connected'
-      ? get().castClient?.queueNext()
-      : TrackPlayer.skipToNext();
-
-    return false;
-
-    const activeTrackIndex = get().activeTrackIndex;
-    const queue = get().queue;
-
-    const crossfader = new Sound(
-      queue[activeTrackIndex + 1].url,
-      Sound.MAIN_BUNDLE,
-      e => {
-        if (e) {
-          TrackPlayer.skipToNext();
-          console.log('failed to load the sound', e);
-          return;
-        }
-
-        crossfader.setVolume(0);
-        crossfader.play();
-
-        let fadeOutInterval = setInterval(async () => {
-          const currentTrackVolume = await TrackPlayer.getVolume();
-          const crossfaderVolume = crossfader.getVolume();
-
-          await TrackPlayer.setVolume(currentTrackVolume - 0.1);
-          crossfader.setVolume(crossfaderVolume + 0.1);
-
-          if (currentTrackVolume <= 0) {
-            crossfader.getCurrentTime(async seconds => {
-              await TrackPlayer.skipToNext();
-              await TrackPlayer.seekTo(seconds + 1.8);
-              clearInterval(fadeOutInterval);
-
-              let fadeInInterval = setInterval(async () => {
-                await TrackPlayer.setVolume(
-                  (await TrackPlayer.getVolume()) + 0.5,
-                );
-
-                crossfader.setVolume(crossfader.getVolume() - 0.3);
-
-                if (crossfader.getVolume() <= 0) {
-                  await TrackPlayer.setVolume(1);
-                  crossfader.stop();
-                  clearInterval(fadeInInterval);
-                  crossfader.release();
-                }
-              }, 1000);
-            });
-          }
-        }, 1000);
-      },
-    );
+    if (castState === 'connected') castClient?.queueNext();
+    else TrackPlayer.skipToNext();
   },
   seekTo: (position: number) => {
     Vibration.vibrate(50);
 
+    // ? Retrieve castClient & castState state
+    const castClient = get().castClient;
     const castState = get().castState;
 
-    castState === 'connected'
-      ? get().castClient?.seek({position})
-      : TrackPlayer.seekTo(position);
+    if (castState === 'connected') castClient?.seek({position});
+    else TrackPlayer.seekTo(position);
   },
   skipTo: (track: TrackProps) => {
     Vibration.vibrate(50);
 
+    // ? Retrieve castClient & castState state
+    const castClient = get().castClient;
     const castState = get().castState;
+
+    // ? Retrieve queue state
     const queue = get().queue;
 
-    castState === 'connected'
-      ? get().castClient?.skip()
-      : TrackPlayer.skip(queue.findIndex(_track => _track.id === track.id));
+    // ? Get the index of the track in queue to skip to
+    const skipToIndex = queue.findIndex(({id}) => id === track.id);
+
+    if (castState === 'connected')
+      castClient?.loadMedia({
+        queueData: {
+          startIndex: skipToIndex,
+          items: queue.map((track, index) => ({
+            mediaInfo: {
+              contentUrl: track.url,
+              contentType: 'audio/mpeg',
+              metadata: {
+                type: 'musicTrack',
+                images: [{url: track.artwork}],
+                title: track.title,
+                albumTitle: track.albumArtist,
+                albumArtist: track.albumArtist,
+                artist: track.artists,
+                releaseDate: track.year,
+                trackNumber: index + 1,
+                discNumber: 1,
+              },
+              customData: {
+                id: track.id,
+                title: track.title,
+                albumArtist: track.albumArtist,
+                duration: track.duration,
+                artists: track.artists,
+                album: track.album,
+                rating: track.rating ?? 0,
+                plays: track.plays,
+                year: track.year,
+                waveform: track.waveform,
+                sampleRate: track.sampleRate,
+                palette: track.palette,
+                genre: track.genre,
+                format: track.format,
+                encoder: track.encoder,
+                bitrate: track.bitrate,
+                artwork: track.artwork,
+              },
+            },
+          })) as MediaQueueData['items'],
+        },
+      });
+    else TrackPlayer.skip(skipToIndex);
   },
   remove: (track: TrackProps) => {
     Vibration.vibrate(50);
 
+    // ? Retrieve castClient & castState state
+    const castClient = get().castClient;
     const castState = get().castState;
+
+    // ? Retrieve queue, activeTrackIndex state & setQueue action
+    const activeTrackIndex = get().activeTrackIndex;
     const queue = get().queue;
     const setQueue = get().setQueue;
 
+    // ? Remove track from queue
     setQueue(queue.filter(_track => _track.id !== track.id && _track));
 
-    castState === 'connected'
-      ? {}
-      : TrackPlayer.remove(queue.findIndex(_track => _track.id === track.id));
+    if (castState === 'connected')
+      castClient?.loadMedia({
+        autoplay: false,
+        queueData: {
+          startIndex: activeTrackIndex,
+          items: queue.map((track, index) => ({
+            mediaInfo: {
+              contentUrl: track.url,
+              contentType: 'audio/mpeg',
+              metadata: {
+                type: 'musicTrack',
+                images: [{url: track.artwork}],
+                title: track.title,
+                albumTitle: track.albumArtist,
+                albumArtist: track.albumArtist,
+                artist: track.artists,
+                releaseDate: track.year,
+                trackNumber: index + 1,
+                discNumber: 1,
+              },
+              customData: {
+                id: track.id,
+                title: track.title,
+                albumArtist: track.albumArtist,
+                duration: track.duration,
+                artists: track.artists,
+                album: track.album,
+                rating: track.rating ?? 0,
+                plays: track.plays,
+                year: track.year,
+                waveform: track.waveform,
+                sampleRate: track.sampleRate,
+                palette: track.palette,
+                genre: track.genre,
+                format: track.format,
+                encoder: track.encoder,
+                bitrate: track.bitrate,
+                artwork: track.artwork,
+              },
+            },
+          })) as MediaQueueData['items'],
+        },
+      });
+    else TrackPlayer.remove(queue.findIndex(_track => _track.id === track.id));
   },
   moveTrack: async (from: number, to: number) => {
+    // ? Retrieve castClient & castState state
+    const castClient = get().castClient;
     const castState = get().castState;
 
-    if (castState === 'connected') {
-    } else {
+    // ? Retrieve queue & activeTrackIndex states
+    const activeTrackIndex = get().activeTrackIndex;
+    const queue = get().queue;
+
+    if (castState === 'connected')
+      castClient?.loadMedia({
+        autoplay: false,
+        queueData: {
+          startIndex: activeTrackIndex,
+          items: queue.map((track, index) => ({
+            mediaInfo: {
+              contentUrl: track.url,
+              contentType: 'audio/mpeg',
+              metadata: {
+                type: 'musicTrack',
+                images: [{url: track.artwork}],
+                title: track.title,
+                albumTitle: track.albumArtist,
+                albumArtist: track.albumArtist,
+                artist: track.artists,
+                releaseDate: track.year,
+                trackNumber: index + 1,
+                discNumber: 1,
+              },
+              customData: {
+                id: track.id,
+                title: track.title,
+                albumArtist: track.albumArtist,
+                duration: track.duration,
+                artists: track.artists,
+                album: track.album,
+                rating: track.rating ?? 0,
+                plays: track.plays,
+                year: track.year,
+                waveform: track.waveform,
+                sampleRate: track.sampleRate,
+                palette: track.palette,
+                genre: track.genre,
+                format: track.format,
+                encoder: track.encoder,
+                bitrate: track.bitrate,
+                artwork: track.artwork,
+              },
+            },
+          })) as MediaQueueData['items'],
+        },
+      });
+    else {
       await TrackPlayer.move(from, to);
       await TrackPlayer.move(to, from);
       await TrackPlayer.move(from, to);
@@ -344,39 +446,133 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
       // console.log(___queue.map(track => track.title));
     }
   },
-  addAsNextTrack: async (track: TrackProps, index: number) => {
+  addAsNextTrack: (track: TrackProps, index: number) => {
     // ? Convert the palette from string to array
     track.palette = JSON.parse(track.palette);
 
-    // ? Retrieve castState state
+    // ? Retrieve castClient & castState state
+    const castClient = get().castClient;
     const castState = get().castState;
 
-    // ? Retrieve setQueue action
+    // ? Retrieve queue state & setQueue action
+    const queue = get().queue;
     const setQueue = get().setQueue;
 
-    if (castState === 'connected') {
-      get().castClient?.queueInsertItem(track, index);
-    } else {
-      await TrackPlayer.add(track, index);
-      const queue = await TrackPlayer.getQueue();
-      setQueue(queue);
-    }
+    // ? Add track after current track
+    queue.splice(index, 0, track);
+
+    // ? Set Queue
+    setQueue([...queue]);
+
+    // ? Save queue to storage
+    AsyncStorage.setItem('queue', JSON.stringify([...queue]));
+
+    if (castState === 'connected')
+      castClient?.getMediaStatus().then(status => {
+        const currentItemId = status?.currentItemId;
+
+        castClient.queueInsertItem(
+          {
+            preloadTime: 10,
+            mediaInfo: {
+              contentUrl: track.url,
+              contentType: 'audio/mpeg',
+              metadata: {
+                type: 'musicTrack',
+                images: [{url: track.artwork}],
+                title: track.title,
+                albumTitle: track.albumArtist,
+                albumArtist: track.albumArtist,
+                artist: track.artists,
+                releaseDate: track.year,
+                trackNumber: 1,
+                discNumber: 1,
+              },
+              customData: {
+                id: track.id,
+                title: track.title,
+                albumArtist: track.albumArtist,
+                duration: track.duration,
+                artists: track.artists,
+                album: track.album,
+                rating: track.rating ?? 0,
+                plays: track.plays,
+                year: track.year,
+                waveform: track.waveform,
+                sampleRate: track.sampleRate,
+                palette: track.palette,
+                genre: track.genre,
+                format: track.format,
+                encoder: track.encoder,
+                bitrate: track.bitrate,
+                artwork: track.artwork,
+              },
+            },
+          },
+          currentItemId! + 1,
+        );
+      });
+    else TrackPlayer.add(track, index);
   },
-  addTrackToEndOfQueue: async (track: TrackProps) => {
+  addTrackToEndOfQueue: (track: TrackProps) => {
     // ? Convert the palette from string to array
     track.palette = JSON.parse(track.palette);
 
-    // ? Retrieve castState state
+    // ? Retrieve castClient & castState state
+    const castClient = get().castClient;
     const castState = get().castState;
 
-    // ? Retrieve setQueue action
+    // ? Retrieve queue state & setQueue action
+    const queue = get().queue;
     const setQueue = get().setQueue;
 
-    if (castState === 'connected') get().castClient?.queueInsertItem(track);
-    else {
-      await TrackPlayer.add(track);
-      const queue = await TrackPlayer.getQueue();
-      setQueue(queue);
-    }
+    // ? Add track to end of queue
+    const _queue = [...queue, track];
+
+    // ? Set Queue
+    setQueue(_queue);
+
+    // ? Save queue to storage
+    AsyncStorage.setItem('queue', JSON.stringify(_queue));
+
+    if (castState === 'connected')
+      castClient?.queueInsertItem({
+        preloadTime: 10,
+        mediaInfo: {
+          contentUrl: track.url,
+          contentType: 'audio/mpeg',
+          metadata: {
+            type: 'musicTrack',
+            images: [{url: track.artwork}],
+            title: track.title,
+            albumTitle: track.albumArtist,
+            albumArtist: track.albumArtist,
+            artist: track.artists,
+            releaseDate: track.year,
+            trackNumber: 1,
+            discNumber: 1,
+          },
+          customData: {
+            id: track.id,
+            title: track.title,
+            albumArtist: track.albumArtist,
+            duration: track.duration,
+            artists: track.artists,
+            album: track.album,
+            rating: track.rating ?? 0,
+            plays: track.plays,
+            year: track.year,
+            waveform: track.waveform,
+            sampleRate: track.sampleRate,
+            palette: track.palette,
+            genre: track.genre,
+            format: track.format,
+            encoder: track.encoder,
+            bitrate: track.bitrate,
+            artwork: track.artwork,
+          },
+        },
+      });
+    else TrackPlayer.add(track);
   },
 }));

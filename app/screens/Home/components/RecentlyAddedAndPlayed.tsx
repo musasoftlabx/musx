@@ -66,8 +66,8 @@ export default function RecentlyAddedAndPlayed({
             <Text
               numberOfLines={1}
               style={{
-                fontSize: 16,
                 color: 'white',
+                fontSize: 16,
                 marginTop: 5,
                 marginBottom: 2,
               }}>

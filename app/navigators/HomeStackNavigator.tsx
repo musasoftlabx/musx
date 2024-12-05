@@ -16,6 +16,11 @@ import Folders from '../screens/Library/Folders';
 import Home from '../screens/Home/';
 import Playlists from '../screens/Library/Playlists';
 import TrackMetadata from '../screens/Library/TrackMetadata';
+import {Text, View} from 'react-native';
+import {GradientText} from '../components/TextX';
+import LinearGradient from 'react-native-linear-gradient';
+
+import {BlurView, VibrancyView} from '@react-native-community/blur';
 
 const Stack = createNativeStackNavigator();
 
@@ -26,7 +31,44 @@ export default function HomeStackNavigator() {
         <Stack.Screen
           name="Home"
           component={Home}
-          options={{headerShown: false}}
+          options={{
+            title: '',
+            headerTransparent: true,
+            headerBlurEffect: 'prominent',
+            // headerBackground: () => (
+            //   <>
+            //     <BlurView
+            //       style={{
+            //         position: 'absolute',
+            //         top: 0,
+            //         left: 0,
+            //         bottom: 0,
+            //         right: 0,
+            //       }}
+            //       blurType="light"
+            //       blurAmount={1}
+            //       reducedTransparencyFallbackColor="white"
+            //     />
+            //   </>
+            // ),
+            headerShadowVisible: false,
+            headerLeft: () => (
+              <View style={{paddingVertical: 20}}>
+                <GradientText
+                  bold
+                  font="Laila-Bold"
+                  gradient={['#fff59d', '#fff']}
+                  numberOfLines={1}
+                  scale={5}>
+                  MusX Player
+                </GradientText>
+                <Text>Consists of 0 tracks</Text>
+              </View>
+            ),
+            headerRight: () => (
+              <CastButton style={{height: 24, width: 24, marginTop: -15}} />
+            ),
+          }}
         />
         <Stack.Screen name="Playlists" component={Playlists} />
         <Stack.Screen

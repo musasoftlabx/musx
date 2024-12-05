@@ -28,7 +28,7 @@ export default function TabNavigator() {
     <>
       <Tab.Navigator
         initialRouteName=""
-        //initialRouteName="LibraryStackNavigator"
+        //initialRouteName="Search"
         screenOptions={({route}) => ({
           tabBarIcon: ({focused, color, size}) => {
             let iconName;

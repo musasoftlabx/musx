@@ -2,31 +2,22 @@
 import React from 'react';
 
 // * React Native
-import {
-  FlatList,
-  Image,
-  ImageBackground,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import {FlatList, View} from 'react-native';
 
 // * Libraries
-import {Circle, Rect} from 'react-native-svg';
+import {Rect} from 'react-native-svg';
 import SvgAnimatedLinearGradient from 'react-native-svg-animated-linear-gradient';
 
-// * Store
-import {ARTWORK_URL, AUDIO_URL, usePlayerStore, WIDTH} from '../../../store';
+// * Components
+import ListItem from '../../../components/ListItem';
 
 // * Types
 import {SectionProps} from '..';
-import {TrackProps} from '../../../types';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {StarRatingDisplay} from 'react-native-star-rating-widget';
+import {TrackProps, TracksProps} from '../../../types';
 
 const ItemPlaceholder = () => {
   return [1, 2, 3].map(i => (
+    // @ts-ignore
     <SvgAnimatedLinearGradient
       key={i}
       primaryColor="#e8f7ff"
@@ -44,173 +35,78 @@ const ItemPlaceholder = () => {
 export default function MostPlayed({
   loading,
   dataset,
+  bottomSheetRef,
+  setTrack,
+  setBottomSheetVisible,
 }: {
   loading: boolean;
   dataset: SectionProps['dataset'];
+  bottomSheetRef?: any;
+  setTrack: (highlighted: TrackProps) => void;
+  setBottomSheetVisible: (visible: boolean) => void;
 }) {
-  // ? StoreActions
-  const play = usePlayerStore(state => state.play);
-
-  return (
-    <>
-      {loading ? (
-        <View
-          style={{
-            backgroundColor: '#fff',
-            opacity: 0.2,
-            padding: 20,
-            margin: 10,
-            borderRadius: 10,
-          }}>
-          <SvgAnimatedLinearGradient
-            primaryColor="#e8f7ff"
-            secondaryColor="#4dadf7"
-            height={25}>
-            <Rect x="0" y="5" rx="4" ry="4" width="200" height="15" />
-          </SvgAnimatedLinearGradient>
-          <ItemPlaceholder />
-        </View>
-      ) : (
-        <FlatList
-          horizontal
-          data={dataset}
-          renderItem={({item}: {item: TrackProps}) => (
-            <ImageBackground
-              source={{uri: `${ARTWORK_URL}${item.artwork}`}}
-              resizeMode="cover"
-              borderRadius={20}
-              width={10}
-              blurRadius={20}
-              style={{
-                margin: 10,
-                width: 320,
-                //tintColor: '#000',
-                padding: 10,
-              }}>
-              {/* <View
-              style={{
-                top: 0,
-                bottom: 0,
-                right: 0,
-                left: 0,
-                position: 'absolute',
-                backgroundColor: 'black',
-                opacity: 0.6,
-                zIndex: 2,
-              }}
-            /> */}
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  marginHorizontal: 10,
-                  marginVertical: 10,
-                }}>
-                <Text
-                  style={{
-                    fontSize: 20,
-                    color: '#fff',
-                  }}>
-                  Most played this month
-                </Text>
-                <View style={{flex: 1}} />
-                <Pressable>
-                  <MaterialIcons
-                    style={{marginTop: 3}}
-                    name="double-arrow"
-                    size={15}
-                  />
-                </Pressable>
-              </View>
-              <FlatList
-                data={dataset}
-                renderItem={({
-                  item,
-                  index,
-                }: {
-                  item: TrackProps;
-                  index: number;
-                }) => (
-                  <Pressable onPress={() => play('', item)}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        paddingVertical: 10,
-                        paddingHorizontal: 10,
-                      }}>
-                      <Text
-                        style={{
-                          fontSize: 20,
-                          fontWeight: 'bold',
-                          color: '#fff',
-                        }}>
-                        {index + 1}.
-                      </Text>
-                      <Image
-                        source={{
-                          uri: `${ARTWORK_URL}${item.artwork}`,
-                        }}
-                        style={{
-                          height: 45,
-                          width: 45,
-                          marginHorizontal: 8,
-                          borderRadius: 10,
-                        }}
-                      />
-                      <View
-                        style={{
-                          justifyContent: 'center',
-                          marginTop: -2,
-                          maxWidth: WIDTH - 175,
-                        }}>
-                        <Text numberOfLines={1} style={styles.title}>
-                          {item.title}
-                        </Text>
-                        <Text numberOfLines={1} style={styles.artists}>
-                          {item.artists || 'Unknown Artist'}
-                        </Text>
-                      </View>
-                      <View style={{flex: 1}} />
-                      <View
-                        style={{
-                          justifyContent: 'center',
-                          alignItems: 'flex-end',
-                        }}>
-                        <StarRatingDisplay
-                          rating={item.rating}
-                          starSize={16}
-                          starStyle={{marginHorizontal: 0}}
-                        />
-                        <Text
-                          style={{
-                            fontWeight: 'bold',
-                            marginRight: 5,
-                          }}>
-                          {item.plays || 0} plays
-                        </Text>
-                      </View>
-                    </View>
-                  </Pressable>
-                )}
-                keyExtractor={(item, index) => index.toString()}
-                scrollEnabled={false}
-              />
-            </ImageBackground>
-          )}
-          showsHorizontalScrollIndicator={false}
+  return loading ? (
+    <View
+      style={{
+        backgroundColor: '#fff',
+        opacity: 0.2,
+        padding: 20,
+        margin: 10,
+        borderRadius: 10,
+      }}>
+      <ItemPlaceholder />
+    </View>
+  ) : (
+    <FlatList
+      data={dataset as TracksProps}
+      renderItem={({item}: {item: TrackProps}) => (
+        <ListItem
+          data={dataset as TracksProps}
+          item={item}
+          display="bitrate"
+          bottomSheetRef={bottomSheetRef}
+          setTrack={setTrack}
+          setBottomSheetVisible={setBottomSheetVisible}
         />
       )}
-    </>
+      keyExtractor={(_, index) => index.toString()}
+      scrollEnabled={false}
+    />
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#121212',
-  },
-  item: {
-    margin: 10,
-  },
-});
+{
+  /* <ImageBackground
+      source={{uri: dataset?.[0].artwork}}
+      resizeMode="cover"
+      blurRadius={100}
+      borderRadius={15}
+      style={{margin: 5, padding: 10}}>
+      <View
+        style={{
+          backgroundColor: '#0000',
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
+          zIndex: 2,
+        }}
+      />
+      <FlatList
+        data={dataset as TracksProps}
+        renderItem={({item}: {item: TrackProps}) => (
+          <ListItem
+            data={dataset as TracksProps}
+            item={item}
+            display="bitrate"
+            bottomSheetRef={bottomSheetRef}
+            setTrack={setTrack}
+            setBottomSheetVisible={setBottomSheetVisible}
+          />
+        )}
+        keyExtractor={(_, index) => index.toString()}
+        scrollEnabled={false}
+      />
+    </ImageBackground> */
+}

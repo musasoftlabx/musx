@@ -7,12 +7,13 @@ type TAttributes = {
   errors?: Object;
   label?: String;
   isSubmitting?: boolean;
+  loading?: boolean;
   touched?: Object;
   values?: Object;
 } & ButtonProps;
 
 const ButtonX = (props: TAttributes) => {
-  const {parent, errors, isSubmitting, touched, values} = props;
+  const {parent, errors, isSubmitting, loading, touched, values} = props;
 
   const theme = useTheme();
 
@@ -53,7 +54,6 @@ const ButtonX = (props: TAttributes) => {
           borderWidth: 1,
           borderStyle: parent === 'light' || !parent ? 'solid' : 'dotted',
           paddingVertical: 0,
-          paddingTop: 5,
           margin: 2,
         }}
         disabled={inactive}
@@ -61,7 +61,7 @@ const ButtonX = (props: TAttributes) => {
           color: inactive ? 'grey' : 'white',
           fontSize: s(2),
         }}
-        loading={isSubmitting}
+        loading={isSubmitting || loading}
         mode="contained"
         onPress={props.onPress}
         style={{elevation: inactive ? 0 : 20}}
