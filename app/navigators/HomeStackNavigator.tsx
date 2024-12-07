@@ -21,13 +21,20 @@ import {GradientText} from '../components/TextX';
 import LinearGradient from 'react-native-linear-gradient';
 
 import {BlurView, VibrancyView} from '@react-native-community/blur';
+import History from '../screens/Library/History';
+import {usePlayerStore} from '../store';
+import Artists from '../screens/Library/Artists';
+import MostPlayed from '../screens/Library/MostPlayed';
 
 const Stack = createNativeStackNavigator();
 
 export default function HomeStackNavigator() {
+  // ? StoreStates
+  const palette = usePlayerStore(state => state.palette);
+
   return (
     <>
-      <Stack.Navigator initialRouteName="Home">
+      <Stack.Navigator initialRouteName="">
         <Stack.Screen
           name="Home"
           component={Home}
@@ -80,6 +87,7 @@ export default function HomeStackNavigator() {
             headerShadowVisible: false,
           }}
         />
+        <Stack.Screen name="Artists" component={Artists} />
         <Stack.Screen
           name="Artist"
           component={Artist}
@@ -103,6 +111,26 @@ export default function HomeStackNavigator() {
             ),
           }}
         />
+
+        <Stack.Group>
+          <Stack.Screen
+            name="Most Played"
+            component={MostPlayed}
+            options={{title: ''}}
+          />
+
+          <Stack.Screen
+            name="History"
+            component={History}
+            options={{
+              headerStyle: {backgroundColor: palette?.[1] ?? '#000'},
+              headerRight: () => (
+                <CastButton style={{height: 24, width: 24, marginRight: 5}} />
+              ),
+            }}
+          />
+        </Stack.Group>
+
         <Stack.Group>
           <Stack.Screen
             name="AddToPlaylist"

@@ -3098,6 +3098,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-community/datetimepicker@npm:^8.2.0":
+  version: 8.2.0
+  resolution: "@react-native-community/datetimepicker@npm:8.2.0"
+  dependencies:
+    invariant: ^2.2.4
+  peerDependencies:
+    expo: ">=50.0.0"
+    react: "*"
+    react-native: "*"
+    react-native-windows: "*"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+    react-native-windows:
+      optional: true
+  checksum: 3adc9346f8948abed246da3bfa3a223e44c2c5903070178a82e583ce6f8273607fe5a542af834b3a27aff81980c555e5f72bf0e87c85e3f00856a0de21525374
+  languageName: node
+  linkType: hard
+
 "@react-native-community/hooks@npm:^3.0.0":
   version: 3.0.0
   resolution: "@react-native-community/hooks@npm:3.0.0"
@@ -9001,6 +9020,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"moment@npm:^2.29.4":
+  version: 2.30.1
+  resolution: "moment@npm:2.30.1"
+  checksum: 859236bab1e88c3e5802afcf797fc801acdbd0ee509d34ea3df6eea21eb6bcc2abd4ae4e4e64aa7c986aa6cba563c6e62806218e6412a765010712e5fa121ba6
+  languageName: node
+  linkType: hard
+
 "ms@npm:2.0.0":
   version: 2.0.0
   resolution: "ms@npm:2.0.0"
@@ -9027,6 +9053,7 @@ __metadata:
     "@gorhom/bottom-sheet": ^5.0.5
     "@react-native-async-storage/async-storage": ^2.0.0
     "@react-native-community/blur": ^4.4.1
+    "@react-native-community/datetimepicker": ^8.2.0
     "@react-native-community/hooks": ^3.0.0
     "@react-native-community/slider": ^4.5.4
     "@react-native-masked-view/masked-view": ^0.3.1
@@ -9069,6 +9096,7 @@ __metadata:
     react-native-google-cast: ^4.8.3
     react-native-linear-gradient: ^2.8.3
     react-native-lyric: ^1.0.2
+    react-native-month-year-picker: ^1.9.0
     react-native-pager-view: ^6.4.1
     react-native-paper: ^5.12.5
     react-native-picker-select: ^9.3.1
@@ -10001,6 +10029,19 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: c7b9390e73c9c9daf5860a1992c03dc5ac19e864d271987397519ba800f3af0bf67a613d2a9be97b22851dee1a7dc8b2199e8a68b95c794cf463643b8180a2d4
+  languageName: node
+  linkType: hard
+
+"react-native-month-year-picker@npm:^1.9.0":
+  version: 1.9.0
+  resolution: "react-native-month-year-picker@npm:1.9.0"
+  dependencies:
+    invariant: ^2.2.4
+    moment: ^2.29.4
+  peerDependencies:
+    react: ">= 16.11.0"
+    react-native: ">= 0.60.0"
+  checksum: 751291652cf1f1aa5198bc794c2855be52b50567b09086c60ad791db25939750cbe0c3d079023343728d3e45e14d073ee69d573ffa0065c562f29e26c91134d9
   languageName: node
   linkType: hard
 

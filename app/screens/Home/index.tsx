@@ -134,6 +134,36 @@ export default function Home({navigation}: any) {
     wait(2000).then(() => setRefreshing(false));
   }, []);
 
+  const SectionHeader = ({
+    section,
+    routeTo,
+  }: {
+    section: SectionProps;
+    routeTo: string;
+  }) => (
+    <Pressable
+      onPress={() =>
+        navigation.navigate(routeTo, {
+          queryKey: [_.camelCase(section.title)],
+          title: section.title,
+        })
+      }
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: 20,
+        marginBottom: 5,
+        marginHorizontal: 10,
+      }}>
+      <Text style={{fontSize: 18, fontWeight: '800', color: '#fff'}}>
+        {section.title}
+      </Text>
+
+      <FontAwesome name="chevron-right" size={12} style={{marginTop: 7}} />
+    </Pressable>
+  );
+
   return (
     <>
       <StatusBarX />
@@ -150,25 +180,17 @@ export default function Home({navigation}: any) {
         renderSectionHeader={({section}) => (
           <>
             {section.title !== 'Libraries' && (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginTop: 20,
-                  marginBottom: 5,
-                  marginHorizontal: 10,
-                }}>
-                <Text style={{fontSize: 18, fontWeight: '800', color: '#fff'}}>
-                  {section.title}
-                </Text>
-
-                <FontAwesome
-                  name="chevron-right"
-                  size={12}
-                  style={{marginTop: 7}}
-                />
-              </View>
+              <>
+                {section.title === 'Favourite Artists' ? (
+                  <SectionHeader section={section} routeTo="Artists" />
+                ) : section.title === 'Recently Added' ? (
+                  <SectionHeader section={section} routeTo="History" />
+                ) : section.title === 'Recently Played' ? (
+                  <SectionHeader section={section} routeTo="History" />
+                ) : section.title === 'Most Played' ? (
+                  <SectionHeader section={section} routeTo="Most Played" />
+                ) : null}
+              </>
             )}
           </>
         )}

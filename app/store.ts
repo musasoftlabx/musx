@@ -215,9 +215,8 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   playPause: () => {
     Vibration.vibrate(50);
 
+    // ? Retrieve playBack state, castClient & castState state
     const {state} = get().playbackState;
-
-    // ? Retrieve castClient & castState state
     const castClient = get().castClient;
     const castState = get().castState;
 
