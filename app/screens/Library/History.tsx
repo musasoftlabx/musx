@@ -1,5 +1,5 @@
 // * React
-import React, {useState, useRef, useEffect, useLayoutEffect} from 'react';
+import React, {useState, useRef, useLayoutEffect} from 'react';
 
 // * React Native
 import {ActivityIndicator, View, Text} from 'react-native';

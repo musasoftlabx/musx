@@ -55,7 +55,9 @@ export default function LibraryStackNavigator() {
             ),
           }}
         />
+
         <Stack.Screen name="Artists" component={Artists} />
+
         <Stack.Screen
           name="Artist"
           component={Artist}

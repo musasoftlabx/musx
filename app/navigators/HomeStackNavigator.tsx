@@ -1,30 +1,33 @@
 // * React
 import React from 'react';
 
+// * React Native
+import {Text, View} from 'react-native';
+
 // * Libraries
 import {CastButton} from 'react-native-google-cast';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import LinearGradient from 'react-native-linear-gradient';
+import {BlurView, VibrancyView} from '@react-native-community/blur';
 
 // * Components
+import {GradientText} from '../components/TextX';
 import Footer from '../components/Footer';
 
 // * Screens
 import AddToPlaylist from '../screens/Library/AddToPlaylist';
 import Album from '../screens/Library/Album';
 import Artist from '../screens/Library/Artist';
+import Artists from '../screens/Library/Artists';
 import Folders from '../screens/Library/Folders';
+import History from '../screens/Library/History';
 import Home from '../screens/Home/';
+import MostPlayed from '../screens/Library/MostPlayed';
 import Playlists from '../screens/Library/Playlists';
 import TrackMetadata from '../screens/Library/TrackMetadata';
-import {Text, View} from 'react-native';
-import {GradientText} from '../components/TextX';
-import LinearGradient from 'react-native-linear-gradient';
 
-import {BlurView, VibrancyView} from '@react-native-community/blur';
-import History from '../screens/Library/History';
+// * Store
 import {usePlayerStore} from '../store';
-import Artists from '../screens/Library/Artists';
-import MostPlayed from '../screens/Library/MostPlayed';
 
 const Stack = createNativeStackNavigator();
 
@@ -77,7 +80,9 @@ export default function HomeStackNavigator() {
             ),
           }}
         />
+
         <Stack.Screen name="Playlists" component={Playlists} />
+
         <Stack.Screen
           name="Folders"
           component={Folders}
@@ -87,7 +92,9 @@ export default function HomeStackNavigator() {
             headerShadowVisible: false,
           }}
         />
+
         <Stack.Screen name="Artists" component={Artists} />
+
         <Stack.Screen
           name="Artist"
           component={Artist}
@@ -100,6 +107,7 @@ export default function HomeStackNavigator() {
             ),
           }}
         />
+
         <Stack.Screen
           name="Album"
           component={Album}
@@ -116,7 +124,7 @@ export default function HomeStackNavigator() {
           <Stack.Screen
             name="Most Played"
             component={MostPlayed}
-            options={{title: ''}}
+            options={{title: '', headerBackVisible: true}}
           />
 
           <Stack.Screen

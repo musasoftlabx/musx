@@ -1,20 +1,43 @@
 import React, {useState, useEffect} from 'react';
 
-import {Image, View, Pressable, Text, FlatList, StyleSheet} from 'react-native';
+import {ActivityIndicator, Image, Pressable, Text, View} from 'react-native';
 
 import axios from 'axios';
 
-import {API_URL, usePlayerStore, WIDTH} from '../../store';
+import {API_URL, usePlayerStore} from '../../store';
 
-import {TrackProps} from '../../types';
-import LinearGradient from 'react-native-linear-gradient';
+import {FlashList} from '@shopify/flash-list';
 import {useBackHandler} from '@react-native-community/hooks';
+import {useQuery} from '@tanstack/react-query';
+import LinearGradientX from '../../components/LinearGradientX';
+
+type PlaylistProps = {
+  id: number;
+  name: string;
+  createdOn: string;
+  modifiedOn: string;
+  tracks: number;
+  artworks: string[];
+  artwork: string;
+  duration: string;
+  size: string;
+};
 
 export default function Playlists({navigation}: any) {
   const [layout, setLayout] = useState('grid');
-  const [playlists, setPlaylists] = useState(null);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
   const palette = usePlayerStore(state => state.palette);
+
+  const {
+    data: playlists,
+    isError,
+    isFetching,
+  } = useQuery({
+    queryKey: ['playlists'],
+    queryFn: ({queryKey}) => axios(`${API_URL}${queryKey[0]}`),
+    select: ({data}) => data,
+  });
 
   useBackHandler(() => {
     navigation.goBack();
@@ -28,177 +51,100 @@ export default function Playlists({navigation}: any) {
     });
   });
 
-  useEffect(() => {
-    axios(`${API_URL}playlists`).then(({data}) => setPlaylists(data));
-  }, []);
-
   return (
     <>
-      <LinearGradient
-        colors={[palette[0] ?? '#000', palette[1] ?? '#fff']}
-        useAngle={true}
-        angle={290}
-        style={{position: 'absolute', top: 0, left: 0, bottom: 0, right: 0}}
-      />
+      <LinearGradientX />
 
-      <FlatList
+      <FlashList
         data={playlists}
-        keyExtractor={(item, index) => index.toString()}
         numColumns={3}
-        contentContainerStyle={{minHeight: '100%'}}
-        renderItem={({item}: {item: TrackProps}) => (
-          <>
-            {layout === 'grid' ? (
-              <Pressable
-                onPress={() =>
-                  navigation.navigate('Playlist', {
-                    id: item.id,
-                    name: item.name,
-                    duration: item.duration,
-                    totalTracks: item.totalTracks,
-                    tracks: item.tracks,
-                  })
-                }
-                style={{flexBasis: '33%'}}>
-                <View style={{paddingVertical: 12, alignItems: 'center'}}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      flexBasis: '50%',
-                      flexWrap: 'wrap',
-                      width: 100,
-                      height: 100,
-                    }}>
-                    {item.tracks.map((track: TrackProps, i: number) => (
-                      <Image
-                        key={i}
-                        source={{uri: track.artwork}}
-                        style={{width: 50, height: 50}}
-                        resizeMode="cover"
-                      />
-                    ))}
-                  </View>
-                  <Text
-                    numberOfLines={1}
-                    style={{
-                      fontSize: 18,
-                      fontWeight: 'bold',
-                      color: 'white',
-                      marginTop: 8,
-                    }}>
-                    {item.name}
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    style={{
-                      fontSize: 16,
-                      color: 'white',
-                      marginVertical: 1,
-                    }}>
-                    {item.totalTracks} tracks
-                  </Text>
-                  <Text style={{fontSize: 14, opacity: 0.5}}>
-                    {item.duration}
-                  </Text>
+        keyExtractor={(_, index) => index.toString()}
+        estimatedItemSize={300}
+        refreshing={refreshing}
+        onRefresh={() => {
+          setRefreshing(true);
+          setTimeout(() => setRefreshing(false), 1000);
+        }}
+        renderItem={({item}: {item: PlaylistProps}) => (
+          <Pressable
+            onPress={() => navigation.navigate('Playlist', item)}
+            style={{flex: 1}}>
+            <View style={{paddingVertical: 12, alignItems: 'center', gap: 3}}>
+              {item.tracks >= 4 ? (
+                <View
+                  style={{
+                    borderRadius: 10,
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    marginTop: 0.5,
+                    width: 100,
+                    height: 100,
+                    overflow: 'hidden',
+                  }}>
+                  {item.artworks.map((artwork: string, i: number) => (
+                    <Image
+                      key={i}
+                      source={{uri: artwork}}
+                      style={{width: 50, height: 50}}
+                      resizeMode="cover"
+                    />
+                  ))}
                 </View>
-              </Pressable>
-            ) : (
-              <Pressable onPress={() => navigation.navigate('NowPlaying')}>
-                <View style={styles.item}>
-                  <Image
-                    source={{uri: item.artwork}}
-                    style={{
-                      width: 100,
-                      height: 100,
-                      borderRadius: 100,
-                    }}
-                    onError={(e: any) => {
-                      e.target.onerror = null;
-                      e.target.src = require('../../assets/images/musician.png');
-                    }}
-                  />
-                  <View
-                    style={{
-                      justifyContent: 'center',
-                      marginTop: -2,
-                      maxWidth: WIDTH - 180,
-                    }}>
-                    <Text numberOfLines={1} style={styles.title}>
-                      {item.artist}
-                    </Text>
-                    <Text numberOfLines={1} style={styles.album}>
-                      {item.plays}
-                    </Text>
-                  </View>
-                  <View style={{flex: 1}} />
-                  <View
-                    style={{justifyContent: 'center', alignItems: 'flex-end'}}>
-                    <Text style={{fontWeight: 'bold', marginRight: 5}}>
-                      {item.tracks}
-                    </Text>
-                  </View>
-                </View>
-              </Pressable>
-            )}
-          </>
+              ) : (
+                <Image
+                  source={{uri: item.artworks[0]}}
+                  style={{width: 100, height: 100, borderRadius: 10}}
+                />
+              )}
+
+              <Text numberOfLines={1} style={{color: '#fff', fontSize: 16}}>
+                {item.name}
+              </Text>
+
+              <View
+                style={{alignItems: 'center', flexDirection: 'row', gap: 3}}>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    alignSelf: 'flex-start',
+                    borderColor: '#ffffff4D',
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    fontSize: 14,
+                    marginTop: 1,
+                    paddingLeft: 5,
+                    paddingRight: 3,
+                  }}>
+                  {item.size}
+                </Text>
+
+                <Text style={{fontSize: 14, opacity: 0.5}}>
+                  {item.tracks} tracks
+                </Text>
+              </View>
+
+              <Text style={{fontSize: 14, opacity: 0.5}}>
+                {item.duration} mins
+              </Text>
+            </View>
+          </Pressable>
         )}
+        ListEmptyComponent={() =>
+          isFetching ? (
+            <ActivityIndicator
+              size="large"
+              color="#fff"
+              style={{marginTop: '50%'}}
+            />
+          ) : isError ? (
+            <View>
+              <Text style={{fontFamily: 'Abel'}}>Empty</Text>
+            </View>
+          ) : (
+            <View />
+          )
+        }
       />
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  item: {
-    flexDirection: 'row',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-  },
-  imageShadow: {
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 12,
-      height: 12,
-    },
-    shadowOpacity: 0.58,
-    shadowRadius: 16.0,
-    elevation: 24,
-    justifyContent: 'center',
-  },
-  isPlaying: {
-    height: 45,
-    width: 45,
-    marginRight: 8,
-    borderRadius: 100,
-  },
-  image: {
-    height: 45,
-    width: 45,
-    marginRight: 8,
-    borderRadius: 10,
-  },
-  title: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  artists: {
-    fontSize: 14,
-    fontWeight: '300',
-    fontStyle: 'italic',
-  },
-  album: {
-    fontSize: 12,
-    fontWeight: '300',
-  },
-  plays: {
-    backgroundColor: 'grey',
-    borderRadius: 10,
-    height: 35,
-    margin: 10,
-    opacity: 0.6,
-    padding: 5,
-    paddingHorizontal: 15,
-  },
-});

@@ -2,7 +2,7 @@
 import React, {useState, useRef, useLayoutEffect, useCallback} from 'react';
 
 // * React Native
-import {ActivityIndicator, View, Text} from 'react-native';
+import {ActivityIndicator, Text, View, Vibration} from 'react-native';
 
 // * Libraries
 import {FlashList} from '@shopify/flash-list';
@@ -10,7 +10,6 @@ import {useBackHandler} from '@react-native-community/hooks';
 import {useInfiniteQuery} from '@tanstack/react-query';
 import axios from 'axios';
 import BottomSheet from '@gorhom/bottom-sheet';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import MonthPicker from 'react-native-month-year-picker';
 
 // * Components
@@ -26,10 +25,9 @@ import {API_URL, HEIGHT, LIST_ITEM_HEIGHT, usePlayerStore} from '../../store';
 import {queryClient} from '../../../App';
 
 // * Types
+import {CastButton} from 'react-native-google-cast';
 import {TrackProps, TracksProps} from '../../types';
 import dayjs from 'dayjs';
-import {CastButton} from 'react-native-google-cast';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 export default function MostPlayed({
@@ -53,6 +51,13 @@ export default function MostPlayed({
     return true;
   });
 
+  // ? States
+  const [bottomSheetVisible, setBottomSheetVisible] = useState<boolean>(false);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [track, setTrack] = useState<TrackProps>();
+  const [date, setDate] = useState(new Date());
+  const [show, setShow] = useState(false);
+
   const {
     data,
     isError,
@@ -63,7 +68,9 @@ export default function MostPlayed({
   } = useInfiniteQuery({
     queryKey,
     queryFn: ({pageParam, queryKey}) =>
-      axios.get(`${API_URL}${queryKey[0]}?limit=${limit}&offset=${pageParam}`),
+      axios.get(
+        `${API_URL}${queryKey[0]}?limit=${limit}&offset=${pageParam}&date=${date}`,
+      ),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages, lastPageParam) => {
       const maxPages = Math.ceil(lastPage.data.count / limit);
@@ -71,19 +78,12 @@ export default function MostPlayed({
     },
   });
 
-  // ? States
-  const [bottomSheetVisible, setBottomSheetVisible] = useState<boolean>(false);
-  const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [track, setTrack] = useState<TrackProps>();
-  const [date, setDate] = useState(new Date());
-  const [show, setShow] = useState(false);
-
   const onValueChange = useCallback(
-    (event, newDate) => {
+    (event: any, newDate: Date) => {
       const selectedDate = newDate || date;
-
       setShow(false);
       setDate(selectedDate);
+      queryClient.refetchQueries({queryKey});
     },
     [date, show],
   );
@@ -94,23 +94,23 @@ export default function MostPlayed({
       headerLeft: () => (
         <View style={{justifyContent: 'center'}}>
           <Text style={{color: '#fff', fontSize: 20}}>{title}</Text>
-          <Text>{date.toLocaleString()}</Text>
+          <Text>In {dayjs(date).format('MMMM, YYYY').toLocaleString()}</Text>
         </View>
       ),
       headerRight: () => (
         <View style={{alignItems: 'center', flexDirection: 'row', gap: 40}}>
           <Ionicons
             name="calendar-outline"
-            size={24}
+            size={22}
             color="white"
-            style={{marginRight: 10}}
-            onPress={() => setShow(true)}
+            style={{marginRight: 10, opacity: 0.8}}
+            onPress={() => (Vibration.vibrate(50), setShow(true))}
           />
           <CastButton style={{height: 24, width: 24, marginRight: 5}} />
         </View>
       ),
     });
-  });
+  }, [navigation]);
 
   return (
     <>
@@ -122,7 +122,6 @@ export default function MostPlayed({
         <MonthPicker
           value={date}
           onChange={onValueChange}
-          //minimumDate={new Date()}
           maximumDate={new Date(2025, 1)}
         />
       )}

@@ -14,7 +14,7 @@ import axios from 'axios';
 import LinearGradientX from '../../components/LinearGradientX';
 
 // * Store
-import {API_URL, AUDIO_URL, usePlayerStore} from '../../store';
+import {API_URL, usePlayerStore} from '../../store';
 
 // * Types
 import {TrackProps} from '../../types';
@@ -72,7 +72,7 @@ export default function Artists({navigation}: any) {
             <View style={{paddingVertical: 12, alignItems: 'center'}}>
               <Image
                 source={{
-                  uri: `${item?.path
+                  uri: `${item?.url
                     .split('/')
                     .slice(0, -1)
                     .join('/')}/artist.jpg`,
