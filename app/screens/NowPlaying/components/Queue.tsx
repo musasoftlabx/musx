@@ -14,11 +14,11 @@ import {
 import {SegmentedButtons} from 'react-native-paper';
 import {StarRatingDisplay} from 'react-native-star-rating-widget';
 import {TouchableOpacity} from 'react-native-gesture-handler';
+import {Track} from 'react-native-track-player';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import SwipeableItem, {
   SwipeableItemImperativeRef,
 } from 'react-native-swipeable-item';
-import {Track} from 'react-native-track-player';
 
 // * Store
 import {HEIGHT, LIST_ITEM_HEIGHT, usePlayerStore} from '../../../store';

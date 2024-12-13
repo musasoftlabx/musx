@@ -89,3 +89,54 @@ APK build
 New project
 
 > npx @react-native-community/cli@latest init AwesomeProject
+
+React Native Masked View issue with skeleton black background
+
+> Go to /Users/musa-mutetwi/projects/mobile/musx/node_modules/@react-native-masked-view/masked-view/android/src/main/java/org/reactnative/maskedview/RNCMaskedView.java
+
+> Add line with (add this line)
+
+```java
+ @Override
+  protected void dispatchDraw(Canvas canvas) {
+    super.dispatchDraw(canvas);
+
+    if (mBitmapMaskInvalidated) {
+      // redraw mask element to support animated elements
+      updateBitmapMask();
+
+      mBitmapMaskInvalidated = false;
+    }
+
+    // draw the mask
+    if (mBitmapMask != null) {
+      setLayerType(LAYER_TYPE_HARDWARE, mPaint); // add this line
+      mPaint.setXfermode(mPorterDuffXferMode);
+      canvas.drawBitmap(mBitmapMask, 0, 0, mPaint);
+      mPaint.setXfermode(null);
+    }
+  }
+```
+
+# Link Fonts
+
+Link fonts (Make sure the font folder exists with the fonts)
+Create file called react-native.config.js
+
+> Add the following config
+
+```javascript
+module.exports = {
+  project: {
+    ios: {},
+    android: {},
+  },
+  assets: ['./app/assets/fonts'],
+};
+```
+
+Run the below command
+
+> npx react-native-asset
+
+> yarn android

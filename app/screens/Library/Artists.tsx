@@ -6,6 +6,7 @@ import {Image, View, Pressable, Text, ActivityIndicator} from 'react-native';
 
 // * Libraries
 import {FlashList} from '@shopify/flash-list';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useBackHandler} from '@react-native-community/hooks';
 import {useQuery} from '@tanstack/react-query';
 import axios from 'axios';
@@ -17,9 +18,11 @@ import LinearGradientX from '../../components/LinearGradientX';
 import {API_URL, usePlayerStore} from '../../store';
 
 // * Types
-import {TrackProps} from '../../types';
+import {RootStackParamList, TrackProps} from '../../types';
 
-export default function Artists({navigation}: any) {
+export default function Artists({
+  navigation,
+}: NativeStackScreenProps<RootStackParamList, 'Artist', ''>) {
   // ? States
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
@@ -64,31 +67,47 @@ export default function Artists({navigation}: any) {
             onPress={() =>
               navigation.navigate('Artist', {
                 albumArtist: item.albumArtist,
-                tracks: item.tracks,
+                artworks: item.artworks,
                 path: item.path,
+                tracks: item.tracks,
+                url: item.url,
               })
             }
             style={{flex: 1}}>
             <View style={{paddingVertical: 12, alignItems: 'center'}}>
-              <Image
-                source={{
-                  uri: `${item?.url
-                    .split('/')
-                    .slice(0, -1)
-                    .join('/')}/artist.jpg`,
-                }}
-                //defaultSource={require('../../assets/images/musician.png')}
-                style={{
-                  width: 100,
-                  height: 100,
-                  borderRadius: 100,
-                }}
-                resizeMode="cover"
-                onError={(e: any) => {
-                  e.target.onerror = null;
-                  e.target.src = require('../../assets/images/musician.png');
-                }}
-              />
+              {item.artworks?.length === 4 ? (
+                <View
+                  style={{
+                    borderRadius: 100,
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    marginTop: 0.5,
+                    width: 100,
+                    height: 100,
+                    overflow: 'hidden',
+                  }}>
+                  {item.artworks.map((artwork: string, i: number) => (
+                    <Image
+                      key={i}
+                      source={{uri: artwork}}
+                      style={{width: 50, height: 50}}
+                      resizeMode="cover"
+                    />
+                  ))}
+                </View>
+              ) : (
+                <Image
+                  source={{
+                    uri: `${item.url
+                      .split('/')
+                      .slice(0, -1)
+                      .join('/')}/artist.jpg`,
+                  }}
+                  defaultSource={require('../../assets/images/musician.png')}
+                  style={{width: 100, height: 100, borderRadius: 100}}
+                  resizeMode="cover"
+                />
+              )}
               <Text
                 numberOfLines={1}
                 style={{
@@ -97,7 +116,9 @@ export default function Artists({navigation}: any) {
                   marginTop: 5,
                   marginBottom: 1,
                 }}>
-                {item.albumArtist}
+                {item.albumArtist?.includes('Various Artists')
+                  ? item.albumArtist.replace('Various Artists', 'V.A.')
+                  : item.albumArtist}
               </Text>
               <Text
                 style={{

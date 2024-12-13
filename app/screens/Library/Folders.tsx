@@ -6,7 +6,10 @@ import {BackHandler, Image, Pressable, Vibration, View} from 'react-native';
 
 // * Libraries
 import {useMutation} from '@tanstack/react-query';
-import {useDeviceOrientation} from '@react-native-community/hooks';
+import {
+  useBackHandler,
+  useDeviceOrientation,
+} from '@react-native-community/hooks';
 import {FlashList} from '@shopify/flash-list';
 import {Text} from 'react-native-paper';
 import axios from 'axios';
@@ -16,10 +19,9 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 
 // * Components
 import LinearGradientX from '../../components/LinearGradientX';
-import ListEmptyItem from '../../components/ListEmptyItem';
 import ListItem from '../../components/ListItem';
 import StatusBarX from '../../components/StatusBarX';
-import TrackDetails from '../../components/TrackDetails';
+import VerticalListItem from '../../components/Skeletons/VerticalListItem';
 
 // * Store
 import {API_URL, usePlayerStore} from '../../store';
@@ -36,15 +38,28 @@ export default function Folders({navigation}: any) {
 
   const [path, setPath] = useState('');
   const [data, setData] = useState<TracksProps>();
-  const [track, setTrack] = useState<TrackProps>();
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [bottomSheetVisible, setBottomSheetVisible] = useState<boolean>(false);
 
   // ? StoreStates
+  const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const palette = usePlayerStore(state => state.palette);
 
   // ? StoreActions
-  const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
+  const openTrackDetails = usePlayerStore(state => state.openTrackDetails);
+  const closeTrackDetails = usePlayerStore(state => state.closeTrackDetails);
+  const setTrackDetails = usePlayerStore(state => state.setTrackDetails);
+
+  useBackHandler(() => {
+    if (bottomSheetRef.current) {
+      closeTrackDetails();
+      navigation.goBack();
+      return true;
+    } else {
+      openTrackDetails();
+      return false;
+    }
+  });
 
   // ? Mutations
   const {
@@ -79,24 +94,22 @@ export default function Folders({navigation}: any) {
     });
   }, [path, activeTrackIndex]);
 
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      () => {
-        if (bottomSheetVisible) {
-          bottomSheetRef.current?.close();
-          setBottomSheetVisible(false);
-          //setTrack();
-          return true;
-        } else {
-          setBottomSheetVisible(true);
-          return false;
-        }
-      },
-    );
+  // useEffect(() => {
+  //   const backHandler = BackHandler.addEventListener(
+  //     'hardwareBackPress',
+  //     () => {
+  //       if (bottomSheetVisible) {
+  //         closeTrackDetails();
+  //         return true;
+  //       } else {
+  //         openTrackDetails();
+  //         return false;
+  //       }
+  //     },
+  //   );
 
-    return () => backHandler.remove();
-  }, [bottomSheetVisible]);
+  //   return () => backHandler.remove();
+  // }, [bottomSheetVisible]);
 
   useEffect(() => {
     (async () => {
@@ -142,7 +155,7 @@ export default function Folders({navigation}: any) {
 
       <LinearGradientX angle={290} />
 
-      {isPending && <ListEmptyItem />}
+      {isPending && <VerticalListItem />}
 
       {isError && (
         <View>
@@ -186,26 +199,10 @@ export default function Folders({navigation}: any) {
                   </View>
                 </Pressable>
               ) : (
-                <ListItem
-                  data={data!}
-                  item={item}
-                  display="size"
-                  bottomSheetRef={bottomSheetRef}
-                  setTrack={setTrack}
-                  setBottomSheetVisible={setBottomSheetVisible}
-                />
+                <ListItem data={data!} item={item} display="size" />
               )}
             </>
           )}
-        />
-      )}
-
-      {track && (
-        <TrackDetails
-          track={track}
-          navigation={navigation}
-          bottomSheetRef={bottomSheetRef}
-          queriesToRefetch={['artist']}
         />
       )}
     </>

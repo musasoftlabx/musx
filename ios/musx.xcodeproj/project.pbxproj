@@ -14,6 +14,17 @@
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		7699B88040F8A987B510C191 /* libPods-musx-musxTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 19F6CBCC0A4E27FBF8BF4A61 /* libPods-musx-musxTests.a */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		E7D2CA5FD1C34AA4B4FF1F1D /* Abel.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DFC105D44B7142B390C2F470 /* Abel.ttf */; };
+		B4740B4073E84482A9FC1234 /* K2D-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D309727B358F45A2AC9823F7 /* K2D-Bold.ttf */; };
+		9EC612AC74A14E65847C5D7F /* K2D.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7629AF22F4AF4D0EB9A6FFDE /* K2D.ttf */; };
+		56057FC8986547D3B6BBF3A8 /* Laila-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AD64601A461D45B1B5B53329 /* Laila-Bold.ttf */; };
+		78BB5755AC0E4915845B7CB0 /* Laila.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F0080747142D4ABDBB3248A4 /* Laila.ttf */; };
+		FED39DF50CED4D378986FEE7 /* Laila300.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A3C1FF38670A4F3EB0704364 /* Laila300.ttf */; };
+		8D836299255A4EF79D30101C /* Laila500.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 56F12A22170D4CA7B23EE775 /* Laila500.ttf */; };
+		3BA428B4E8014352B4ED7A58 /* Laila600.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BA470E79E3ED41E4A53EB594 /* Laila600.ttf */; };
+		A118A1CF7F9347BF8B5D0315 /* Montez.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 946EC5DF2143475DB2DA3071 /* Montez.ttf */; };
+		FC5C43F82F354394AABCB0CB /* Rubik-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 35D052ACE8504D94B622500B /* Rubik-Bold.ttf */; };
+		3A3F00ACC017476ABD8A2AF3 /* Rubik.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6CD1C594244348E78986EC5A /* Rubik.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -45,6 +56,17 @@
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = musx/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		89C6BE57DB24E9ADA2F236DE /* Pods-musx-musxTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-musx-musxTests.release.xcconfig"; path = "Target Support Files/Pods-musx-musxTests/Pods-musx-musxTests.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		DFC105D44B7142B390C2F470 /* Abel.ttf */ = {isa = PBXFileReference; name = "Abel.ttf"; path = "../app/assets/fonts/Abel.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		D309727B358F45A2AC9823F7 /* K2D-Bold.ttf */ = {isa = PBXFileReference; name = "K2D-Bold.ttf"; path = "../app/assets/fonts/K2D-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		7629AF22F4AF4D0EB9A6FFDE /* K2D.ttf */ = {isa = PBXFileReference; name = "K2D.ttf"; path = "../app/assets/fonts/K2D.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		AD64601A461D45B1B5B53329 /* Laila-Bold.ttf */ = {isa = PBXFileReference; name = "Laila-Bold.ttf"; path = "../app/assets/fonts/Laila-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		F0080747142D4ABDBB3248A4 /* Laila.ttf */ = {isa = PBXFileReference; name = "Laila.ttf"; path = "../app/assets/fonts/Laila.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		A3C1FF38670A4F3EB0704364 /* Laila300.ttf */ = {isa = PBXFileReference; name = "Laila300.ttf"; path = "../app/assets/fonts/Laila300.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		56F12A22170D4CA7B23EE775 /* Laila500.ttf */ = {isa = PBXFileReference; name = "Laila500.ttf"; path = "../app/assets/fonts/Laila500.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		BA470E79E3ED41E4A53EB594 /* Laila600.ttf */ = {isa = PBXFileReference; name = "Laila600.ttf"; path = "../app/assets/fonts/Laila600.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		946EC5DF2143475DB2DA3071 /* Montez.ttf */ = {isa = PBXFileReference; name = "Montez.ttf"; path = "../app/assets/fonts/Montez.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		35D052ACE8504D94B622500B /* Rubik-Bold.ttf */ = {isa = PBXFileReference; name = "Rubik-Bold.ttf"; path = "../app/assets/fonts/Rubik-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		6CD1C594244348E78986EC5A /* Rubik.ttf */ = {isa = PBXFileReference; name = "Rubik.ttf"; path = "../app/assets/fonts/Rubik.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -124,6 +146,7 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				C785E30E9F5A481EA441CE07 /* Resources */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -149,6 +172,25 @@
 			);
 			path = Pods;
 			sourceTree = "<group>";
+		};
+		C785E30E9F5A481EA441CE07 /* Resources */ = {
+			isa = "PBXGroup";
+			children = (
+				DFC105D44B7142B390C2F470 /* Abel.ttf */,
+				D309727B358F45A2AC9823F7 /* K2D-Bold.ttf */,
+				7629AF22F4AF4D0EB9A6FFDE /* K2D.ttf */,
+				AD64601A461D45B1B5B53329 /* Laila-Bold.ttf */,
+				F0080747142D4ABDBB3248A4 /* Laila.ttf */,
+				A3C1FF38670A4F3EB0704364 /* Laila300.ttf */,
+				56F12A22170D4CA7B23EE775 /* Laila500.ttf */,
+				BA470E79E3ED41E4A53EB594 /* Laila600.ttf */,
+				946EC5DF2143475DB2DA3071 /* Montez.ttf */,
+				35D052ACE8504D94B622500B /* Rubik-Bold.ttf */,
+				6CD1C594244348E78986EC5A /* Rubik.ttf */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+			path = "";
 		};
 /* End PBXGroup section */
 
@@ -245,6 +287,17 @@
 			files = (
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				E7D2CA5FD1C34AA4B4FF1F1D /* Abel.ttf in Resources */,
+				B4740B4073E84482A9FC1234 /* K2D-Bold.ttf in Resources */,
+				9EC612AC74A14E65847C5D7F /* K2D.ttf in Resources */,
+				56057FC8986547D3B6BBF3A8 /* Laila-Bold.ttf in Resources */,
+				78BB5755AC0E4915845B7CB0 /* Laila.ttf in Resources */,
+				FED39DF50CED4D378986FEE7 /* Laila300.ttf in Resources */,
+				8D836299255A4EF79D30101C /* Laila500.ttf in Resources */,
+				3BA428B4E8014352B4ED7A58 /* Laila600.ttf in Resources */,
+				A118A1CF7F9347BF8B5D0315 /* Montez.ttf in Resources */,
+				FC5C43F82F354394AABCB0CB /* Rubik-Bold.ttf in Resources */,
+				3A3F00ACC017476ABD8A2AF3 /* Rubik.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

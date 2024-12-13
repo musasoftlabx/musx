@@ -32,7 +32,7 @@ export type TAttributes = {
   ph?: number;
   pv?: number;
   p?: number;
-} & TextProps;
+} & TextProps<any>;
 
 const TextX = (props: TAttributes) => {
   const theme = useTheme();
@@ -44,7 +44,7 @@ const TextX = (props: TAttributes) => {
         {
           //@ts-ignore
           ...props.style,
-          color: props.color || theme.colors.text,
+          color: props.color || theme.colors.primary,
           fontFamily: `${props.font || fontFamily}`,
           fontSize: s(props.scale) || s(1.8),
           opacity: props.opacity || 1,
@@ -78,16 +78,19 @@ const TextX = (props: TAttributes) => {
   );
 };
 
-export const GradientText = (props: TAttributes & {gradient: string[]}) => {
+export const GradientText = (
+  props: TAttributes & {angle?: number; gradient: string[]},
+) => {
   return (
     <MaskedView
       maskElement={<TextX {...props} />}
       renderToHardwareTextureAndroid
       style={{flexDirection: 'row'}}>
       <LinearGradient
+        angle={props.angle ?? 270}
         colors={props.gradient}
-        start={{x: 0, y: 1}}
-        end={{x: 1, y: 0}}>
+        start={{x: 0.5, y: 1}}
+        end={{x: 0.5, y: 0}}>
         <Text {...props} style={{fontSize: s(props.scale * 1.1), opacity: 0}} />
       </LinearGradient>
     </MaskedView>

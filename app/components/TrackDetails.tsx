@@ -5,7 +5,7 @@ import React, {useState} from 'react';
 import {View, Image, Pressable, Text, Alert, Vibration} from 'react-native';
 
 // * Libraries
-import {StarRatingDisplay} from 'react-native-star-rating-widget';
+import StarRating from 'react-native-star-rating-widget';
 import {useMutation, useQueryClient} from '@tanstack/react-query';
 import {Avatar, Chip, Snackbar} from 'react-native-paper';
 import axios, {AxiosError} from 'axios';
@@ -17,21 +17,27 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import {usePlayerStore} from '../store';
 
 // * Assets
+import imageFiller from '../assets/images/image-filler.png';
+
+// * Types
 import {TrackProps} from '../types';
 
 export default function TrackDetails({
   track,
   navigation,
-  bottomSheetRef,
   queriesToRefetch,
-  fetchTracks,
 }: {
   track: TrackProps;
   navigation: any;
-  bottomSheetRef?: any;
   queriesToRefetch: string[];
-  fetchTracks?: () => void;
 }) {
+  // ? Mutations
+  const {mutate: saveRating} = useMutation({
+    mutationFn: (body: {id?: number; rating: number}) =>
+      axios.patch('rateTrack', body),
+  });
+
+  const [error, setError] = useState<boolean>(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
@@ -44,6 +50,7 @@ export default function TrackDetails({
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const queue = usePlayerStore(state => state.queue);
+  const trackDetailsRef = usePlayerStore(state => state.trackDetailsRef);
 
   // ? StoreActions
   const addAsNextTrack = usePlayerStore(state => state.addAsNextTrack);
@@ -52,12 +59,14 @@ export default function TrackDetails({
   );
   const play = usePlayerStore(state => state.play);
   const next = usePlayerStore(state => state.next);
+  const setTrackRating = usePlayerStore(state => state.setTrackRating);
   const setQueue = usePlayerStore(state => state.setQueue);
+  const closeTrackDetails = usePlayerStore(state => state.closeTrackDetails);
 
   return (
     <>
       <BottomSheet
-        ref={bottomSheetRef}
+        ref={trackDetailsRef}
         index={-1}
         snapPoints={['68%']}
         enableDynamicSizing={false}
@@ -73,7 +82,7 @@ export default function TrackDetails({
               text: 'Play',
               icon: 'play-arrow',
               action: () => {
-                bottomSheetRef.current?.close();
+                closeTrackDetails();
                 play([track], track);
               },
             },
@@ -81,7 +90,7 @@ export default function TrackDetails({
               text: 'Play Next',
               icon: 'queue-play-next',
               action: () => {
-                bottomSheetRef.current?.close();
+                closeTrackDetails();
                 addAsNextTrack(track, activeTrackIndex + 1);
               },
             },
@@ -89,7 +98,7 @@ export default function TrackDetails({
               text: 'Add to queue',
               icon: 'add-to-queue',
               action: () => {
-                bottomSheetRef.current?.close();
+                closeTrackDetails();
                 addTrackToEndOfQueue(track);
               },
             },
@@ -97,11 +106,13 @@ export default function TrackDetails({
               text: 'Add to playlist',
               icon: 'playlist-add',
               action: ({id}: {id: number}) => {
-                bottomSheetRef.current?.close();
+                closeTrackDetails();
                 navigation.navigate('AddToPlaylist', {id});
               },
             },
             {
+              icon: 'account-music-outline',
+              iconSource: 'material-community-icons',
               text: (
                 <View
                   style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
@@ -111,15 +122,22 @@ export default function TrackDetails({
                   <View>
                     <Chip
                       avatar={
-                        <Avatar.Image
-                          size={24}
-                          source={{
-                            uri: `${track.url
-                              .split('/')
-                              .slice(0, -1)
-                              .join('/')}/artist.jpg`,
-                          }}
-                        />
+                        track && (
+                          <Avatar.Image
+                            size={24}
+                            source={
+                              error
+                                ? imageFiller
+                                : {
+                                    uri: `${track?.url
+                                      .split('/')
+                                      .slice(0, -1)
+                                      .join('/')}/artist.jpg`,
+                                  }
+                            }
+                            onError={() => setError(true)}
+                          />
+                        )
                       }
                       style={{
                         backgroundColor: 'transparent',
@@ -129,7 +147,7 @@ export default function TrackDetails({
                       }}
                       textStyle={{color: '#fff'}}
                       onPress={() => {
-                        bottomSheetRef.current?.close();
+                        closeTrackDetails();
                         Vibration.vibrate(100);
                         navigation.navigate('Artist', {
                           albumArtist: track?.albumArtist,
@@ -143,8 +161,6 @@ export default function TrackDetails({
                   </View>
                 </View>
               ),
-              icon: 'account-music-outline',
-              iconSource: 'material-community-icons',
             },
             {
               text: 'View Metadata',
@@ -163,7 +179,7 @@ export default function TrackDetails({
               iconSource: 'material-community-icons',
               action: (track: TrackProps) => {
                 // ? Close the bottom sheet
-                bottomSheetRef.current.close();
+                closeTrackDetails();
 
                 if (track.id === activeTrack.id)
                   Alert.alert(
@@ -212,21 +228,23 @@ export default function TrackDetails({
           ListHeaderComponent={
             <View
               style={{
-                flexDirection: 'row',
                 alignItems: 'center',
+                flexDirection: 'row',
                 marginTop: 20,
                 marginBottom: 10,
                 marginHorizontal: 20,
               }}>
-              <Image
-                source={{uri: track?.artwork}}
-                style={{
-                  height: 45,
-                  width: 45,
-                  marginRight: 10,
-                  borderRadius: 10,
-                }}
-              />
+              {track && (
+                <Image
+                  source={{uri: track?.artwork}}
+                  style={{
+                    borderRadius: 10,
+                    marginRight: 10,
+                    height: 45,
+                    width: 45,
+                  }}
+                />
+              )}
               <View style={{justifyContent: 'center', marginLeft: 5}}>
                 <Text style={{fontSize: 18, fontWeight: 'bold'}}>
                   {track?.title}
@@ -235,6 +253,24 @@ export default function TrackDetails({
               </View>
             </View>
           }
+          ListFooterComponent={
+            <StarRating
+              rating={track?.rating ?? 0}
+              style={{alignSelf: 'center'}}
+              onChange={rating => {
+                Vibration.vibrate(50);
+                setTrackRating(rating);
+                saveRating(
+                  {id: track?.id, rating},
+                  {
+                    onSuccess: ({data}) => console.log(data),
+                    onError: error => console.log(error),
+                  },
+                );
+              }}
+            />
+          }
+          ListFooterComponentStyle={{marginTop: 15}}
           renderItem={({
             item,
           }: {
@@ -251,8 +287,8 @@ export default function TrackDetails({
               }}>
               <View
                 style={{
-                  flexDirection: 'row',
                   alignItems: 'center',
+                  flexDirection: 'row',
                   gap: 10,
                   padding: 15,
                 }}>

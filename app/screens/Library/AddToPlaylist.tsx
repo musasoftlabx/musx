@@ -1,5 +1,5 @@
 // * React
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 
 // * React Native
 import {Image, FlatList, Pressable, Text, View} from 'react-native';
@@ -7,13 +7,19 @@ import {Image, FlatList, Pressable, Text, View} from 'react-native';
 // * Libraries
 import {Button, Snackbar, TextInput} from 'react-native-paper';
 import {useBackHandler} from '@react-native-community/hooks';
+import {useQuery} from '@tanstack/react-query';
+import axios from 'axios';
+
+import {queryClient} from '../../../App';
+import ButtonX from '../../components/ButtonX';
+import LinearGradientX from '../../components/LinearGradientX';
+import StatusBarX from '../../components/StatusBarX';
 
 // * Store
-import {API_URL, ARTWORK_URL} from '../../store';
+import {API_URL} from '../../store';
 
 // * Types
 import {TrackProps} from '../../types';
-import axios from 'axios';
 
 export default function AddToPlaylist({
   navigation,
@@ -21,32 +27,32 @@ export default function AddToPlaylist({
     params: {id},
   },
 }: any) {
-  const [playlists, setPlaylists] = useState(null);
+  // ? States
   const [name, setName] = useState('');
   const [snackbar, setSnackbar] = useState(false);
   const [displayForm, setDisplayForm] = useState<boolean>(false);
+
+  const {
+    data: playlists,
+    isError,
+    isFetching,
+  } = useQuery({
+    queryKey: ['playlists'],
+    queryFn: ({queryKey}) => axios(`${API_URL}${queryKey[0]}`),
+    select: ({data}) => data,
+  });
 
   useBackHandler(() => {
     navigation.goBack();
     return true;
   });
 
-  // const {data, isSuccess, isFetching, isFetched} = useQuery({
-  //   queryKey: ['playlists'],
-  //   queryFn: ({queryKey}) => axios.get(`${API_URL}${queryKey[0]}`),
-  //   select: ({data}) => data,
-  // });
-
-  useEffect(() => {
-    axios(`${API_URL}playlists`).then(({data}) => setPlaylists(data));
-  }, []);
-
   const createPlaylist = async () => {
     const {data} = await axios.post(`${API_URL}createPlaylist`, {
       name,
       trackId: id,
     });
-    setPlaylists(data);
+    queryClient.refetchQueries({queryKey: ['playlists']});
     setName('');
     navigation.goBack();
   };
@@ -62,115 +68,113 @@ export default function AddToPlaylist({
   };
 
   return (
-    <View style={{marginHorizontal: 15}}>
-      <Button
-        mode="contained"
-        icon="plus"
-        onPress={() => setDisplayForm(prev => !prev)}
-        style={{
-          //fontSize: 22,
-          marginTop: 80,
-          marginBottom: 40,
-          width: 150,
-          borderBottomRightRadius: 20,
-          borderTopRightRadius: 20,
-        }}>
-        CREATE NEW
-      </Button>
-      <View
-        //animation="slideInDown"
-        //duration={3000}
-        style={{display: displayForm ? 'flex' : 'none'}}>
-        <TextInput
-          label="Playlist Name"
-          value={name}
-          dense
-          onChangeText={text => setName(text)}
-          style={{
-            marginBottom: 20,
-            // borderRadius: 20,
-            // borderTopLeftRadius: 20,
-            // borderTopRightRadius: 20,
-            fontSize: 18,
-          }}
-        />
+    <>
+      <StatusBarX />
 
-        <Button
-          mode="contained"
-          loading={false}
-          disabled={false}
-          onPress={createPlaylist}
-          style={{marginBottom: 40}}>
-          CREATE
-        </Button>
-      </View>
+      <LinearGradientX />
 
-      <FlatList
-        data={playlists && playlists}
-        contentContainerStyle={{minHeight: '100%'}}
-        keyExtractor={(item, index) => index.toString()}
-        showsVerticalScrollIndicator={false}
-        ListHeaderComponent={() => (
-          <Text style={{fontSize: 16, marginBottom: 10}}>Playlists</Text>
-        )}
-        renderItem={({item, index}: {item: TrackProps; index: number}) => (
-          <Pressable onPress={() => addPlaylistTrack(item.id)}>
-            <View
-              style={{
-                flexDirection: 'row',
-                marginVertical: 10,
-                marginHorizontal: 10,
-              }}>
+      <View style={{marginHorizontal: 15}}>
+        <ButtonX
+          icon={displayForm ? 'chevron-up' : 'plus'}
+          style={{marginTop: 70, marginBottom: 20}}
+          onPress={() => setDisplayForm(prev => !prev)}>
+          CREATE NEW
+        </ButtonX>
+
+        <View
+          //animation="slideInDown"
+          //duration={3000}
+          style={{display: displayForm ? 'flex' : 'none'}}>
+          <TextInput
+            label="Playlist Name"
+            value={name}
+            dense
+            onChangeText={text => setName(text)}
+            style={{
+              marginBottom: 20,
+              // borderRadius: 20,
+              // borderTopLeftRadius: 20,
+              // borderTopRightRadius: 20,
+              fontSize: 18,
+            }}
+          />
+
+          <Button
+            mode="contained"
+            loading={false}
+            disabled={false}
+            onPress={createPlaylist}
+            style={{marginBottom: 40}}>
+            CREATE
+          </Button>
+        </View>
+
+        <FlatList
+          data={playlists}
+          contentContainerStyle={{minHeight: '100%'}}
+          keyExtractor={(_, index) => index.toString()}
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={() => (
+            <Text style={{fontSize: 16, marginBottom: 10}}>Playlists</Text>
+          )}
+          renderItem={({item}: {item: TrackProps}) => (
+            <Pressable onPress={() => addPlaylistTrack(item.id)}>
               <View
                 style={{
-                  flexDirection: 'column',
-                  flexBasis: '50%',
-                  flexWrap: 'wrap',
-                  width: 50,
-                  height: 50,
+                  flexDirection: 'row',
+                  marginVertical: 10,
+                  marginHorizontal: 10,
                 }}>
-                {item.tracks.length < 4 ? (
-                  <Image
-                    source={{uri: `${ARTWORK_URL}${item.tracks[0].artwork}`}}
-                    style={{borderRadius: 10, width: 50, height: 50}}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <>
-                    {item.tracks.map((track: TrackProps, i: number) => {
-                      return (
+                <View
+                  style={{
+                    borderRadius: 10,
+                    flexDirection: 'column',
+                    flexBasis: '50%',
+                    flexWrap: 'wrap',
+                    height: 50,
+                    width: 50,
+                    overflow: 'hidden',
+                  }}>
+                  {item.artworks.length < 4 ? (
+                    <Image
+                      source={{uri: item.artworks[0]}}
+                      style={{borderRadius: 10, width: 50, height: 50}}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    item.artworks.map(
+                      (artwork: string, i: number) =>
                         i < 4 && (
                           <Image
                             key={i}
-                            source={{uri: `${ARTWORK_URL}${track.artwork}`}}
+                            source={{uri: artwork}}
                             style={{width: 25, height: 25}}
                             resizeMode="cover"
                           />
-                        )
-                      );
-                    })}
-                  </>
-                )}
+                        ),
+                    )
+                  )}
+                </View>
+                <View style={{justifyContent: 'center', marginLeft: -110}}>
+                  <Text
+                    numberOfLines={1}
+                    style={{fontSize: 18, fontWeight: 'bold'}}>
+                    {item.name}
+                  </Text>
+                  <Text numberOfLines={1} style={{opacity: 0.7}}>
+                    {item.tracks.length} track
+                    {item.tracks.length === 1 ? '' : 's'}
+                  </Text>
+                </View>
               </View>
-              <View style={{justifyContent: 'center', marginLeft: -110}}>
-                <Text
-                  numberOfLines={1}
-                  style={{fontSize: 18, fontWeight: 'bold'}}>
-                  {item.name}
-                </Text>
-                <Text numberOfLines={1} style={{opacity: 0.7}}>
-                  {item.tracks.length} track
-                  {item.tracks.length === 1 ? '' : 's'}
-                </Text>
-              </View>
-            </View>
-          </Pressable>
-        )}
-      />
+            </Pressable>
+          )}
+        />
 
-      <Snackbar visible={snackbar} duration={3000} onDismiss={() => {}}>
-        Added to Playlist successfully!
-      </Snackbar>
-    </View>
+        <Snackbar visible={snackbar} duration={3000} onDismiss={() => {}}>
+          Added to Playlist successfully!
+        </Snackbar>
+      </View>
+    </>
   );
 }

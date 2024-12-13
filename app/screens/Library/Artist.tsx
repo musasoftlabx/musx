@@ -1,29 +1,30 @@
 // * React
-import React, {useState, useRef} from 'react';
+import React, {useState} from 'react';
 
 // * React Native
 import {
   Image,
   ImageBackground,
-  View,
   Pressable,
-  Text,
   SectionList,
-  ActivityIndicator,
+  Text,
+  View,
 } from 'react-native';
 
 // * Libraries
 import {FlashList} from '@shopify/flash-list';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useBackHandler} from '@react-native-community/hooks';
 import {useQuery} from '@tanstack/react-query';
 import axios from 'axios';
-import BottomSheet from '@gorhom/bottom-sheet';
 
 // * Components
+import {queryClient} from '../../../App';
+import HorizontalListItem from '../../components/Skeletons/HorizontalListItem';
 import LinearGradientX from '../../components/LinearGradientX';
 import ListItem from '../../components/ListItem';
 import StatusBarX from '../../components/StatusBarX';
-import TrackDetails from '../../components/TrackDetails';
+import VerticalListItem from '../../components/Skeletons/VerticalListItem';
 
 // * Assets
 import imageFiller from '../../assets/images/image-filler.png';
@@ -32,8 +33,7 @@ import imageFiller from '../../assets/images/image-filler.png';
 import {API_URL, HEIGHT, WIDTH} from '../../store';
 
 // * Types
-import {TrackProps, TracksProps} from '../../types';
-import {queryClient} from '../../../App';
+import {RootStackParamList, TrackProps, TracksProps} from '../../types';
 
 export type ArtistProps = {
   albums: {
@@ -48,12 +48,9 @@ export type ArtistProps = {
 export default function Artist({
   navigation,
   route: {
-    params: {albumArtist, artworks, url, tracks},
+    params: {albumArtist, artworks, tracks, url},
   },
-}: any) {
-  // ? Refs
-  const bottomSheetRef = useRef<BottomSheet>(null);
-
+}: NativeStackScreenProps<RootStackParamList, 'Artist', ''>) {
   // ? Hooks
   useBackHandler(() => {
     navigation.goBack();
@@ -73,9 +70,7 @@ export default function Artist({
   });
 
   // ? States
-  const [bottomSheetVisible, setBottomSheetVisible] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [track, setTrack] = useState<TrackProps>();
 
   return (
     <>
@@ -140,10 +135,28 @@ export default function Artist({
       </ImageBackground>
 
       {isFetching && (
-        <ActivityIndicator
-          size="large"
-          color="#fff"
-          style={{marginTop: '50%'}}
+        <SectionList
+          sections={[
+            {title: 'Albums', data: [1], horizontal: true},
+            {title: 'Singles', data: [1]},
+          ]}
+          renderSectionHeader={({section: {title}}) => (
+            <Text
+              numberOfLines={1}
+              style={{
+                color: '#fff',
+                fontWeight: '800',
+                fontSize: 18,
+                marginTop: 10,
+                marginBottom: 5,
+                marginLeft: 10,
+              }}>
+              {title}
+            </Text>
+          )}
+          renderItem={({section: {horizontal}}) =>
+            horizontal ? <HorizontalListItem /> : <VerticalListItem />
+          }
         />
       )}
 
@@ -211,9 +224,9 @@ export default function Artist({
                         <Image
                           source={{uri: item.artwork}}
                           style={{
+                            borderRadius: 10,
                             width: 100,
                             height: 100,
-                            borderRadius: 10,
                           }}
                           resizeMode="cover"
                         />
@@ -269,9 +282,6 @@ export default function Artist({
                         data={artist.singles}
                         item={item}
                         display="bitrate"
-                        bottomSheetRef={bottomSheetRef}
-                        setTrack={setTrack}
-                        setBottomSheetVisible={setBottomSheetVisible}
                       />
                     )}
                   />
@@ -279,15 +289,6 @@ export default function Artist({
               </>
             )
           }
-        />
-      )}
-
-      {track && (
-        <TrackDetails
-          track={track}
-          navigation={navigation}
-          bottomSheetRef={bottomSheetRef}
-          queriesToRefetch={['artist']}
         />
       )}
     </>

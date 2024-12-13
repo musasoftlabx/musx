@@ -75,7 +75,8 @@ TrackPlayer.setupPlayer({autoHandleInterruptions: true});
 
 export default function App(): React.JSX.Element {
   // ? Refs
-  const ref = useRef<BottomSheet>(null);
+  const nowPlayingRef = useRef<BottomSheet>(null);
+  const trackDetailsRef = useRef<BottomSheet>(null);
 
   // ? Hooks
   const activeTrack = useActiveTrack();
@@ -111,6 +112,7 @@ export default function App(): React.JSX.Element {
   const setLyrics = usePlayerStore(state => state.setLyrics);
   const setLyricsVisible = usePlayerStore(state => state.setLyricsVisible);
   const openNowPlaying = usePlayerStore(state => state.openNowPlaying);
+  const setTrackDetailsRef = usePlayerStore(state => state.setTrackDetailsRef);
   const setNowPlayingRef = usePlayerStore(state => state.setNowPlayingRef);
   const setCastState = usePlayerStore(state => state.setCastState);
   const setCastClient = usePlayerStore(state => state.setCastClient);
@@ -133,7 +135,8 @@ export default function App(): React.JSX.Element {
 
   // ? Effects
   useEffect(() => {
-    setNowPlayingRef(ref); // ? Set Now Playing Bottom Sheet Ref
+    setNowPlayingRef(nowPlayingRef); // ? Set Now Playing Ref
+    setTrackDetailsRef(trackDetailsRef); // ? Set Track Details Ref
 
     (async () => {
       // ? Update Track Player options
@@ -187,7 +190,7 @@ export default function App(): React.JSX.Element {
 
         setQueue(_queue);
         setActiveTrackIndex(Number(savedActiveTrackIndex));
-        openNowPlaying(ref);
+        openNowPlaying(nowPlayingRef);
       }
     })();
   }, []);

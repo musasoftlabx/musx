@@ -10,7 +10,6 @@
     "test": "jest"
   },
   "dependencies": {
-    "-": "^0.0.1",
     "@furkankaya/react-native-linear-text-gradient": "^1.0.2",
     "@gorhom/bottom-sheet": "^5.0.5",
     "@react-native-async-storage/async-storage": "^2.0.0",
@@ -54,6 +53,7 @@
     "react-native-screens": "^3.34.0",
     "react-native-select-dropdown": "^4.0.1",
     "react-native-shadow-2": "^7.1.1",
+    "react-native-skeleton-placeholder": "^5.2.4",
     "react-native-snap-carousel": "^3.9.1",
     "react-native-sound": "^0.11.2",
     "react-native-star-rating-widget": "^1.9.1",

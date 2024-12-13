@@ -1,28 +1,35 @@
 // * React
-import React from 'react';
+import React, {useRef} from 'react';
 
 // * Libraries
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import BottomSheet from '@gorhom/bottom-sheet';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 // * Screens
 import Downloads from '../screens/Downloads';
 import HomeStackNavigator from './HomeStackNavigator';
+import NowPlaying from '../screens/NowPlaying';
 import Search from '../screens/Search';
 import Settings from '../screens/Settings';
+import TrackDetails from '../components/TrackDetails';
 
 // * Navigator
 import LibraryStackNavigator from './LibraryStackNavigator';
 
 // * Store
 import {usePlayerStore} from '../store';
-import NowPlaying from '../screens/NowPlaying';
+
+// * Types
+import {TrackProps} from '../types';
 
 const Tab = createBottomTabNavigator();
 
-export default function TabNavigator() {
+export default function TabNavigator({navigation}: any) {
   // ? StoreStates
   const palette = usePlayerStore(state => state.palette);
+  const trackDetails = usePlayerStore(state => state.trackDetails);
+  //const palette = usePlayerStore(state => state.palette);
 
   return (
     <>
@@ -68,6 +75,12 @@ export default function TabNavigator() {
       </Tab.Navigator>
 
       <NowPlaying />
+
+      <TrackDetails
+        track={trackDetails}
+        navigation={navigation}
+        queriesToRefetch={['']}
+      />
     </>
   );
 }

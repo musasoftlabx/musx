@@ -8,7 +8,7 @@ import {
   CompositeScreenProps,
   NavigatorScreenParams,
 } from '@react-navigation/native';
-import {StackScreenProps} from '@react-navigation/stack';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 declare global {
   namespace ReactNavigation {
@@ -17,14 +17,28 @@ declare global {
 }
 
 export type RootStackParamList = {
-  //Root: NavigatorScreenParams<RootTabParamList> | undefined;
-  //Modal: undefined;
-  //NotFound: undefined;
-  //Footer: undefined;
+  Home: {queryKey: string; title: string};
+  History: {queryKey: string; title: string};
+  Playlists: undefined;
+  Folders: undefined;
+  MostPlayed: any;
+  Artists: any;
+  Artist: {
+    albumArtist: string;
+    artworks: string[];
+    tracks: number;
+    url: string;
+    path: string;
+  };
+  Album: {albumArtist: string; album: string};
+  Root: NavigatorScreenParams<RootTabParamList> | undefined;
+  Modal: undefined;
+  NotFound: undefined;
+  Footer: undefined;
 };
 
 export type RootStackScreenProps<Screen extends keyof RootStackParamList> =
-  StackScreenProps<RootStackParamList, Screen>;
+  NativeStackScreenProps<RootStackParamList, Screen>;
 
 export type RootTabParamList = {
   TabOne: undefined;
@@ -34,7 +48,7 @@ export type RootTabParamList = {
 export type RootTabScreenProps<Screen extends keyof RootTabParamList> =
   CompositeScreenProps<
     BottomTabScreenProps<RootTabParamList, Screen>,
-    StackScreenProps<RootStackParamList>
+    NativeStackScreenProps<RootStackParamList>
   >;
 
 export interface IAxiosError {

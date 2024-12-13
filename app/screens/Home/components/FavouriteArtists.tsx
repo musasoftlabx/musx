@@ -6,17 +6,16 @@ import {Image, Pressable, Text, View} from 'react-native';
 
 // * Libraries
 import {Avatar} from 'react-native-paper';
-import {Circle, Rect} from 'react-native-svg';
 import {FlashList} from '@shopify/flash-list';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useNavigation} from '@react-navigation/native';
-import SvgAnimatedLinearGradient from 'react-native-svg-animated-linear-gradient';
 
-// * Store
-import {ARTWORK_URL, WIDTH} from '../../../store';
+// * Components
+import HorizontalListItem from '../../../components/Skeletons/HorizontalListItem';
 
 // * Types
 import {SectionProps} from '..';
-import {TrackProps, TracksProps} from '../../../types';
+import {RootStackParamList, TrackProps, TracksProps} from '../../../types';
 
 export default function FavouriteArtists({
   loading,
@@ -25,26 +24,15 @@ export default function FavouriteArtists({
   loading: boolean;
   dataset: SectionProps['dataset'];
 }) {
-  const navigation: any = useNavigation();
+  const navigation =
+    useNavigation<
+      NativeStackNavigationProp<RootStackParamList, 'Artist', ''>
+    >();
 
   return (
     <>
       {loading ? (
-        <View style={{flexDirection: 'row', opacity: 0.2, padding: 10}}>
-          {new Array(Number((WIDTH / 150).toFixed(0))).fill(0).map((_, i) => (
-            //@ts-ignore
-            <SvgAnimatedLinearGradient
-              key={i}
-              primaryColor="#e8f7ff"
-              secondaryColor="#4dadf7"
-              height={150}
-              width={150}>
-              <Circle cx="50" cy="50" r="50" />
-              <Rect x="0" y="120" rx="4" ry="4" width="100" height="10" />
-              <Rect x="10" y="140" rx="4" ry="4" width="80" height="8" />
-            </SvgAnimatedLinearGradient>
-          ))}
-        </View>
+        <HorizontalListItem borderRadius={100} />
       ) : (
         dataset && (
           <FlashList
@@ -58,6 +46,7 @@ export default function FavouriteArtists({
                   navigation.navigate('Artist', {
                     albumArtist: item.albumArtist,
                     artworks: item.artworks,
+                    path: item.path,
                     tracks: item.tracks,
                     url: item.url,
                   })
@@ -129,7 +118,7 @@ export default function FavouriteArtists({
             )}
             ListFooterComponent={
               <Pressable
-                onPress={() => {}}
+                onPress={() => navigation.navigate('Artists')}
                 style={{
                   flex: 1,
                   justifyContent: 'center',

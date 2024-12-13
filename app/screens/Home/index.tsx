@@ -1,20 +1,20 @@
 // * React
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect} from 'react';
 
 // * React Native
 import {
-  View,
+  Image,
   Pressable,
   RefreshControl,
   SectionList,
-  Text,
   SectionListData,
-  Image,
+  Text,
+  View,
 } from 'react-native';
 
 // * Libraries
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import _ from 'lodash';
-import BottomSheet from '@gorhom/bottom-sheet';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 // * Components
@@ -23,13 +23,12 @@ import LinearGradientX from '../../components/LinearGradientX';
 import MostPlayed from './components/MostPlayed';
 import RecentlyAddedAndPlayed from './components/RecentlyAddedAndPlayed';
 import StatusBarX from '../../components/StatusBarX';
-import TrackDetails from '../../components/TrackDetails';
 
 // * Store
 import {API_URL, WIDTH} from '../../store';
 
 // * Types
-import {TrackProps} from '../../types';
+import {RootStackParamList, TrackProps} from '../../types';
 
 export type SectionProps = {
   data?: [number];
@@ -38,20 +37,13 @@ export type SectionProps = {
   horizontal?: boolean;
 };
 
-const wait = (timeout: number) => {
-  return new Promise(resolve => setTimeout(resolve, timeout));
-};
-
-export default function Home({navigation}: any) {
-  // ? Refs
-  const bottomSheetRef = useRef<BottomSheet>(null);
-
-  // ? StoreStates
-  const [bottomSheetVisible, setBottomSheetVisible] = useState<boolean>(false);
+export default function Home({
+  navigation,
+}: NativeStackScreenProps<RootStackParamList, 'Home', ''>) {
+  // ? States
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>();
-  const [track, setTrack] = useState<TrackProps>();
   const [sections, setSections] = useState<
     SectionListData<number, SectionProps>[]
   >([
@@ -99,8 +91,10 @@ export default function Home({navigation}: any) {
     },
   ]);
 
+  // ? Effects
   useEffect(() => fetchDashboard(), []);
 
+  // ? Functions
   const fetchDashboard = () => {
     let updated: any = [];
 
@@ -124,15 +118,10 @@ export default function Home({navigation}: any) {
         setSections(updated);
         setStats(data.stats);
         setLoading(false);
+        setRefreshing(false);
       }),
     );
   };
-
-  const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    fetchDashboard();
-    wait(2000).then(() => setRefreshing(false));
-  }, []);
 
   const SectionHeader = ({
     section,
@@ -143,7 +132,7 @@ export default function Home({navigation}: any) {
   }) => (
     <Pressable
       onPress={() =>
-        navigation.navigate(routeTo, {
+        navigation.navigate(routeTo as any, {
           queryKey: [_.camelCase(section.title)],
           title: section.title,
         })
@@ -175,7 +164,13 @@ export default function Home({navigation}: any) {
         showsVerticalScrollIndicator={false}
         sections={sections}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              fetchDashboard();
+            }}
+          />
         }
         renderSectionHeader={({section}) => (
           <>
@@ -207,22 +202,11 @@ export default function Home({navigation}: any) {
 
                 {(section.title === 'Recently Added' ||
                   section.title === 'Recently Played') && (
-                  <RecentlyAddedAndPlayed
-                    section={section}
-                    bottomSheetRef={bottomSheetRef}
-                    setTrack={setTrack}
-                    setBottomSheetVisible={setBottomSheetVisible}
-                  />
+                  <RecentlyAddedAndPlayed loading={loading} section={section} />
                 )}
 
                 {section.title === 'Most Played' && (
-                  <MostPlayed
-                    loading={loading}
-                    dataset={section.dataset}
-                    setTrack={setTrack}
-                    bottomSheetRef={bottomSheetRef}
-                    setBottomSheetVisible={setBottomSheetVisible}
-                  />
+                  <MostPlayed loading={loading} dataset={section.dataset} />
                 )}
               </>
             ) : (
@@ -232,7 +216,7 @@ export default function Home({navigation}: any) {
                     {section.dataset?.map((item, i) => (
                       <Pressable
                         key={i}
-                        onPress={() => navigation.navigate(item.name)}
+                        onPress={() => navigation.navigate(item.name as any)}
                         style={{
                           flexGrow: 1,
                           borderRadius: 10,
@@ -287,17 +271,7 @@ export default function Home({navigation}: any) {
             )}
           </>
         )}
-        style={{marginTop: 100}}
       />
-
-      {track && (
-        <TrackDetails
-          track={track}
-          navigation={navigation}
-          bottomSheetRef={bottomSheetRef}
-          queriesToRefetch={['']}
-        />
-      )}
     </>
   );
 }

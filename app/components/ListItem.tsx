@@ -33,16 +33,10 @@ export default function ListItem({
   data,
   item,
   display,
-  bottomSheetRef,
-  setTrack,
-  setBottomSheetVisible,
 }: {
   data: TracksProps | ArtistProps['albums'];
   item: TrackProps;
   display?: 'size' | 'bitrate' | 'duration';
-  bottomSheetRef?: any;
-  setTrack: (highlighted: TrackProps) => void;
-  setBottomSheetVisible: (visible: boolean) => void;
 }) {
   // ? StoreStates
   const {state} = usePlayerStore(state => state.playbackState);
@@ -50,6 +44,8 @@ export default function ListItem({
 
   // ? StoreActions
   const play = usePlayerStore(state => state.play);
+  const openTrackDetails = usePlayerStore(state => state.openTrackDetails);
+  const setTrackDetails = usePlayerStore(state => state.setTrackDetails);
 
   // ? Constants
   const isActive = activeTrack.id === item.id;
@@ -71,9 +67,8 @@ export default function ListItem({
       onPress={() => play(data, item)}
       onLongPress={() => {
         Vibration.vibrate(100);
-        setTrack(item);
-        setBottomSheetVisible(true);
-        bottomSheetRef.current?.snapToIndex(0);
+        setTrackDetails(item);
+        openTrackDetails();
       }}
       style={[
         isActive

@@ -1,15 +1,20 @@
+// * React
 import React, {useState, useEffect} from 'react';
 
+// * React Native
 import {ActivityIndicator, Image, Pressable, Text, View} from 'react-native';
 
-import axios from 'axios';
-
-import {API_URL, usePlayerStore} from '../../store';
-
+// * Libraries
 import {FlashList} from '@shopify/flash-list';
 import {useBackHandler} from '@react-native-community/hooks';
 import {useQuery} from '@tanstack/react-query';
+import axios from 'axios';
+
+// * Components
 import LinearGradientX from '../../components/LinearGradientX';
+
+// * Store
+import {API_URL, usePlayerStore} from '../../store';
 
 type PlaylistProps = {
   id: number;

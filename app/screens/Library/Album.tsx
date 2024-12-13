@@ -1,21 +1,21 @@
 // * React
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect} from 'react';
 
 // * React Native
 import {View, Text, ActivityIndicator} from 'react-native';
 
 // * Libraries
 import {FlashList} from '@shopify/flash-list';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useBackHandler} from '@react-native-community/hooks';
 import {useQuery} from '@tanstack/react-query';
 import axios from 'axios';
-import BottomSheet from '@gorhom/bottom-sheet';
 
 // * Components
 import LinearGradientX from '../../components/LinearGradientX';
 import ListItem from '../../components/ListItem';
 import StatusBarX from '../../components/StatusBarX';
-import TrackDetails from '../../components/TrackDetails';
+import VerticalListItem from '../../components/Skeletons/VerticalListItem';
 
 // * Store
 import {API_URL, usePlayerStore} from '../../store';
@@ -24,17 +24,14 @@ import {API_URL, usePlayerStore} from '../../store';
 import {queryClient} from '../../../App';
 
 // * Types
-import {TrackProps} from '../../types';
+import {RootStackParamList, TrackProps} from '../../types';
 
 export default function Album({
   navigation,
   route: {
     params: {albumArtist, album},
   },
-}: any) {
-  // ? Refs
-  const bottomSheetRef = useRef<BottomSheet>(null);
-
+}: NativeStackScreenProps<RootStackParamList, 'Album', ''>) {
   // ? Hooks
   useBackHandler(() => {
     navigation.goBack();
@@ -45,6 +42,7 @@ export default function Album({
     data: tracks,
     isError,
     isFetching,
+    isSuccess,
   } = useQuery({
     enabled: albumArtist && album ? true : false,
     queryKey: ['album', albumArtist, album],
@@ -54,9 +52,7 @@ export default function Album({
   });
 
   // ? States
-  const [bottomSheetVisible, setBottomSheetVisible] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [track, setTrack] = useState<TrackProps>();
 
   // ? StoreStates
   const palette = usePlayerStore(state => state.palette);
@@ -80,50 +76,38 @@ export default function Album({
 
       <LinearGradientX />
 
-      <FlashList
-        data={tracks}
-        keyExtractor={(_, index) => index.toString()}
-        estimatedItemSize={10}
-        refreshing={refreshing}
-        onRefresh={() => {
-          setRefreshing(true);
-          queryClient
-            .refetchQueries({queryKey: ['album', albumArtist, album]})
-            .then(() => setRefreshing(false));
-        }}
-        renderItem={({item}: {item: TrackProps}) => (
-          <ListItem
-            data={tracks}
-            item={item}
-            display="bitrate"
-            bottomSheetRef={bottomSheetRef}
-            setTrack={setTrack}
-            setBottomSheetVisible={setBottomSheetVisible}
-          />
-        )}
-        ListEmptyComponent={() =>
-          isFetching ? (
-            <ActivityIndicator
-              size="large"
-              color="#fff"
-              style={{marginTop: '50%'}}
-            />
-          ) : isError ? (
-            <View>
-              <Text style={{fontFamily: 'Abel'}}>Empty</Text>
-            </View>
-          ) : (
-            <View />
-          )
-        }
-      />
+      {isFetching && <VerticalListItem />}
 
-      {track && (
-        <TrackDetails
-          track={track}
-          navigation={navigation}
-          bottomSheetRef={bottomSheetRef}
-          queriesToRefetch={['album', 'artist']}
+      {isSuccess && (
+        <FlashList
+          data={tracks}
+          keyExtractor={(_, index) => index.toString()}
+          estimatedItemSize={10}
+          refreshing={refreshing}
+          onRefresh={() => {
+            setRefreshing(true);
+            queryClient
+              .refetchQueries({queryKey: ['album', albumArtist, album]})
+              .then(() => setRefreshing(false));
+          }}
+          renderItem={({item}: {item: TrackProps}) => (
+            <ListItem data={tracks} item={item} display="bitrate" />
+          )}
+          ListEmptyComponent={() =>
+            isFetching ? (
+              <ActivityIndicator
+                size="large"
+                color="#fff"
+                style={{marginTop: '50%'}}
+              />
+            ) : isError ? (
+              <View>
+                <Text style={{fontFamily: 'Abel'}}>Empty</Text>
+              </View>
+            ) : (
+              <View />
+            )
+          }
         />
       )}
     </>

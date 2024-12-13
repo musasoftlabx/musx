@@ -5,13 +5,6 @@ __metadata:
   version: 6
   cacheKey: 8
 
-"-@npm:^0.0.1":
-  version: 0.0.1
-  resolution: "-@npm:0.0.1"
-  checksum: 33786d96a8c404f3ce4db242b50d9a8f6013b3a0673bba52186b92f016429135ec2d9b9f77abf85c2a2b757c85e9b33a1f44d5dbf9740fd6294de87198681fd6
-  languageName: node
-  linkType: hard
-
 "@ampproject/remapping@npm:^2.2.0":
   version: 2.3.0
   resolution: "@ampproject/remapping@npm:2.3.0"
@@ -9027,7 +9020,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "musx@workspace:."
   dependencies:
-    "-": ^0.0.1
     "@babel/core": ^7.20.0
     "@babel/preset-env": ^7.20.0
     "@babel/runtime": ^7.20.0
@@ -9089,6 +9081,7 @@ __metadata:
     react-native-screens: ^3.34.0
     react-native-select-dropdown: ^4.0.1
     react-native-shadow-2: ^7.1.1
+    react-native-skeleton-placeholder: ^5.2.4
     react-native-snap-carousel: ^3.9.1
     react-native-sound: ^0.11.2
     react-native-star-rating-widget: ^1.9.1
@@ -10160,6 +10153,18 @@ __metadata:
     react-native: "*"
     react-native-svg: ">=12.1.0"
   checksum: 3855eff4b28ef239f0c63cae5d7459f5597524853f02ddd6388504ad9e407215c78919a732aa25d888f3cd5f9c15f55d5b2184652e499cf387c9361c2f4f5f53
+  languageName: node
+  linkType: hard
+
+"react-native-skeleton-placeholder@npm:^5.2.4":
+  version: 5.2.4
+  resolution: "react-native-skeleton-placeholder@npm:5.2.4"
+  peerDependencies:
+    "@react-native-masked-view/masked-view": ^0.2.8
+    react: ">=0.14.8"
+    react-native: ">=0.50.1"
+    react-native-linear-gradient: ^2.5.6
+  checksum: c90176c55d0a8342724c38ed5af8baff8ed879b04feeff027574c3c405f3d1be193614bd65e30ddf46407cb951d412f6cc5e2aa4a8e179c589c865f83bdae39e
   languageName: node
   linkType: hard
 

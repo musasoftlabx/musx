@@ -12,6 +12,7 @@ import tinycolor from 'tinycolor2';
 // * Types
 import {TrackProps, TracksProps} from './types';
 import {MediaQueueData, RemoteMediaClient} from 'react-native-google-cast';
+import axios from 'axios';
 
 export const SERVER_URL = `http://75.119.137.255`;
 export const API_URL = `${SERVER_URL}:3000/`;
@@ -39,6 +40,8 @@ interface IPlayerStore {
   lyrics: null | string;
   palette: string[];
   nowPlayingRef: BottomSheet | null;
+  trackDetailsRef: BottomSheet | null;
+  trackDetails: any;
   castState: any;
   castClient: RemoteMediaClient | null;
   setProgress: (queue: Progress) => void;
@@ -55,9 +58,13 @@ interface IPlayerStore {
   setPalette: (palette: string[]) => void;
   setLyricsVisible: (lyricsVisible: boolean) => void;
   setLyrics: (lyrics: null | string) => void;
+  setNowPlayingRef: (nowPlayingRef: BottomSheet | {}) => void;
   openNowPlaying: (nowPlayingRef: BottomSheet | {}) => void;
   closeNowPlaying: (nowPlayingRef: BottomSheet | {}) => void;
-  setNowPlayingRef: (nowPlayingRef: BottomSheet | {}) => void;
+  setTrackDetailsRef: (trackDetailsRef: BottomSheet | {}) => void;
+  setTrackDetails: (trackDetails: TrackProps) => void;
+  openTrackDetails: () => void;
+  closeTrackDetails: () => void;
   setCastState: (castState: any) => void;
   setCastClient: (castClient: any) => void;
   play: (params: any, selected: TrackProps, position?: number) => void;
@@ -88,6 +95,8 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   palette: [],
   lyrics: null,
   nowPlayingRef: null,
+  trackDetailsRef: null,
+  trackDetails: null,
   castState: {},
   castClient: null,
   setProgress: progress => set(state => ({...state, progress})),
@@ -117,6 +126,18 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   },
   setNowPlayingRef: (nowPlayingRef: any) =>
     set(state => ({...state, nowPlayingRef})),
+  openTrackDetails: () => {
+    const trackDetailsRef: any = get().trackDetailsRef;
+    trackDetailsRef.current?.snapToIndex(0);
+  },
+  closeTrackDetails: () => {
+    const trackDetailsRef: any = get().trackDetailsRef;
+    trackDetailsRef.current?.close();
+  },
+  setTrackDetailsRef: (trackDetailsRef: any) =>
+    set(state => ({...state, trackDetailsRef})),
+  setTrackDetails: (trackDetails: TrackProps) =>
+    set(state => ({...state, trackDetails})),
   setCastState: (castState: any) => set(state => ({...state, castState})),
   setCastClient: (castClient: any) => set(state => ({...state, castClient})),
 
