@@ -2,7 +2,7 @@
 import React, {useState, useEffect} from 'react';
 
 // * React Native
-import {View, Text, ActivityIndicator} from 'react-native';
+import {View, Text} from 'react-native';
 
 // * Libraries
 import {FlashList} from '@shopify/flash-list';
@@ -93,21 +93,6 @@ export default function Album({
           renderItem={({item}: {item: TrackProps}) => (
             <ListItem data={tracks} item={item} display="bitrate" />
           )}
-          ListEmptyComponent={() =>
-            isFetching ? (
-              <ActivityIndicator
-                size="large"
-                color="#fff"
-                style={{marginTop: '50%'}}
-              />
-            ) : isError ? (
-              <View>
-                <Text style={{fontFamily: 'Abel'}}>Empty</Text>
-              </View>
-            ) : (
-              <View />
-            )
-          }
         />
       )}
     </>

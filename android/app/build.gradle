@@ -146,6 +146,9 @@ dependencies {
 
     // ? MusX - React Native Google Cast
     implementation "com.google.android.gms:play-services-cast-framework:${safeExtGet('castFrameworkVersion', '+')}"
+
+    // ? MusX - React Native FS
+    //implementation project(':react-native-fs')
 }
 
 apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")

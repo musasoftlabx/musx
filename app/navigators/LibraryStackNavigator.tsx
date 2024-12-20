@@ -70,6 +70,7 @@ export default function LibraryStackNavigator() {
             ),
           }}
         />
+
         <Stack.Screen
           name="Folders"
           component={Folders}

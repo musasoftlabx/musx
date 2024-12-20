@@ -183,7 +183,7 @@ export default function Home({
                 ) : section.title === 'Recently Played' ? (
                   <SectionHeader section={section} routeTo="History" />
                 ) : section.title === 'Most Played' ? (
-                  <SectionHeader section={section} routeTo="Most Played" />
+                  <SectionHeader section={section} routeTo="MostPlayed" />
                 ) : null}
               </>
             )}

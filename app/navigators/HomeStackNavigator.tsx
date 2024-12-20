@@ -22,6 +22,7 @@ import Folders from '../screens/Library/Folders';
 import History from '../screens/Library/History';
 import Home from '../screens/Home/';
 import MostPlayed from '../screens/Library/MostPlayed';
+import Playlist from '../screens/Library/Playlist';
 import Playlists from '../screens/Library/Playlists';
 import TrackMetadata from '../screens/Library/TrackMetadata';
 
@@ -76,13 +77,13 @@ export default function HomeStackNavigator() {
           name="Folders"
           component={Folders}
           options={{
-            headerTransparent: true,
             headerBlurEffect: 'dark',
+            headerTransparent: true,
             headerShadowVisible: false,
           }}
         />
 
-        <Stack.Screen name="Artists" component={Artists} />
+        {/* <Stack.Screen name="Artists" component={Artists} /> */}
 
         <Stack.Screen
           name="Artist"
@@ -111,7 +112,7 @@ export default function HomeStackNavigator() {
 
         <Stack.Group>
           <Stack.Screen
-            name="Most Played"
+            name="MostPlayed"
             component={MostPlayed}
             options={{title: '', headerBackVisible: true}}
           />
@@ -140,32 +141,10 @@ export default function HomeStackNavigator() {
             options={{title: 'Metadata'}}
           />
         </Stack.Group>
-        {/* 
-      
-      <Stack.Screen
-        name="Playlist"
-        component={Playlist}
-        options={{headerShown: false}}
-      />
-      <Stack.Screen
-        name="Artists"
-        component={Artists}
-        options={{
-          headerStyle: {
-            backgroundColor: 'transparent',
-          },
-          headerTitle: props => (
-            <TextInput
-              onChangeText={onChangeText}
-              onChange={text => filter(text.nativeEvent.text)}
-              value={text}
-              placeholder="Search"
-              style={{fontSize: 20}}
-            />
-          ),
-        }}
-      />
-       */}
+
+        <Stack.Screen name="Playlist" component={Playlist} />
+
+        <Stack.Screen name="Artists" component={Artists} />
       </Stack.Navigator>
 
       <Footer />

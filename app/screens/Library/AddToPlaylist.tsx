@@ -57,14 +57,14 @@ export default function AddToPlaylist({
     navigation.goBack();
   };
 
-  const addPlaylistTrack = async (playlistId: number) => {
+  const addPlaylistTrack = async (track: TrackProps) => {
     await axios.post(`${API_URL}addPlaylistTrack`, {
-      playlistId,
+      playlistId: track.id,
       trackId: id,
       startsAt: null,
       endsAt: null,
     });
-    navigation.goBack();
+    navigation.navigate('Playlist', track);
   };
 
   return (
@@ -118,7 +118,7 @@ export default function AddToPlaylist({
             <Text style={{fontSize: 16, marginBottom: 10}}>Playlists</Text>
           )}
           renderItem={({item}: {item: TrackProps}) => (
-            <Pressable onPress={() => addPlaylistTrack(item.id)}>
+            <Pressable onPress={() => addPlaylistTrack(item)}>
               <View
                 style={{
                   flexDirection: 'row',

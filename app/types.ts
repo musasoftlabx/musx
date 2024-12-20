@@ -19,9 +19,32 @@ declare global {
 export type RootStackParamList = {
   Home: {queryKey: string; title: string};
   History: {queryKey: string; title: string};
-  Playlists: undefined;
+  Playlist: {
+    id: number;
+    name: string;
+    createdOn: string;
+    modifiedOn: string;
+    tracks: number;
+    artworks: string[];
+    artwork: string;
+    duration: string;
+    size: string;
+  };
+  Playlists: {
+    id: number;
+    name: string;
+    createdOn: string;
+    modifiedOn: string;
+    tracks: number;
+    artworks: string[];
+    artwork: string;
+    duration: string;
+    size: string;
+  };
   Folders: undefined;
   MostPlayed: any;
+  AddToPlaylist: any;
+  TrackMetadata: any;
   Artists: any;
   Artist: {
     albumArtist: string;
@@ -87,6 +110,7 @@ export type TrackProps = {
   track: number;
   waveform: string;
   year: string;
+  position: number;
 
   type?: any; //TrackType;
   /** The user agent HTTP header */

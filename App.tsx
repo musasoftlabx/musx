@@ -48,7 +48,7 @@ import TabNavigator from './app/navigators/TabNavigator';
 import {darkTheme} from './app/utils';
 
 // * Store
-import {API_URL, usePlayerStore} from './app/store';
+import {API_URL, AUDIO_URL, usePlayerStore} from './app/store';
 
 // * Constants
 export const queryClient = new QueryClient();
@@ -80,21 +80,21 @@ export default function App(): React.JSX.Element {
 
   // ? Hooks
   const activeTrack = useActiveTrack();
-  const playbackState = usePlaybackState();
-  const progress = useProgress();
   const castClient = useRemoteMediaClient();
   const castMediaStatus = useMediaStatus();
   const castState = useCastState();
   const castSession = useCastSession();
+  const playbackState = usePlaybackState();
+  const progress = useProgress();
   const streamPosition = useStreamPosition();
 
   // ? StoreStates
   const _activeTrack = usePlayerStore(state => state.activeTrack);
-  const queue = usePlayerStore(state => state.queue);
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
-  const playRegistered = usePlayerStore(state => state.playRegistered);
-
   const isCrossFading = usePlayerStore(state => state.isCrossFading);
+  const playRegistered = usePlayerStore(state => state.playRegistered);
+  const queue = usePlayerStore(state => state.queue);
+  const streamViaHLS = usePlayerStore(state => state.streamViaHLS);
 
   // ? StoreActions
   const play = usePlayerStore(state => state.play);
@@ -105,6 +105,7 @@ export default function App(): React.JSX.Element {
   const setActiveTrackIndex = usePlayerStore(
     state => state.setActiveTrackIndex,
   );
+  const setIsCrossFading = usePlayerStore(state => state.setIsCrossFading);
   const setQueue = usePlayerStore(state => state.setQueue);
   const setTrackRating = usePlayerStore(state => state.setTrackRating);
   const setTrackPlayCount = usePlayerStore(state => state.setTrackPlayCount);
@@ -116,13 +117,11 @@ export default function App(): React.JSX.Element {
   const setNowPlayingRef = usePlayerStore(state => state.setNowPlayingRef);
   const setCastState = usePlayerStore(state => state.setCastState);
   const setCastClient = usePlayerStore(state => state.setCastClient);
-
-  const setIsCrossFading = usePlayerStore(state => state.setIsCrossFading);
+  const setStreamViaHLS = usePlayerStore(state => state.setStreamViaHLS);
 
   // ? Functions
   const fetchLyrics = (url: string) => {
-    axios
-      .get(url)
+    axios(url)
       .then(({data: lyrics}) => {
         setLyrics(lyrics);
         setLyricsVisible(true);
@@ -131,6 +130,14 @@ export default function App(): React.JSX.Element {
         setLyrics('');
         setLyricsVisible(false);
       });
+  };
+
+  const transcode = () => {
+    axios(
+      `${API_URL}transcode?path=${activeTrack!.path}&duration=${
+        activeTrack?.duration
+      }&bitrate=`,
+    ).catch(() => {});
   };
 
   // ? Effects
@@ -173,6 +180,9 @@ export default function App(): React.JSX.Element {
         ],
       });
 
+      const streamViaHLS = AsyncStorage.getItem('streamViaHLS');
+      setStreamViaHLS(Boolean(streamViaHLS));
+
       const playPosition = await AsyncStorage.getItem('playPosition');
       const savedQueue = await AsyncStorage.getItem('queue');
       const savedActiveTrackIndex = await AsyncStorage.getItem(
@@ -208,7 +218,10 @@ export default function App(): React.JSX.Element {
       castClient?.getMediaStatus().then(status => {
         const {mediaInfo} = status as MediaStatus;
         const {contentUrl, customData} = mediaInfo as MediaInfo;
-        const {id, rating, plays, palette, duration} = customData as any;
+        const {id, rating, plays, palette, duration, path} = customData as any;
+
+        // ? Invoke transcoder to transcode the file to HLS chunks
+        streamViaHLS && transcode();
 
         // ? Save variables to store to be accessed by components
         setLyricsVisible(false);
@@ -220,7 +233,7 @@ export default function App(): React.JSX.Element {
         setProgress({position: 0, buffered: 0, duration});
 
         // ? Get active track lyrics. Display the lyrics if found else display artwork
-        fetchLyrics(contentUrl.replace('.mp3', '.lrc'));
+        fetchLyrics(`${AUDIO_URL}${path.replace('.mp3', '.lrc')}`);
 
         // ? Get the active track index
         const activeTrackIndex = queue.findIndex(track => track.id === id);
@@ -294,6 +307,9 @@ export default function App(): React.JSX.Element {
     event => {
       if (!castSession) {
         if (event.type === Event.PlaybackActiveTrackChanged) {
+          // ? Invoke transcoder to transcode the file to HLS chunks
+          streamViaHLS && transcode();
+
           // ? Save variables to store to be accessed by components
           setLyricsVisible(false);
           setPlayRegistered(false);
@@ -308,7 +324,10 @@ export default function App(): React.JSX.Element {
             duration: activeTrack?.duration!,
           });
 
-          fetchLyrics(activeTrack!.url.replace('.mp3', '.lrc')); // ? Get active track lyrics. Display the lyrics if found else display artwork
+          // ? Get active track lyrics. Display the lyrics if found else display artwork
+          fetchLyrics(
+            `${AUDIO_URL}${activeTrack!.path.replace('.mp3', '.lrc')}`,
+          );
 
           TrackPlayer.getActiveTrackIndex().then(i => {
             setActiveTrackIndex(i);
@@ -340,59 +359,59 @@ export default function App(): React.JSX.Element {
               .catch(error => console.log(error));
           }
 
-          if (
-            progress.duration >= 20 &&
-            progress.duration - progress.position <= 20 &&
-            !isCrossFading
-          ) {
-            setIsCrossFading(true);
+          // if (
+          //   progress.duration >= 20 &&
+          //   progress.duration - progress.position <= 20 &&
+          //   !isCrossFading
+          // ) {
+          //   setIsCrossFading(true);
 
-            const crossfader = new Sound(
-              queue[activeTrackIndex + 1].url,
-              Sound.MAIN_BUNDLE,
-              e => {
-                if (e) {
-                  TrackPlayer.skipToNext();
-                  console.log('failed to load the sound', e);
-                  return;
-                }
+          //   const crossfader = new Sound(
+          //     queue[activeTrackIndex + 1].url,
+          //     Sound.MAIN_BUNDLE,
+          //     e => {
+          //       if (e) {
+          //         TrackPlayer.skipToNext();
+          //         console.log('failed to load the sound', e);
+          //         return;
+          //       }
 
-                crossfader.setVolume(0);
-                crossfader.play();
+          //       crossfader.setVolume(0);
+          //       crossfader.play();
 
-                let fadeOutInterval = setInterval(async () => {
-                  const currentTrackVolume = await TrackPlayer.getVolume();
-                  const crossfaderVolume = crossfader.getVolume();
+          //       let fadeOutInterval = setInterval(async () => {
+          //         const currentTrackVolume = await TrackPlayer.getVolume();
+          //         const crossfaderVolume = crossfader.getVolume();
 
-                  await TrackPlayer.setVolume(currentTrackVolume - 0.1);
-                  crossfader.setVolume(crossfaderVolume + 0.1);
+          //         await TrackPlayer.setVolume(currentTrackVolume - 0.1);
+          //         crossfader.setVolume(crossfaderVolume + 0.1);
 
-                  if (currentTrackVolume <= 0) {
-                    crossfader.getCurrentTime(async seconds => {
-                      await TrackPlayer.skipToNext();
-                      await TrackPlayer.seekTo(seconds + 1.8);
-                      clearInterval(fadeOutInterval);
+          //         if (currentTrackVolume <= 0) {
+          //           crossfader.getCurrentTime(async seconds => {
+          //             await TrackPlayer.skipToNext();
+          //             await TrackPlayer.seekTo(seconds + 1.8);
+          //             clearInterval(fadeOutInterval);
 
-                      let fadeInInterval = setInterval(async () => {
-                        await TrackPlayer.setVolume(
-                          (await TrackPlayer.getVolume()) + 0.5,
-                        );
+          //             let fadeInInterval = setInterval(async () => {
+          //               await TrackPlayer.setVolume(
+          //                 (await TrackPlayer.getVolume()) + 0.5,
+          //               );
 
-                        crossfader.setVolume(crossfader.getVolume() - 0.3);
+          //               crossfader.setVolume(crossfader.getVolume() - 0.3);
 
-                        if (crossfader.getVolume() <= 0) {
-                          await TrackPlayer.setVolume(1);
-                          crossfader.stop();
-                          clearInterval(fadeInInterval);
-                          crossfader.release();
-                        }
-                      }, 1000);
-                    });
-                  }
-                }, 1000);
-              },
-            );
-          }
+          //               if (crossfader.getVolume() <= 0) {
+          //                 await TrackPlayer.setVolume(1);
+          //                 crossfader.stop();
+          //                 clearInterval(fadeInInterval);
+          //                 crossfader.release();
+          //               }
+          //             }, 1000);
+          //           });
+          //         }
+          //       }, 1000);
+          //     },
+          //   );
+          // }
         }
 
         if (event.type === Event.PlaybackState) {

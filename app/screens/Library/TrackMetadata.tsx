@@ -6,9 +6,10 @@ import {Text, View, Alert} from 'react-native';
 
 // * Libraries
 import * as Yup from 'yup';
-import {HelperText, Snackbar, TextInput, useTheme} from 'react-native-paper';
 import {FlashList} from '@shopify/flash-list';
 import {Formik} from 'formik';
+import {HelperText, Snackbar, TextInput, useTheme} from 'react-native-paper';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useBackHandler} from '@react-native-community/hooks';
 import {useMutation} from '@tanstack/react-query';
 import axios from 'axios';
@@ -18,11 +19,12 @@ import ButtonX from '../../components/ButtonX';
 import LinearGradientX from '../../components/LinearGradientX';
 
 // * Store
-import {API_URL, usePlayerStore} from '../../store';
+import {usePlayerStore} from '../../store';
 
 // * Types
-import {TrackProps} from '../../types';
+import {RootStackParamList} from '../../types';
 
+// * Functions
 import {formatTrackTime} from '../../functions';
 
 import {styles} from '../../styles';
@@ -30,10 +32,7 @@ import {styles} from '../../styles';
 export default function TrackMetadata({
   navigation,
   route: {params: _params},
-}: {
-  navigation: any;
-  route: {params: TrackProps};
-}) {
+}: NativeStackScreenProps<RootStackParamList, 'TrackMetadata', ''>) {
   const theme = useTheme();
 
   // ? StoreStates
@@ -41,16 +40,16 @@ export default function TrackMetadata({
 
   const [snackbar, setSnackbar] = useState(false);
   const [refreshMetadataLoading, setRefreshMetadataLoading] = useState(false);
-  const [params, setParams] = useState<TrackProps>(_params);
+  const [params, setParams] = useState(_params);
 
   const {mutate: updateMetadata} = useMutation({
     mutationFn: (data: HTMLFormElement) => axios.post('updateMetadata', data),
   });
 
   const {mutate: refreshMetadata} = useMutation({
-    mutationFn: () => axios.post(`refreshMetadata`, {path: params.path}),
+    mutationFn: () => axios.post(`refreshMetadata`, {path: params?.path}),
     onSuccess: () => {
-      axios.get(`trackMetadata/${params.id}`).then(({data}) => {
+      axios.get(`trackMetadata/${params?.id}`).then(({data}) => {
         setParams(data);
         setRefreshMetadataLoading(false);
       });
@@ -75,29 +74,29 @@ export default function TrackMetadata({
 
       <FlashList
         data={[
-          {label: 'Id', value: params.id.toString()},
+          {label: 'Id', value: params?.id.toString()},
           {
             label: 'Bitrate',
-            value: `${(params.bitrate / 1000).toFixed(3)} Kbps`,
+            value: `${(params?.bitrate / 1000).toFixed(3)} Kbps`,
           },
           {
             label: 'Sample Rate',
-            value: `${(params.sampleRate / 1000).toFixed(3)} Khz`,
+            value: `${(params?.sampleRate / 1000).toFixed(3)} Khz`,
           },
-          {label: 'Channel Layout', value: params.channelLayout},
-          {label: 'Channels', value: params.channels.toString()},
+          {label: 'Channel Layout', value: params?.channelLayout},
+          {label: 'Channels', value: params?.channels.toString()},
           {
             label: 'Size',
             value: `${Number(
-              (params.size / 1000).toFixed(2),
+              (params?.size / 1000).toFixed(2),
             ).toLocaleString()} MB`,
           },
           {
             label: 'Duration',
-            value: `${formatTrackTime(params.duration)} mins`,
+            value: `${formatTrackTime(params?.duration)} mins`,
           },
-          {label: 'Format', value: params.format.toLocaleUpperCase()},
-          {label: 'Encoder', value: params.encoder},
+          {label: 'Format', value: params?.format.toLocaleUpperCase()},
+          {label: 'Encoder', value: params?.encoder},
         ]}
         numColumns={3}
         keyExtractor={(_, index) => index.toString()}

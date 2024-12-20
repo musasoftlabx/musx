@@ -11,7 +11,11 @@ import tinycolor from 'tinycolor2';
 
 // * Types
 import {TrackProps, TracksProps} from './types';
-import {MediaQueueData, RemoteMediaClient} from 'react-native-google-cast';
+import {
+  MediaHlsSegmentFormat,
+  MediaQueueData,
+  RemoteMediaClient,
+} from 'react-native-google-cast';
 import axios from 'axios';
 
 export const SERVER_URL = `http://75.119.137.255`;
@@ -19,10 +23,21 @@ export const API_URL = `${SERVER_URL}:3000/`;
 export const AUDIO_URL = `${SERVER_URL}/Music/`;
 export const ARTWORK_URL = `${SERVER_URL}/Artwork/`;
 export const WAVEFORM_URL = `${SERVER_URL}/Waveform/`;
+export const TRANSCODES_URL = `${SERVER_URL}/Transcodes/`;
 export const WIDTH = Dimensions.get('window').width;
 export const HEIGHT = Dimensions.get('window').height;
 export const ASPECT_RATIO = WIDTH / HEIGHT;
 export const LIST_ITEM_HEIGHT = 60;
+
+const handleHLSstreaming = (queue: any) =>
+  queue.map((track: TrackProps) => ({
+    ...track,
+    type: 'hls',
+    url: `${TRANSCODES_URL}${track.path.split('/').slice(-1)}`.replace(
+      '.mp3',
+      '.m3u8',
+    ),
+  }));
 
 interface IPlayerStore {
   progress: Progress;
@@ -44,6 +59,7 @@ interface IPlayerStore {
   trackDetails: any;
   castState: any;
   castClient: RemoteMediaClient | null;
+  streamViaHLS: boolean;
   setProgress: (queue: Progress) => void;
   setPlaybackState: (playbackState: any) => void;
   setQueue: (queue: Track[]) => void;
@@ -77,6 +93,7 @@ interface IPlayerStore {
   moveTrack: (from: number, to: number) => void;
   addAsNextTrack: (track: TrackProps, index: number) => void;
   addTrackToEndOfQueue: (track: TrackProps) => void;
+  setStreamViaHLS: (streamViaHLS: boolean) => void;
 }
 
 export const usePlayerStore = create<IPlayerStore>((set, get) => ({
@@ -99,6 +116,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   trackDetails: null,
   castState: {},
   castClient: null,
+  streamViaHLS: false,
   setProgress: progress => set(state => ({...state, progress})),
   setPlaybackState: playbackState => set(state => ({...state, playbackState})),
   setQueue: queue => set(state => ({...state, queue})),
@@ -140,6 +158,8 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     set(state => ({...state, trackDetails})),
   setCastState: (castState: any) => set(state => ({...state, castState})),
   setCastClient: (castClient: any) => set(state => ({...state, castClient})),
+  setStreamViaHLS: (streamViaHLS: boolean) =>
+    set(state => ({...state, streamViaHLS})),
 
   // ? Player actions
   play: async (data: TracksProps, selected: TrackProps, position?: number) => {
@@ -162,7 +182,12 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     });
 
     // ? Remove undefined items (folders)
-    const queue: any = tracks.filter((track: any) => track);
+    const _queue: any = tracks.filter((track: any) => track);
+
+    let queue: any = [];
+
+    if (get().streamViaHLS) queue = handleHLSstreaming(_queue);
+    else queue = _queue;
 
     // ? Find index of currently selected track
     const selectedIndex = queue.findIndex(
@@ -171,9 +196,12 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
 
     const castState = get().castState;
     const castClient = get().castClient;
+    const setActiveTrack = get().setActiveTrack;
 
     if (castState === 'connected') {
       set({queue});
+
+      setActiveTrack(queue[selectedIndex]);
 
       castClient
         ?.loadMedia({
@@ -184,6 +212,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
               mediaInfo: {
                 contentUrl: track.url,
                 contentType: 'audio/mpeg',
+                hlsSegmentFormat: MediaHlsSegmentFormat.TS,
                 metadata: {
                   type: 'musicTrack',
                   images: [{url: track.artwork}],
@@ -468,7 +497,14 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   },
   addAsNextTrack: (track: TrackProps, index: number) => {
     // ? Convert the palette from string to array
-    track.palette = JSON.parse(track.palette);
+    const palette = JSON.parse(track.palette).map((color: string) => {
+      const brightness = tinycolor(color).getBrightness();
+
+      if (brightness >= 150) return `#${tinycolor(color).darken(50).toHex()}`;
+      else return color;
+    });
+
+    track.palette = palette;
 
     // ? Retrieve castClient & castState state
     const castClient = get().castClient;
@@ -482,7 +518,8 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     queue.splice(index, 0, track);
 
     // ? Set Queue
-    setQueue([...queue]);
+    if (get().streamViaHLS) setQueue(handleHLSstreaming([...queue]));
+    else setQueue([...queue]);
 
     // ? Save queue to storage
     AsyncStorage.setItem('queue', JSON.stringify([...queue]));
@@ -497,6 +534,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
             mediaInfo: {
               contentUrl: track.url,
               contentType: 'audio/mpeg',
+              hlsSegmentFormat: MediaHlsSegmentFormat.TS,
               metadata: {
                 type: 'musicTrack',
                 images: [{url: track.artwork}],
@@ -536,7 +574,15 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   },
   addTrackToEndOfQueue: (track: TrackProps) => {
     // ? Convert the palette from string to array
-    track.palette = JSON.parse(track.palette);
+    //track.palette = JSON.parse(track.palette);
+    const palette = JSON.parse(track.palette).map((color: string) => {
+      const brightness = tinycolor(color).getBrightness();
+
+      if (brightness >= 150) return `#${tinycolor(color).darken(50).toHex()}`;
+      else return color;
+    });
+
+    track.palette = palette;
 
     // ? Retrieve castClient & castState state
     const castClient = get().castClient;
@@ -550,7 +596,8 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     const _queue = [...queue, track];
 
     // ? Set Queue
-    setQueue(_queue);
+    if (get().streamViaHLS) setQueue(handleHLSstreaming(_queue));
+    else setQueue(_queue);
 
     // ? Save queue to storage
     AsyncStorage.setItem('queue', JSON.stringify(_queue));
@@ -561,6 +608,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
         mediaInfo: {
           contentUrl: track.url,
           contentType: 'audio/mpeg',
+          hlsSegmentFormat: MediaHlsSegmentFormat.TS,
           metadata: {
             type: 'musicTrack',
             images: [{url: track.artwork}],

@@ -90,11 +90,23 @@ New project
 
 > npx @react-native-community/cli@latest init AwesomeProject
 
+React Native Google Cast Bug Fix
+
+> Go to node_modules/react-native-google-cast/android/build.gradle
+> Comment the lines below under dependencies
+
+```java
+dependencies {
+  //implementation "com.android.support:appcompat-v7:${safeExtGet('supportLibVersion', '+')}"
+  //implementation "com.android.support:mediarouter-v7:${safeExtGet('supportLibVersion', '+')}"
+}
+```
+
 React Native Masked View issue with skeleton black background
 
-> Go to /Users/musa-mutetwi/projects/mobile/musx/node_modules/@react-native-masked-view/masked-view/android/src/main/java/org/reactnative/maskedview/RNCMaskedView.java
+> Go to node_modules/@react-native-masked-view/masked-view/android/src/main/java/org/reactnative/maskedview/RNCMaskedView.java
 
-> Add line with (add this line)
+> Add line with (check add this line comment)
 
 ```java
  @Override

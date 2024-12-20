@@ -75,109 +75,111 @@ export default function Footer() {
 
         <View
           style={{
-            flexDirection: 'row',
             alignItems: 'center',
-            gap: 10,
+            flexDirection: 'row',
+            gap: 40,
             paddingHorizontal: 20,
           }}>
           <Pressable
-            style={{flexGrow: 0.8, flexDirection: 'row', alignItems: 'center'}}
+            style={{
+              alignItems: 'center',
+              flexDirection: 'row',
+              flexShrink: 1,
+            }}
             onPress={() => {
-              openNowPlaying(nowPlayingRef!);
               Vibration.vibrate(50);
+              openNowPlaying(nowPlayingRef!);
             }}>
             <Image
               source={
                 activeTrack?.artwork ? {uri: activeTrack?.artwork} : imageFiller
               }
               style={{
-                height: 50,
-                width: 50,
-                marginRight: 8,
                 borderRadius: 10,
+                height: 50,
+                marginRight: 8,
+                width: 50,
               }}
             />
-            <View>
+            <View style={{flexBasis: '40%'}}>
               <Text numberOfLines={1} style={styles.title}>
                 {activeTrack?.title}
               </Text>
               <Text numberOfLines={1} style={styles.artists}>
                 {activeTrack?.albumArtist ?? 'Unknown Artist'}
               </Text>
-              <Text style={{fontSize: 12, marginLeft: 3, marginTop: 2}}>
+              <Text style={{fontSize: 12, marginTop: 2}}>
                 {`${formatTrackTime(position)} / ${formatTrackTime(duration)}`}
               </Text>
             </View>
           </Pressable>
 
-          <View style={{flexGrow: 0.2}}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'flex-end',
-                gap: 20,
-              }}>
-              <Pressable
-                disabled={(activeTrackIndex === 0 && position <= 10) || isIdle}
-                onPress={() => previous(position)}>
-                <Icon
-                  name="play-back"
-                  size={25}
-                  color={
-                    (activeTrackIndex === 0 && position <= 10) || isIdle
-                      ? 'rgba(255, 255, 255, .4)'
-                      : 'white'
-                  }
-                />
-              </Pressable>
-
-              <Progress.Circle
-                size={50}
-                progress={position / duration || 0}
-                color="#fff"
-                style={{marginRight: -67.5, opacity: 1}}
+          <View
+            style={{
+              alignItems: 'center',
+              flexDirection: 'row',
+              justifyContent: 'flex-end',
+              gap: 20,
+            }}>
+            <Pressable
+              disabled={(activeTrackIndex === 0 && position <= 10) || isIdle}
+              onPress={() => previous(position)}>
+              <Icon
+                name="play-back"
+                size={25}
+                color={
+                  (activeTrackIndex === 0 && position <= 10) || isIdle
+                    ? 'rgba(255, 255, 255, .4)'
+                    : 'white'
+                }
               />
+            </Pressable>
 
-              {isLoading || isBuffering ? (
-                <ActivityIndicator
-                  size={30}
-                  color="#000"
-                  style={{
-                    backgroundColor: '#fff',
-                    borderRadius: 100,
-                    borderColor: 'transparent',
-                    width: 35,
-                    height: 35,
-                    marginLeft: 5,
-                  }}
-                />
-              ) : (
-                <Pressable disabled={isEnded || isIdle} onPress={playPause}>
-                  <Icon
-                    name={isPlaying ? 'pause-circle' : 'play-circle'}
-                    size={45}
-                    color={
-                      isEnded || isIdle ? 'rgba(255, 255, 255, .4)' : 'white'
-                    }
-                  />
-                </Pressable>
-              )}
+            <Progress.Circle
+              size={50}
+              progress={position / duration || 0}
+              color="#fff"
+              style={{marginRight: -67.5, opacity: 1}}
+            />
 
-              <Pressable
-                disabled={activeTrackIndex === queue.length - 1}
-                onPress={next}>
+            {isLoading || isBuffering ? (
+              <ActivityIndicator
+                size={30}
+                color="#000"
+                style={{
+                  backgroundColor: '#fff',
+                  borderRadius: 100,
+                  borderColor: 'transparent',
+                  width: 35,
+                  height: 35,
+                  marginLeft: 5,
+                }}
+              />
+            ) : (
+              <Pressable disabled={isEnded || isIdle} onPress={playPause}>
                 <Icon
-                  name="play-forward"
-                  size={25}
+                  name={isPlaying ? 'pause-circle' : 'play-circle'}
+                  size={45}
                   color={
-                    activeTrackIndex === queue.length - 1
-                      ? 'rgba(255, 255, 255, .4)'
-                      : 'white'
+                    isEnded || isIdle ? 'rgba(255, 255, 255, .4)' : 'white'
                   }
                 />
               </Pressable>
-            </View>
+            )}
+
+            <Pressable
+              disabled={activeTrackIndex === queue.length - 1}
+              onPress={next}>
+              <Icon
+                name="play-forward"
+                size={25}
+                color={
+                  activeTrackIndex === queue.length - 1
+                    ? 'rgba(255, 255, 255, .4)'
+                    : 'white'
+                }
+              />
+            </Pressable>
           </View>
         </View>
       </View>
@@ -187,5 +189,5 @@ export default function Footer() {
 
 const styles = StyleSheet.create({
   title: {fontSize: 17, fontWeight: '800'},
-  artists: {fontSize: 14, fontWeight: '500', marginLeft: 2},
+  artists: {fontSize: 14, fontWeight: '500'},
 });

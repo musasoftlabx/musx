@@ -35,7 +35,6 @@ import LinearGradientX from '../components/LinearGradientX';
 import ListEmptyItem from '../components/ListEmptyItem';
 import ListItem from '../components/ListItem';
 import StatusBarX from '../components/StatusBarX';
-import TrackDetails from '../components/TrackDetails';
 
 // * Store
 import {HEIGHT, usePlayerStore, WIDTH} from '../store';
@@ -50,14 +49,9 @@ type SearchProps = {
 };
 
 export default function Search({navigation}: any) {
-  // ? Refs
-  const bottomSheetRef = useRef<BottomSheet>(null);
-
   // ? States
-  const [bottomSheetVisible, setBottomSheetVisible] = useState<boolean>(false);
   const [searchWord, setSearchWord] = useState('');
   const [data, setData] = useState<SearchProps>();
-  const [track, setTrack] = useState<TrackProps>();
   const [showSearch, setShowSearch] = useState(false);
 
   // ? StoreStates
@@ -270,9 +264,6 @@ export default function Search({navigation}: any) {
                         data={data.tracks}
                         item={item}
                         display="bitrate"
-                        bottomSheetRef={bottomSheetRef}
-                        setTrack={setTrack}
-                        setBottomSheetVisible={setBottomSheetVisible}
                       />
                     )}
                   />
@@ -326,15 +317,6 @@ export default function Search({navigation}: any) {
             </>
           )}
           style={{marginTop: 60}}
-        />
-      )}
-
-      {track && (
-        <TrackDetails
-          track={track}
-          navigation={navigation}
-          bottomSheetRef={bottomSheetRef}
-          queriesToRefetch={['artist']}
         />
       )}
     </>

@@ -345,7 +345,8 @@ export default function Queue() {
             }}
             keyExtractor={(_, index) => index.toString()}
             renderItem={RenderQueueListItem}
-            activationDistance={0}
+            activationDistance={5}
+            //autoscrollThreshold={-10}
             ListEmptyComponent={() => (
               <View
                 style={{
@@ -356,7 +357,7 @@ export default function Queue() {
                 <Text>No tracks</Text>
               </View>
             )}
-            containerStyle={{marginVertical: 10}}
+            containerStyle={{flex: 1, marginVertical: 10}}
           />
         ) : (
           <FlatList

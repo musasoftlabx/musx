@@ -1,3 +1,4 @@
+// * React
 import React, {
   useState,
   useLayoutEffect,
@@ -6,49 +7,44 @@ import React, {
   useEffect,
 } from 'react';
 
+// * React Native
 import {
-  ActivityIndicator,
   Image,
   ImageBackground,
+  Pressable,
   Text,
   Vibration,
   View,
 } from 'react-native';
 
-import {FlashList} from '@shopify/flash-list';
+// * Libraries
 import {TouchableOpacity} from 'react-native-gesture-handler';
-import {useQuery} from '@tanstack/react-query';
+import {useMutation, useQuery} from '@tanstack/react-query';
+import {useBackHandler} from '@react-native-community/hooks';
 import axios from 'axios';
-import BottomSheet from '@gorhom/bottom-sheet';
 import DraggableFlatList, {
   OpacityDecorator,
   RenderItemParams,
-  ScaleDecorator,
   ShadowDecorator,
 } from 'react-native-draggable-flatlist';
+import {StarRatingDisplay} from 'react-native-star-rating-widget';
 import SwipeableItem, {
   SwipeableItemImperativeRef,
 } from 'react-native-swipeable-item';
 
 import LinearGradientX from '../../components/LinearGradientX';
-import ListItem from '../../components/ListItem';
-import TrackDetails from '../../components/TrackDetails';
 
-import {
-  API_URL,
-  HEIGHT,
-  LIST_ITEM_HEIGHT,
-  usePlayerStore,
-  WIDTH,
-} from '../../store';
+import {API_URL, LIST_ITEM_HEIGHT, usePlayerStore} from '../../store';
 
 // * Assets
 import imageFiller from '../../assets/images/image-filler.png';
 
-import {TrackProps, TracksProps} from '../../types';
-import {StarRatingDisplay} from 'react-native-star-rating-widget';
 import {formatTrackTime} from '../../functions';
-import {Track} from 'react-native-track-player';
+
+import {TrackProps, TracksProps} from '../../types';
+import StatusBarX from '../../components/StatusBarX';
+import {queryClient} from '../../../App';
+import VerticalListItem from '../../components/Skeletons/VerticalListItem';
 
 export default function Playlist({
   navigation,
@@ -57,19 +53,16 @@ export default function Playlist({
   },
 }: any) {
   // ? Refs
-  const bottomSheetRef = useRef<BottomSheet>(null);
   const swipeableItemRef = useRef<SwipeableItemImperativeRef>(null);
 
   // ? States
-  const [bottomSheetVisible, setBottomSheetVisible] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [track, setTrack] = useState<TrackProps>();
   const [playlistTracks, setPlaylistTracks] = useState<TracksProps>([]);
 
+  const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const palette = usePlayerStore(state => state.palette);
 
-  const remove = usePlayerStore(state => state.remove);
-  const skipTo = usePlayerStore(state => state.skipTo);
+  const play = usePlayerStore(state => state.play);
 
   const {data, isSuccess, isError, isFetching} = useQuery({
     queryKey: ['playlist', id],
@@ -77,9 +70,27 @@ export default function Playlist({
     select: ({data}) => data,
   });
 
+  const {mutate: rearrangePlaylist} = useMutation({
+    mutationFn: (body: {playlistId: number; trackIds: number[]}) =>
+      axios.put(`rearrangePlaylist`, body),
+  });
+
+  const {mutate: deletePlaylistTrack} = useMutation({
+    mutationFn: (body: {playlistId: number; trackId: number}) =>
+      axios.delete(
+        `deletePlaylistTrack?playlistId=${body.playlistId}&trackId=${body.trackId}`,
+      ),
+  });
+
+  // ? Hooks
+  useBackHandler(() => {
+    navigation.goBack();
+    return true;
+  });
+
   useEffect(() => {
-    if (data.length > 0) setPlaylistTracks(data);
-  }, data);
+    if (data?.length > 0) setPlaylistTracks(data);
+  }, [data]);
 
   // ? Effects
   useLayoutEffect(() => {
@@ -87,11 +98,11 @@ export default function Playlist({
       title: name,
       headerStyle: {backgroundColor: palette?.[1] ?? '#000'},
     });
-  }, [navigation]);
+  }, [navigation, activeTrackIndex]);
 
   // ? Functions
   const ListItem = ({item}: {item: TrackProps}) => (
-    <TouchableOpacity activeOpacity={1} onPress={() => skipTo(item)}>
+    <Pressable onPress={() => play(playlistTracks, item)}>
       <View
         style={{
           flex: 1,
@@ -111,7 +122,7 @@ export default function Playlist({
             <Text
               numberOfLines={1}
               style={{fontSize: 16, fontWeight: '600', width: '97%'}}>
-              {item.title}
+              {item.position}. {item.title}
             </Text>
             <Text numberOfLines={1} style={{fontSize: 14, color: '#ffffff80'}}>
               {item.artists ?? 'Unknown Artist'}
@@ -148,67 +159,114 @@ export default function Playlist({
           </View>
         </View>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
+
+  const refetch = () =>
+    queryClient
+      .refetchQueries({queryKey: ['playlist', id]})
+      .then(() => setRefreshing(false));
 
   // ? Callbacks
   const RenderQueueListItem = useCallback(
     ({item, drag, isActive}: RenderItemParams<any>) => (
       <ShadowDecorator>
-        <ScaleDecorator>
-          <OpacityDecorator>
-            <TouchableOpacity
-              activeOpacity={1}
-              onPress={() => skipTo(item)}
-              onLongPress={drag}
-              disabled={isActive}>
-              <SwipeableItem
-                ref={swipeableItemRef}
-                item={item}
-                onChange={({openDirection}) =>
-                  openDirection === 'none' ? {} : {}
-                }
-                renderUnderlayLeft={() => (
-                  <View
-                    style={{
-                      backgroundColor: 'rgba(255, 87, 51, .3)',
-                      justifyContent: 'flex-end',
-                      flexDirection: 'row',
-                      paddingHorizontal: 15,
-                      paddingVertical: 10,
+        <OpacityDecorator>
+          <TouchableOpacity
+            activeOpacity={1}
+            onLongPress={drag}
+            disabled={isActive}>
+            <SwipeableItem
+              ref={swipeableItemRef}
+              item={item}
+              onChange={({openDirection}) =>
+                openDirection === 'none' ? {} : {}
+              }
+              renderUnderlayRight={() => (
+                <View
+                  style={{
+                    backgroundColor: 'rgba(255, 87, 51, .3)',
+                    flexDirection: 'row',
+                    paddingHorizontal: 15,
+                    paddingVertical: 10,
+                  }}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      swipeableItemRef.current?.close({animated: true});
                     }}>
-                    <TouchableOpacity
-                      onPress={() => {
-                        swipeableItemRef.current?.close({animated: true});
-                        remove(item);
+                    <Text
+                      style={{
+                        backgroundColor: '#0005',
+                        borderWidth: 1,
+                        borderColor: '#fff',
+                        borderRadius: 5,
+                        fontWeight: 'bold',
+                        color: 'white',
+                        fontSize: 15,
+                        paddingTop: 9,
+                        paddingRight: 13,
+                        paddingBottom: 8,
+                        paddingLeft: 15,
+                        zIndex: 2,
                       }}>
-                      <Text
-                        style={{
-                          backgroundColor: 'red',
-                          borderWidth: 1,
-                          borderColor: '#fff',
-                          borderRadius: 5,
-                          fontWeight: 'bold',
-                          color: 'white',
-                          fontSize: 15,
-                          paddingTop: 9,
-                          paddingRight: 13,
-                          paddingBottom: 8,
-                          paddingLeft: 15,
-                          zIndex: 2,
-                        }}>
-                        DELETE
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-                activationThreshold={0}
-                snapPointsLeft={[150]}>
-                <ListItem item={item} />
-              </SwipeableItem>
-            </TouchableOpacity>
-          </OpacityDecorator>
-        </ScaleDecorator>
+                      EDIT
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              renderUnderlayLeft={() => (
+                <View
+                  style={{
+                    backgroundColor: 'rgba(255, 87, 51, .3)',
+                    justifyContent: 'flex-end',
+                    flexDirection: 'row',
+                    paddingHorizontal: 15,
+                    paddingVertical: 10,
+                  }}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      // ? Close the item
+                      swipeableItemRef.current?.close({animated: true});
+                      // ? Remove the track from list
+                      playlistTracks.filter(
+                        _track => _track.id !== item.id && _track,
+                      );
+                      // ? Delete track from playlist table
+                      deletePlaylistTrack(
+                        {playlistId: id, trackId: item.id},
+                        {
+                          onSuccess: refetch,
+                          onError: error => console.log(error.message),
+                        },
+                      );
+                    }}>
+                    <Text
+                      style={{
+                        backgroundColor: 'red',
+                        borderWidth: 1,
+                        borderColor: '#fff',
+                        borderRadius: 5,
+                        fontWeight: 'bold',
+                        color: 'white',
+                        fontSize: 15,
+                        paddingTop: 9,
+                        paddingRight: 13,
+                        paddingBottom: 8,
+                        paddingLeft: 15,
+                        zIndex: 2,
+                      }}>
+                      DELETE
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              activationThreshold={50}
+              snapPointsRight={[80]}
+              snapPointsLeft={[100]}>
+              <ListItem item={item} />
+            </SwipeableItem>
+          </TouchableOpacity>
+        </OpacityDecorator>
       </ShadowDecorator>
     ),
     [],
@@ -216,6 +274,8 @@ export default function Playlist({
 
   return (
     <>
+      <StatusBarX />
+
       <LinearGradientX />
 
       <ImageBackground source={imageFiller} resizeMode="cover" blurRadius={20}>
@@ -231,13 +291,14 @@ export default function Playlist({
             zIndex: 2,
           }}
         />
+
         <View
           style={{
             alignItems: 'center',
             flexDirection: 'row',
-            gap: 10,
-            paddingHorizontal: 20,
-            paddingBottom: 20,
+            gap: 13,
+            paddingHorizontal: 10,
+            paddingVertical: 20,
           }}>
           {!artwork ? (
             <View
@@ -281,7 +342,7 @@ export default function Playlist({
                 borderWidth: 1,
                 borderRadius: 5,
                 fontSize: 18,
-                marginTop: 1,
+                marginTop: 3,
                 paddingLeft: 5,
                 paddingRight: 3,
               }}>
@@ -291,75 +352,30 @@ export default function Playlist({
         </View>
       </ImageBackground>
 
-      {isFetching && (
-        <ActivityIndicator
-          size="large"
-          color="#fff"
-          style={{marginTop: '50%'}}
-        />
-      )}
+      {isFetching && <VerticalListItem />}
 
       {isSuccess && (
         <DraggableFlatList
           data={playlistTracks}
           onDragBegin={() => Vibration.vibrate(50)}
-          onDragEnd={({data, from, to}) => {
+          onDragEnd={({data}) => {
             // ? Set the data with the new movements
             setPlaylistTracks(data);
-
-            /* // ? Restore the queue by combining the trimmed tracks
-            const restoredQueue = [
-              ...queue.slice(0, activeTrackIndex + 1),
-              ...data,
-              ...queue.slice(11),
-            ];
-            // ? Get the index from and to based on the whole queue
-            const _from = restoredQueue.findIndex(
-              track => track.id === data.find((_, i) => i === from)?.id,
+            // ? Store rearranged tracks on DB///
+            rearrangePlaylist(
+              {playlistId: id, trackIds: data.map(({id}) => id)},
+              {
+                onSuccess: refetch,
+                onError: error => console.log(error.message),
+              },
             );
-            const _to = restoredQueue.findIndex(
-              track => track.id === data.find((_, i) => i === to)?.id,
-            );
-            // ? Set the player queue with the new movements
-            moveTrack(_from, _to);
-            // ? Set the store queue with the new movements
-            setQueue(restoredQueue); */
           }}
           keyExtractor={(_, index) => index.toString()}
           renderItem={RenderQueueListItem}
-          activationDistance={0}
-          ListEmptyComponent={() => (
-            <View
-              style={{
-                height: HEIGHT / 3,
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}>
-              <Text>No tracks</Text>
-            </View>
-          )}
-          containerStyle={{marginVertical: 10}}
+          activationDistance={10}
+          containerStyle={{flex: 1, marginVertical: 10}}
         />
       )}
-
-      {/* {isSuccess && (
-        <FlashList
-          data={playlistTracks}
-          keyExtractor={(_, index) => index.toString()}
-          estimatedItemSize={10}
-          estimatedListSize={{height: HEIGHT, width: WIDTH}}
-          renderItem={({item}: {item: TrackProps}) => (
-            <ListItem
-              data={playlistTracks}
-              item={item}
-              display="bitrate"
-              bottomSheetRef={bottomSheetRef}
-              setTrack={setTrack}
-              setBottomSheetVisible={setBottomSheetVisible}
-            />
-          )}
-        />
-      )} */}
     </>
   );
 }
