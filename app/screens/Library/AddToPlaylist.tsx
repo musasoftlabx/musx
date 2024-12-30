@@ -20,6 +20,7 @@ import {API_URL} from '../../store';
 
 // * Types
 import {TrackProps} from '../../types';
+import {addPlaylistTrack} from '../../functions';
 
 export default function AddToPlaylist({
   navigation,
@@ -55,16 +56,6 @@ export default function AddToPlaylist({
     queryClient.refetchQueries({queryKey: ['playlists']});
     setName('');
     navigation.goBack();
-  };
-
-  const addPlaylistTrack = async (track: TrackProps) => {
-    await axios.post(`${API_URL}addPlaylistTrack`, {
-      playlistId: track.id,
-      trackId: id,
-      startsAt: null,
-      endsAt: null,
-    });
-    navigation.navigate('Playlist', track);
   };
 
   return (
@@ -118,7 +109,7 @@ export default function AddToPlaylist({
             <Text style={{fontSize: 16, marginBottom: 10}}>Playlists</Text>
           )}
           renderItem={({item}: {item: TrackProps}) => (
-            <Pressable onPress={() => addPlaylistTrack(item)}>
+            <Pressable onPress={() => addPlaylistTrack(item, id)}>
               <View
                 style={{
                   flexDirection: 'row',

@@ -40,26 +40,24 @@ export default function Library({navigation}: any) {
       <FlatList
         data={[
           {
-            id: 'Artists',
+            title: 'Scan Library',
+            subtitle: 'This will scan the library for new tracks.',
+            icon: 'disc',
+            count: '',
+          },
+          {
             title: 'Artists',
+            subtitle: 'artists',
             icon: 'account-music-outline',
             count: data?.artists ?? 0,
           },
           {
-            id: 'History',
-            title: 'History',
-            subtitle: 'plays',
-            icon: 'disc',
-            count: data?.plays ?? 0,
-          },
-          {
-            id: 'Playlists',
             title: 'Playlists',
+            subtitle: 'playlists',
             icon: 'playlist-music',
             count: data?.playlists ?? 0,
           },
           {
-            id: 'Folders',
             title: 'Folders',
             subtitle: 'tracks',
             icon: 'folder-music',
@@ -69,8 +67,8 @@ export default function Library({navigation}: any) {
         renderItem={({item}) => (
           <Pressable
             onPress={() => {
-              navigation.navigate(item.id);
-              AsyncStorage.setItem('libraryScreen', item.id);
+              navigation.navigate(item.title.replaceAll(' ', ''));
+              AsyncStorage.setItem('libraryScreen', item.title);
             }}
             style={{
               flexDirection: 'row',
@@ -86,13 +84,15 @@ export default function Library({navigation}: any) {
             />
             <View>
               <Text variant="titleLarge">{item.title}</Text>
-              <Text variant="titleMedium">{`${item.count?.toLocaleString()} ${
-                item.subtitle ? item.subtitle : item.title.toLowerCase()
-              }`}</Text>
+              {item.subtitle && (
+                <Text variant="titleMedium">{`${item.count?.toLocaleString()} ${
+                  item.subtitle
+                }`}</Text>
+              )}
             </View>
           </Pressable>
         )}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item.title}
         ListHeaderComponent={() => (
           <Text variant="headlineLarge" style={{marginBottom: 10}}>
             Library

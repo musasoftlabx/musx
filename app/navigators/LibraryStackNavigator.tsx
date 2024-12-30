@@ -20,6 +20,7 @@ import Library from '../screens/Library';
 import Playlists from '../screens/Library/Playlists';
 import Playlist from '../screens/Library/Playlist';
 import TrackMetadata from '../screens/Library/TrackMetadata';
+import ScanLibrary from '../screens/Library/ScanLibrary';
 
 const Stack = createNativeStackNavigator();
 
@@ -57,6 +58,8 @@ export default function LibraryStackNavigator() {
         />
 
         <Stack.Screen name="Artists" component={Artists} />
+
+        <Stack.Screen name="ScanLibrary" component={ScanLibrary} />
 
         <Stack.Screen
           name="Artist"

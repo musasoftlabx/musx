@@ -16,31 +16,23 @@ declare global {
   }
 }
 
+export type Playlist = {
+  id: number;
+  name: string;
+  createdOn: string;
+  modifiedOn: string;
+  tracks: number;
+  artworks: string[];
+  artwork: string;
+  duration: string;
+  size: string;
+};
+
 export type RootStackParamList = {
   Home: {queryKey: string; title: string};
   History: {queryKey: string; title: string};
-  Playlist: {
-    id: number;
-    name: string;
-    createdOn: string;
-    modifiedOn: string;
-    tracks: number;
-    artworks: string[];
-    artwork: string;
-    duration: string;
-    size: string;
-  };
-  Playlists: {
-    id: number;
-    name: string;
-    createdOn: string;
-    modifiedOn: string;
-    tracks: number;
-    artworks: string[];
-    artwork: string;
-    duration: string;
-    size: string;
-  };
+  Playlist: Playlist;
+  Playlists: Playlist[];
   Folders: undefined;
   MostPlayed: any;
   AddToPlaylist: any;
@@ -82,6 +74,15 @@ export interface IAxiosError {
     };
   };
 }
+
+export type AxiosError = {
+  response: {
+    data: {
+      subject: string;
+      body: string;
+    };
+  };
+};
 
 export type TrackProps = {
   id: number;

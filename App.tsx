@@ -11,7 +11,7 @@ import {
   DarkTheme as RNDarkTheme,
   NavigationContainer,
 } from '@react-navigation/native';
-import {
+import GoogleCast, {
   MediaInfo,
   MediaPlayerState,
   MediaStatus,
@@ -37,7 +37,7 @@ import {PaperProvider, adaptNavigationTheme} from 'react-native-paper';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
+import axios, {Axios, AxiosError} from 'axios';
 import BottomSheet from '@gorhom/bottom-sheet';
 import Sound from 'react-native-sound';
 
@@ -49,6 +49,8 @@ import {darkTheme} from './app/utils';
 
 // * Store
 import {API_URL, AUDIO_URL, usePlayerStore} from './app/store';
+import {TrackProps} from './app/types';
+import TrackDetails from './app/components/TrackDetails';
 
 // * Constants
 export const queryClient = new QueryClient();
@@ -70,8 +72,8 @@ Appearance.setColorScheme('dark');
 // ? Setup Track Player
 TrackPlayer.setupPlayer({autoHandleInterruptions: true});
 
-//AsyncStorage.removeItem('queue');
-//AsyncStorage.removeItem('activeTrackIndex');
+AsyncStorage.removeItem('queue');
+AsyncStorage.removeItem('activeTrackIndex');
 
 export default function App(): React.JSX.Element {
   // ? Refs
@@ -87,6 +89,7 @@ export default function App(): React.JSX.Element {
   const playbackState = usePlaybackState();
   const progress = useProgress();
   const streamPosition = useStreamPosition();
+  const sessionManager = GoogleCast.getSessionManager();
 
   // ? StoreStates
   const _activeTrack = usePlayerStore(state => state.activeTrack);
@@ -95,6 +98,8 @@ export default function App(): React.JSX.Element {
   const playRegistered = usePlayerStore(state => state.playRegistered);
   const queue = usePlayerStore(state => state.queue);
   const streamViaHLS = usePlayerStore(state => state.streamViaHLS);
+  const bitrate = usePlayerStore(state => state.bitrate);
+  const trackDetails = usePlayerStore(state => state.trackDetails);
 
   // ? StoreActions
   const play = usePlayerStore(state => state.play);
@@ -118,6 +123,7 @@ export default function App(): React.JSX.Element {
   const setCastState = usePlayerStore(state => state.setCastState);
   const setCastClient = usePlayerStore(state => state.setCastClient);
   const setStreamViaHLS = usePlayerStore(state => state.setStreamViaHLS);
+  const setBitrate = usePlayerStore(state => state.setBitrate);
 
   // ? Functions
   const fetchLyrics = (url: string) => {
@@ -132,12 +138,10 @@ export default function App(): React.JSX.Element {
       });
   };
 
-  const transcode = () => {
+  const transcode = (path: string, duration: number) => {
     axios(
-      `${API_URL}transcode?path=${activeTrack!.path}&duration=${
-        activeTrack?.duration
-      }&bitrate=`,
-    ).catch(() => {});
+      `${API_URL}transcode?path=${path}&duration=${duration}&bitrate=${bitrate}`,
+    ).catch((error: AxiosError) => console.log(error.message));
   };
 
   // ? Effects
@@ -180,8 +184,17 @@ export default function App(): React.JSX.Element {
         ],
       });
 
-      const streamViaHLS = AsyncStorage.getItem('streamViaHLS');
-      setStreamViaHLS(Boolean(streamViaHLS));
+      //await sessionManager.endCurrentSession();
+
+      // ? Retrieve streamViaHLS
+      const streamViaHLS = await AsyncStorage.getItem('streamViaHLS');
+      if (!streamViaHLS) setStreamViaHLS(false);
+      else setStreamViaHLS(Boolean(streamViaHLS));
+
+      // ? Retrieve bitrate
+      const bitrate = await AsyncStorage.getItem('bitrate');
+      if (!bitrate) setBitrate('Max');
+      else setBitrate(bitrate);
 
       const playPosition = await AsyncStorage.getItem('playPosition');
       const savedQueue = await AsyncStorage.getItem('queue');
@@ -217,19 +230,20 @@ export default function App(): React.JSX.Element {
     if (castMediaStatus?.currentItemId) {
       castClient?.getMediaStatus().then(status => {
         const {mediaInfo} = status as MediaStatus;
-        const {contentUrl, customData} = mediaInfo as MediaInfo;
-        const {id, rating, plays, palette, duration, path} = customData as any;
+        const {customData} = mediaInfo as MediaInfo;
+        const {id, rating, plays, palette, duration, path} =
+          customData as TrackProps;
 
         // ? Invoke transcoder to transcode the file to HLS chunks
-        streamViaHLS && transcode();
+        streamViaHLS && transcode(path, duration);
 
         // ? Save variables to store to be accessed by components
         setLyricsVisible(false);
         setPlayRegistered(false);
-        setActiveTrack(customData as any);
+        setActiveTrack(customData as TrackProps);
         setTrackRating(rating);
         setTrackPlayCount(plays);
-        setPalette(palette);
+        setPalette(palette as unknown as string[]);
         setProgress({position: 0, buffered: 0, duration});
 
         // ? Get active track lyrics. Display the lyrics if found else display artwork
@@ -308,7 +322,7 @@ export default function App(): React.JSX.Element {
       if (!castSession) {
         if (event.type === Event.PlaybackActiveTrackChanged) {
           // ? Invoke transcoder to transcode the file to HLS chunks
-          streamViaHLS && transcode();
+          streamViaHLS && transcode(activeTrack!.path, activeTrack?.duration!);
 
           // ? Save variables to store to be accessed by components
           setLyricsVisible(false);
@@ -435,6 +449,7 @@ export default function App(): React.JSX.Element {
         barStyle="light-content"
         translucent
       />
+
       <QueryClientProvider client={queryClient}>
         <PaperProvider theme={darkTheme}>
           <SafeAreaProvider>
@@ -446,6 +461,11 @@ export default function App(): React.JSX.Element {
                   options={{headerShown: false}}
                 />
               </Stack.Navigator>
+              <TrackDetails
+                trackDetailsRef={trackDetailsRef}
+                track={trackDetails}
+                queriesToRefetch={['']}
+              />
             </NavigationContainer>
           </SafeAreaProvider>
         </PaperProvider>

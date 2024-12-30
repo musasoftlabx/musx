@@ -70,17 +70,19 @@ export default function TabNavigator({navigation}: any) {
           options={{headerShown: false}}
         />
         <Tab.Screen name="Search" component={Search} />
+
         <Tab.Screen name="Downloads" component={Downloads} />
+
         <Tab.Screen name="Settings" component={Settings} />
       </Tab.Navigator>
 
       <NowPlaying />
 
-      <TrackDetails
+      {/* <TrackDetails
         track={trackDetails}
         navigation={navigation}
         queriesToRefetch={['']}
-      />
+      /> */}
     </>
   );
 }

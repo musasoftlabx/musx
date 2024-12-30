@@ -31,6 +31,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 // * Components
+import Footer from '../components/Footer';
 import LinearGradientX from '../components/LinearGradientX';
 import ListEmptyItem from '../components/ListEmptyItem';
 import ListItem from '../components/ListItem';
@@ -319,6 +320,8 @@ export default function Search({navigation}: any) {
           style={{marginTop: 60}}
         />
       )}
+
+      <Footer />
     </>
   );
 }

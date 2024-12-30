@@ -21,6 +21,7 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import FavouriteArtists from './components/FavouriteArtists';
 import LinearGradientX from '../../components/LinearGradientX';
 import MostPlayed from './components/MostPlayed';
+import Playlists from './components/Playlists';
 import RecentlyAddedAndPlayed from './components/RecentlyAddedAndPlayed';
 import StatusBarX from '../../components/StatusBarX';
 
@@ -86,6 +87,11 @@ export default function Home({
     },
     {
       title: 'Recently Played',
+      horizontal: true,
+      data: [1],
+    },
+    {
+      title: 'Playlists',
       horizontal: true,
       data: [1],
     },
@@ -182,6 +188,8 @@ export default function Home({
                   <SectionHeader section={section} routeTo="History" />
                 ) : section.title === 'Recently Played' ? (
                   <SectionHeader section={section} routeTo="History" />
+                ) : section.title === 'Playlists' ? (
+                  <SectionHeader section={section} routeTo="Playlists" />
                 ) : section.title === 'Most Played' ? (
                   <SectionHeader section={section} routeTo="MostPlayed" />
                 ) : null}
@@ -203,6 +211,13 @@ export default function Home({
                 {(section.title === 'Recently Added' ||
                   section.title === 'Recently Played') && (
                   <RecentlyAddedAndPlayed loading={loading} section={section} />
+                )}
+
+                {section.title === 'Playlists' && (
+                  <Playlists
+                    loading={loading}
+                    dataset={section.dataset as RootStackParamList['Playlists']}
+                  />
                 )}
 
                 {section.title === 'Most Played' && (

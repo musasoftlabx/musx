@@ -78,6 +78,8 @@ export default function NowPlaying() {
   const [repeatMode, setRepeatMode] = useState<number>();
 
   // ? StoreStates
+  const bitrate = usePlayerStore(state => state.bitrate);
+  const streamViaHLS = usePlayerStore(state => state.streamViaHLS);
   const nowPlayingRef: any = usePlayerStore(state => state.nowPlayingRef);
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
@@ -494,19 +496,35 @@ export default function NowPlaying() {
                           paddingHorizontal: 10,
                           paddingVertical: 5,
                         }}>
-                        <Text style={{fontWeight: 'bold'}}>
-                          {`${activeTrack?.format?.toLocaleUpperCase()} ${
-                            activeTrack?.sampleRate! / 1000
-                          } Khz`}
-                        </Text>
+                        {!streamViaHLS || bitrate === 'Max' ? (
+                          <>
+                            <Text style={{fontWeight: 'bold'}}>
+                              {`${activeTrack?.format?.toLocaleUpperCase()} ${
+                                activeTrack?.sampleRate! / 1000
+                              } Khz`}
+                            </Text>
 
-                        <Text style={{fontWeight: 'bold'}}>
-                          &nbsp;&nbsp;/&nbsp;&nbsp;
-                        </Text>
+                            <Text style={{fontWeight: 'bold'}}>
+                              &nbsp;&nbsp;/&nbsp;&nbsp;
+                            </Text>
 
-                        <Text style={{fontWeight: 'bold'}}>
-                          {(activeTrack?.bitrate! / 1000).toFixed(2)} Kbps
-                        </Text>
+                            <Text style={{fontWeight: 'bold'}}>
+                              {(activeTrack?.bitrate! / 1000).toFixed(2)} Kbps
+                            </Text>
+                          </>
+                        ) : (
+                          <>
+                            <Text style={{fontWeight: 'bold'}}>OPUS</Text>
+
+                            <Text style={{fontWeight: 'bold'}}>
+                              &nbsp;&nbsp;/&nbsp;&nbsp;
+                            </Text>
+
+                            <Text style={{fontWeight: 'bold'}}>
+                              {bitrate} Kbps
+                            </Text>
+                          </>
+                        )}
                       </View>
 
                       <View style={{flexDirection: 'row', gap: 5}}>

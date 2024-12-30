@@ -13,10 +13,12 @@ import tinycolor from 'tinycolor2';
 import {TrackProps, TracksProps} from './types';
 import {
   MediaHlsSegmentFormat,
+  MediaInfo,
   MediaQueueData,
+  MediaStreamType,
   RemoteMediaClient,
 } from 'react-native-google-cast';
-import axios from 'axios';
+import {DownloadDirectoryPath, mkdir} from '@dr.pogodin/react-native-fs';
 
 export const SERVER_URL = `http://75.119.137.255`;
 export const API_URL = `${SERVER_URL}:3000/`;
@@ -24,10 +26,13 @@ export const AUDIO_URL = `${SERVER_URL}/Music/`;
 export const ARTWORK_URL = `${SERVER_URL}/Artwork/`;
 export const WAVEFORM_URL = `${SERVER_URL}/Waveform/`;
 export const TRANSCODES_URL = `${SERVER_URL}/Transcodes/`;
+export const DOWNLOADS_PATH = `${DownloadDirectoryPath}/MusX_player/`;
 export const WIDTH = Dimensions.get('window').width;
 export const HEIGHT = Dimensions.get('window').height;
 export const ASPECT_RATIO = WIDTH / HEIGHT;
 export const LIST_ITEM_HEIGHT = 60;
+
+mkdir(DOWNLOADS_PATH);
 
 const handleHLSstreaming = (queue: any) =>
   queue.map((track: TrackProps) => ({
@@ -38,6 +43,45 @@ const handleHLSstreaming = (queue: any) =>
       '.m3u8',
     ),
   }));
+
+const mediaInfo = (streamViaHLS: boolean, track: TrackProps): MediaInfo => ({
+  // TODO: Uncomment next two lines if HLS bug is fixed
+  //contentUrl: track.url,
+  //contentType: streamViaHLS ? 'application/x-mpegURL' : 'audio/mpeg',
+  contentUrl: `${AUDIO_URL}${track.path}`,
+  contentType: 'audio/mpeg',
+  metadata: {
+    type: 'musicTrack',
+    images: [{url: track.artwork}],
+    title: track.title,
+    albumTitle: track.albumArtist,
+    albumArtist: track.albumArtist,
+    artist: track.artists,
+    releaseDate: track.year,
+    trackNumber: 1,
+    discNumber: 1,
+  },
+  customData: {
+    id: track.id,
+    path: track.path,
+    title: track.title,
+    albumArtist: track.albumArtist,
+    duration: track.duration,
+    artists: track.artists,
+    album: track.album,
+    rating: track.rating ?? 0,
+    plays: track.plays,
+    year: track.year,
+    waveform: track.waveform,
+    sampleRate: track.sampleRate,
+    palette: track.palette,
+    genre: track.genre,
+    format: track.format,
+    encoder: track.encoder,
+    bitrate: track.bitrate,
+    artwork: track.artwork,
+  },
+});
 
 interface IPlayerStore {
   progress: Progress;
@@ -60,6 +104,7 @@ interface IPlayerStore {
   castState: any;
   castClient: RemoteMediaClient | null;
   streamViaHLS: boolean;
+  bitrate: string;
   setProgress: (queue: Progress) => void;
   setPlaybackState: (playbackState: any) => void;
   setQueue: (queue: Track[]) => void;
@@ -94,6 +139,7 @@ interface IPlayerStore {
   addAsNextTrack: (track: TrackProps, index: number) => void;
   addTrackToEndOfQueue: (track: TrackProps) => void;
   setStreamViaHLS: (streamViaHLS: boolean) => void;
+  setBitrate: (bitrate: string) => void;
 }
 
 export const usePlayerStore = create<IPlayerStore>((set, get) => ({
@@ -117,6 +163,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   castState: {},
   castClient: null,
   streamViaHLS: false,
+  bitrate: '',
   setProgress: progress => set(state => ({...state, progress})),
   setPlaybackState: playbackState => set(state => ({...state, playbackState})),
   setQueue: queue => set(state => ({...state, queue})),
@@ -160,6 +207,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   setCastClient: (castClient: any) => set(state => ({...state, castClient})),
   setStreamViaHLS: (streamViaHLS: boolean) =>
     set(state => ({...state, streamViaHLS})),
+  setBitrate: (bitrate: string) => set(state => ({...state, bitrate})),
 
   // ? Player actions
   play: async (data: TracksProps, selected: TrackProps, position?: number) => {
@@ -201,49 +249,15 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     if (castState === 'connected') {
       set({queue});
 
-      setActiveTrack(queue[selectedIndex]);
+      setActiveTrack(get().queue[selectedIndex]);
 
       castClient
         ?.loadMedia({
           queueData: {
             name: 'MusX Queue',
             startIndex: selectedIndex,
-            items: queue.map((track: TrackProps, index: number) => ({
-              mediaInfo: {
-                contentUrl: track.url,
-                contentType: 'audio/mpeg',
-                hlsSegmentFormat: MediaHlsSegmentFormat.TS,
-                metadata: {
-                  type: 'musicTrack',
-                  images: [{url: track.artwork}],
-                  title: track.title,
-                  albumTitle: track.albumArtist,
-                  albumArtist: track.albumArtist,
-                  artist: track.artists,
-                  releaseDate: track.year,
-                  trackNumber: index + 1,
-                  discNumber: 1,
-                },
-                customData: {
-                  id: track.id,
-                  title: track.title,
-                  albumArtist: track.albumArtist,
-                  duration: track.duration,
-                  artists: track.artists,
-                  album: track.album,
-                  rating: track.rating ?? 0,
-                  plays: track.plays,
-                  year: track.year,
-                  waveform: track.waveform,
-                  sampleRate: track.sampleRate,
-                  palette: track.palette,
-                  genre: track.genre,
-                  format: track.format,
-                  encoder: track.encoder,
-                  bitrate: track.bitrate,
-                  artwork: track.artwork,
-                },
-              },
+            items: queue.map((track: TrackProps) => ({
+              mediaInfo: mediaInfo(get().streamViaHLS, track),
             })),
           },
         })
@@ -531,41 +545,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
         castClient.queueInsertItem(
           {
             preloadTime: 10,
-            mediaInfo: {
-              contentUrl: track.url,
-              contentType: 'audio/mpeg',
-              hlsSegmentFormat: MediaHlsSegmentFormat.TS,
-              metadata: {
-                type: 'musicTrack',
-                images: [{url: track.artwork}],
-                title: track.title,
-                albumTitle: track.albumArtist,
-                albumArtist: track.albumArtist,
-                artist: track.artists,
-                releaseDate: track.year,
-                trackNumber: 1,
-                discNumber: 1,
-              },
-              customData: {
-                id: track.id,
-                title: track.title,
-                albumArtist: track.albumArtist,
-                duration: track.duration,
-                artists: track.artists,
-                album: track.album,
-                rating: track.rating ?? 0,
-                plays: track.plays,
-                year: track.year,
-                waveform: track.waveform,
-                sampleRate: track.sampleRate,
-                palette: track.palette,
-                genre: track.genre,
-                format: track.format,
-                encoder: track.encoder,
-                bitrate: track.bitrate,
-                artwork: track.artwork,
-              },
-            },
+            mediaInfo: mediaInfo(get().streamViaHLS, track) as MediaInfo,
           },
           currentItemId! + 1,
         );
@@ -605,41 +585,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     if (castState === 'connected')
       castClient?.queueInsertItem({
         preloadTime: 10,
-        mediaInfo: {
-          contentUrl: track.url,
-          contentType: 'audio/mpeg',
-          hlsSegmentFormat: MediaHlsSegmentFormat.TS,
-          metadata: {
-            type: 'musicTrack',
-            images: [{url: track.artwork}],
-            title: track.title,
-            albumTitle: track.albumArtist,
-            albumArtist: track.albumArtist,
-            artist: track.artists,
-            releaseDate: track.year,
-            trackNumber: 1,
-            discNumber: 1,
-          },
-          customData: {
-            id: track.id,
-            title: track.title,
-            albumArtist: track.albumArtist,
-            duration: track.duration,
-            artists: track.artists,
-            album: track.album,
-            rating: track.rating ?? 0,
-            plays: track.plays,
-            year: track.year,
-            waveform: track.waveform,
-            sampleRate: track.sampleRate,
-            palette: track.palette,
-            genre: track.genre,
-            format: track.format,
-            encoder: track.encoder,
-            bitrate: track.bitrate,
-            artwork: track.artwork,
-          },
-        },
+        mediaInfo: mediaInfo(get().streamViaHLS, track) as MediaInfo,
       });
     else TrackPlayer.add(track);
   },

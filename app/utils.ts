@@ -28,7 +28,7 @@ export const lightTheme = {
   ...MD3LightTheme,
   colors: {
     ...MD3LightTheme.colors,
-    primary: '#4e342e',
+    primary: '#b038e8',
     secondary: '#8d6e63',
     tertiary: '#d7ccc8',
     error: '#f44336',
@@ -43,7 +43,7 @@ export const darkTheme = {
   ...MD3DarkTheme,
   colors: {
     ...MD3DarkTheme.colors,
-    primary: '#4e342e',
+    primary: '#b038e8',
     secondary: '#8d6e63',
     tertiary: '#d7ccc8',
     error: '#f44336',
