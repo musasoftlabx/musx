@@ -2,7 +2,7 @@
 import React, {useEffect, useState} from 'react';
 
 // * React Native
-import {Text, View, Alert} from 'react-native';
+import {Text, View, Alert, Image} from 'react-native';
 
 // * Libraries
 import * as Yup from 'yup';
@@ -19,7 +19,7 @@ import ButtonX from '../../components/ButtonX';
 import LinearGradientX from '../../components/LinearGradientX';
 
 // * Store
-import {usePlayerStore} from '../../store';
+import {usePlayerStore, WIDTH} from '../../store';
 
 // * Types
 import {RootStackParamList} from '../../types';
@@ -28,6 +28,7 @@ import {RootStackParamList} from '../../types';
 import {formatTrackTime} from '../../functions';
 
 import {styles} from '../../styles';
+import Slider from '@react-native-community/slider';
 
 export default function TrackMetadata({
   navigation,
@@ -39,11 +40,17 @@ export default function TrackMetadata({
   const palette = usePlayerStore(state => state.palette);
 
   const [snackbar, setSnackbar] = useState(false);
+  const [trackGainDisabled, setTrackGainDisabled] = useState(false);
   const [refreshMetadataLoading, setRefreshMetadataLoading] = useState(false);
   const [params, setParams] = useState(_params);
+  const [trackGain, setTrackGain] = useState(0);
 
   const {mutate: updateMetadata} = useMutation({
     mutationFn: (data: HTMLFormElement) => axios.post('updateMetadata', data),
+  });
+
+  const {mutate: updateTrackGain} = useMutation({
+    mutationFn: (data: HTMLFormElement) => axios.put('updateTrackGain', data),
   });
 
   const {mutate: refreshMetadata} = useMutation({
@@ -128,6 +135,47 @@ export default function TrackMetadata({
               }}>
               REFRESH METADATA
             </ButtonX>
+
+            <Slider
+              value={trackGain}
+              step={3}
+              style={{paddingVertical: 30, width: WIDTH}}
+              disabled={trackGainDisabled}
+              onValueChange={value => {
+                setTrackGain(value);
+                setTrackGainDisabled(true);
+              }}
+              onSlidingComplete={value =>
+                updateTrackGain(
+                  {
+                    decibels: value,
+                    trackId: _params?.id,
+                    path: _params?.path,
+                  },
+                  {
+                    onSuccess: ({data}) => {
+                      console.log(data);
+                      setTrackGainDisabled(false);
+                    },
+                    onError: err => {
+                      console.log(err.message);
+                      setTrackGainDisabled(false);
+                    },
+                  },
+                )
+              }
+              minimumValue={-3}
+              maximumValue={3}
+              thumbTintColor="rgb(124, 25, 185)"
+              minimumTrackTintColor="rgb(135, 255, 151)"
+              maximumTrackTintColor="rgb(255, 108, 108)"
+              renderStepNumber
+              StepMarker={(stepMarked, currentValue) => (
+                <Text style={{fontSize: 10}}>
+                  {stepMarked ? currentValue : ''}
+                </Text>
+              )}
+            />
 
             <Formik
               initialValues={{

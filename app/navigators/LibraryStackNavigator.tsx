@@ -22,6 +22,9 @@ import Playlist from '../screens/Library/Playlist';
 import TrackMetadata from '../screens/Library/TrackMetadata';
 import ScanLibrary from '../screens/Library/ScanLibrary';
 
+// * Icons
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+
 const Stack = createNativeStackNavigator();
 
 export default function LibraryStackNavigator() {
@@ -52,7 +55,13 @@ export default function LibraryStackNavigator() {
             title: '',
             headerBackVisible: true,
             headerRight: () => (
-              <CastButton style={{height: 24, width: 24, marginRight: 5}} />
+              <>
+                <MaterialIcons
+                  name="sort"
+                  style={{color: '#fff', fontSize: 24, marginRight: 50}}
+                />
+                <CastButton style={{height: 24, width: 24, marginRight: 5}} />
+              </>
             ),
           }}
         />

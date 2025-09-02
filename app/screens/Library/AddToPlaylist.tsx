@@ -28,6 +28,7 @@ export default function AddToPlaylist({
     params: {id},
   },
 }: any) {
+  console.log({id});
   // ? States
   const [name, setName] = useState('');
   const [snackbar, setSnackbar] = useState(false);
@@ -109,7 +110,21 @@ export default function AddToPlaylist({
             <Text style={{fontSize: 16, marginBottom: 10}}>Playlists</Text>
           )}
           renderItem={({item}: {item: TrackProps}) => (
-            <Pressable onPress={() => addPlaylistTrack(item, id)}>
+            <Pressable
+              onPress={
+                () =>
+                  axios
+                    .post(`${API_URL}addPlaylistTrack`, {
+                      playlistId: item.id,
+                      trackId: id,
+                      startsAt: null,
+                      endsAt: null,
+                    })
+                    .then(() => navigation.goBack())
+                    .catch(err => console.error(err.message))
+
+                //addPlaylistTrack(item, id)
+              }>
               <View
                 style={{
                   flexDirection: 'row',

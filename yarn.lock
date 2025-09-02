@@ -9129,7 +9129,7 @@ __metadata:
     react-native-swipeable-item: ^2.0.9
     react-native-tab-view: ^3.5.2
     react-native-text-ticker: ^1.14.0
-    react-native-track-player: ^4.1.1
+    react-native-track-player: ^4.1.2
     react-native-vector-icons: ^10.2.0
     react-test-renderer: 18.3.1
     tinycolor2: ^1.6.0
@@ -10314,9 +10314,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-track-player@npm:^4.1.1":
-  version: 4.1.1
-  resolution: "react-native-track-player@npm:4.1.1"
+"react-native-track-player@npm:^4.1.2":
+  version: 4.1.2
+  resolution: "react-native-track-player@npm:4.1.2"
   peerDependencies:
     react: ">=16.8.6"
     react-native: ">=0.60.0-rc.2"
@@ -10327,7 +10327,7 @@ __metadata:
       optional: true
     shaka-player:
       optional: true
-  checksum: df1e78d8bda18789a1d0d8118f5c676d10436397df3b20d87408e4abc5312a35613b348bc020b8aceb99e883745f68c915f897a26e798e230c0bfcaf491aeb8e
+  checksum: 04ec6e0cf5a9c61ce05671b5d52e815f2d4e75f3cc2028b79a9a86ac1807a0064ecf4bd106a0781020b1d4757918858f84de5b94cfdea77b8085ead8a11ea791
   languageName: node
   linkType: hard
 

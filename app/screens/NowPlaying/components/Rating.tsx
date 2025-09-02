@@ -31,7 +31,7 @@ export default function Rating() {
   const RatingCallback = useCallback(
     () => (
       <StarRating
-        rating={trackRating}
+        rating={trackRating ?? 0}
         onChange={rating => {
           Vibration.vibrate(50);
           setTrackRating(rating);

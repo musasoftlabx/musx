@@ -15,6 +15,7 @@ import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetFlatList,
 } from '@gorhom/bottom-sheet';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import StarRating from 'react-native-star-rating-widget';
@@ -61,6 +62,8 @@ export default function TrackDetails({
   });
 
   const [error, setError] = useState<boolean>(false);
+  const [lastPlaylistImageError, setLastPlaylistImageError] =
+    useState<boolean>(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
@@ -70,6 +73,7 @@ export default function TrackDetails({
   // ? StoreStates
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const activeTrack = usePlayerStore(state => state.activeTrack);
+  const trackRating = usePlayerStore(state => state.trackRating);
   const queue = usePlayerStore(state => state.queue);
   //const trackDetailsRef = usePlayerStore(state => state.trackDetailsRef);
 
@@ -176,7 +180,12 @@ export default function TrackDetails({
                         addTrackToEndOfQueue(track);
                       },
                     },
-                    null,
+                    {
+                      text: 'Save queue',
+                      icon: 'save',
+                      iconSource: 'foundation',
+                      action: () => {},
+                    },
                   ].map((item, key) =>
                     item ? (
                       <Pressable
@@ -195,6 +204,12 @@ export default function TrackDetails({
                         }}>
                         {item.iconSource === 'material-community-icons' ? (
                           <MaterialCommunityIcons
+                            name={item.icon}
+                            size={24}
+                            color="#fff"
+                          />
+                        ) : item.iconSource === 'foundation' ? (
+                          <FontAwesome
                             name={item.icon}
                             size={24}
                             color="#fff"
@@ -233,9 +248,9 @@ export default function TrackDetails({
                     {
                       text: `Add to ${lastPlaylist?.name}`,
                       icon: 'render-image',
-                      action: ({id}: {id: number}) => {
+                      action: () => {
                         closeTrackDetails();
-                        addPlaylistTrack(lastPlaylist, id);
+                        addPlaylistTrack(lastPlaylist, track.id);
                         setSnackbarMessage('Track added to playlist!');
                         setSnackbarVisible(true);
                       },
@@ -243,9 +258,9 @@ export default function TrackDetails({
                     {
                       text: 'Add to playlist',
                       icon: 'playlist-add',
-                      action: ({id}: {id: number}) => {
+                      action: () => {
                         closeTrackDetails();
-                        navigation.navigate('AddToPlaylist', {id});
+                        navigation.navigate('AddToPlaylist', {id: track.id});
                       },
                     },
                   ].map((item, key) =>
@@ -281,15 +296,28 @@ export default function TrackDetails({
                                   <Image
                                     key={i}
                                     source={{uri: artwork}}
+                                    defaultSource={imageFiller}
                                     style={{width: 15, height: 15}}
                                     resizeMode="cover"
+                                    onError={() =>
+                                      console.log(
+                                        'track details playlist image could not load',
+                                      )
+                                    }
                                   />
                                 ),
                               )}
                             </View>
                           ) : (
                             <Image
-                              source={{uri: lastPlaylist?.artworks[0]}}
+                              source={
+                                imageFiller
+                                // lastPlaylistImageError
+                                //   ? imageFiller
+                                //   : {uri: lastPlaylist?.artworks[0]}
+                              }
+                              defaultSource={imageFiller}
+                              onError={() => setLastPlaylistImageError(true)}
                               style={{
                                 borderRadius: 10,
                                 width: 30,
@@ -304,7 +332,7 @@ export default function TrackDetails({
                             color="#fff"
                           />
                         )}
-                        <Text
+                        {/* <Text
                           style={{
                             color: '#fff',
                             fontSize: 16,
@@ -312,7 +340,7 @@ export default function TrackDetails({
                             overflow: 'hidden',
                           }}>
                           {item.text}
-                        </Text>
+                        </Text> */}
                       </Pressable>
                     ) : (
                       <View key={key} style={{flexBasis: `30%`, flexGrow: 1}} />
@@ -378,12 +406,16 @@ export default function TrackDetails({
               text: 'View Metadata',
               icon: 'database-refresh-outline',
               iconSource: 'material-community-icons',
-              action: (track: TrackProps) =>
-                navigation.navigate('TrackMetadata', track),
-              /* {
-                id,
-                path: path.split('/').slice(0, -1),
-              } */
+              action: (track: TrackProps) => {
+                // ? Close the bottom sheet
+                closeTrackDetails();
+
+                navigation.navigate('TrackMetadata', track);
+                /* {
+                   id,
+                   path: path.split('/').slice(0, -1),
+                 } */
+              },
             },
             {
               text: 'Download track',
@@ -485,7 +517,7 @@ export default function TrackDetails({
           }
           ListFooterComponent={
             <StarRating
-              rating={track?.rating ?? 0}
+              rating={trackRating ?? 0}
               style={{alignSelf: 'center'}}
               onChange={rating => {
                 Vibration.vibrate(50);

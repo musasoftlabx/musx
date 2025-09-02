@@ -33,10 +33,10 @@ export default function Album({
   },
 }: NativeStackScreenProps<RootStackParamList, 'Album', ''>) {
   // ? Hooks
-  useBackHandler(() => {
-    navigation.goBack();
-    return true;
-  });
+  // useBackHandler(() => {
+  //   navigation.goBack();
+  //   return true;
+  // });
 
   const {
     data: tracks,

@@ -54,7 +54,7 @@ const mediaInfo = (streamViaHLS: boolean, track: TrackProps): MediaInfo => ({
     type: 'musicTrack',
     images: [{url: track.artwork}],
     title: track.title,
-    albumTitle: track.albumArtist,
+    albumTitle: track.album,
     albumArtist: track.albumArtist,
     artist: track.artists,
     releaseDate: track.year,
@@ -211,21 +211,24 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
 
   // ? Player actions
   play: async (data: TracksProps, selected: TrackProps, position?: number) => {
+    TrackPlayer.removeUpcomingTracks();
+
     const tracks = data.map((track: TrackProps) => {
       if (track.hasOwnProperty('format')) {
         const _palette = Array.isArray(track.palette)
           ? track.palette
           : JSON.parse(track.palette);
 
-        const palette = _palette.map((color: string) => {
-          const brightness = tinycolor(color).getBrightness();
+        // const palette = _palette.map((color: string) => {
+        //   const brightness = tinycolor(color).getBrightness();
 
-          if (brightness >= 150)
-            return `#${tinycolor(color).darken(50).toHex()}`;
-          else return color;
-        });
+        //   if (brightness >= 150)
+        //     return `#${tinycolor(color).darken(50).toHex()}`;
+        //   else return color;
+        // });
 
-        return {...track, palette};
+        //return {...track, palette};
+        return {...track, palette: ['#000', '#000']};
       }
     });
 

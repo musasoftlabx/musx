@@ -51,6 +51,7 @@ import {darkTheme} from './app/utils';
 import {API_URL, AUDIO_URL, usePlayerStore} from './app/store';
 import {TrackProps} from './app/types';
 import TrackDetails from './app/components/TrackDetails';
+import NowPlaying from './app/screens/NowPlaying';
 
 // * Constants
 export const queryClient = new QueryClient();
@@ -324,6 +325,9 @@ export default function App(): React.JSX.Element {
           // ? Invoke transcoder to transcode the file to HLS chunks
           streamViaHLS && transcode(activeTrack!.path, activeTrack?.duration!);
 
+          setProgress({position: 0, buffered: 0, duration: 0});
+          setTrackRating(0);
+
           // ? Save variables to store to be accessed by components
           setLyricsVisible(false);
           setPlayRegistered(false);
@@ -360,7 +364,8 @@ export default function App(): React.JSX.Element {
           if (progress.position >= 10 && playRegistered === false) {
             setPlayRegistered(true);
 
-            return false;
+            //return false;
+            // ? Update the active track play count
             axios
               .patch('updatePlayCount', {id: activeTrack?.id})
               .then(({data: {plays}}) => {
@@ -371,6 +376,18 @@ export default function App(): React.JSX.Element {
                 } as Track);
               })
               .catch(error => console.log(error));
+
+            // ? Transcode the next track if HLS is enabled
+            if (streamViaHLS && queue.length > 1) {
+              const currentIndex = queue.findIndex(
+                track => track.id === activeTrack?.id,
+              );
+
+              transcode(
+                queue[currentIndex + 1].path,
+                queue[currentIndex + 1].duration!,
+              );
+            }
           }
 
           // if (
@@ -466,6 +483,7 @@ export default function App(): React.JSX.Element {
                 track={trackDetails}
                 queriesToRefetch={['']}
               />
+              <NowPlaying />
             </NavigationContainer>
           </SafeAreaProvider>
         </PaperProvider>

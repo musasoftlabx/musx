@@ -50,16 +50,16 @@ export default function Folders({navigation}: any) {
   const closeTrackDetails = usePlayerStore(state => state.closeTrackDetails);
   const setTrackDetails = usePlayerStore(state => state.setTrackDetails);
 
-  useBackHandler(() => {
-    if (bottomSheetRef.current) {
-      closeTrackDetails();
-      navigation.goBack();
-      return true;
-    } else {
-      openTrackDetails();
-      return false;
-    }
-  });
+  // useBackHandler(() => {
+  //   if (bottomSheetRef.current) {
+  //     closeTrackDetails();
+  //     navigation.goBack();
+  //     return true;
+  //   } else {
+  //     openTrackDetails();
+  //     return false;
+  //   }
+  // });
 
   // ? Mutations
   const {
@@ -195,7 +195,13 @@ export default function Folders({navigation}: any) {
                       source={require('../../assets/images/folder.png')}
                       style={{marginRight: 20, height: 45, width: 45}}
                     />
-                    <Text variant="bodyMedium">{item.name}</Text>
+
+                    <View style={{marginTop: 5}}>
+                      <Text variant="bodyMedium">
+                        {item.name} ({item.details.totalFiles})
+                      </Text>
+                      <Text variant="bodyMedium">{item.details.totalSize}</Text>
+                    </View>
                   </View>
                 </Pressable>
               ) : (

@@ -11,8 +11,8 @@ import {Text} from 'react-native-paper';
 import Animated, {
   Easing,
   useAnimatedStyle,
-  useSharedValue,
   withRepeat,
+  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 
@@ -26,8 +26,8 @@ import {TrackProps, TracksProps} from '../types';
 // * Functions
 import {formatTrackTime} from '../functions';
 
-const duration = 2000;
-const easing = Easing.bezier(0.25, -0.5, 0.25, 1);
+// * Icons
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 export default function ListItem({
   data,
@@ -52,14 +52,19 @@ export default function ListItem({
   const isPlaying = state === State.Playing;
 
   // ? Hooks
-  const sv = useSharedValue<number>(0);
-
-  React.useEffect(() => {
-    sv.value = withRepeat(withTiming(1, {duration, easing}), -1);
-  }, []);
-
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{rotate: `${sv.value * 360}deg`}],
+    transform: [
+      {
+        rotateZ: withRepeat(
+          withSequence(
+            withTiming(0 + 'deg', {duration: 0, easing: Easing.linear}),
+            withTiming(360 + 'deg', {duration: 3000, easing: Easing.linear}),
+          ),
+          -1,
+          false,
+        ),
+      },
+    ],
   }));
 
   return (
@@ -87,13 +92,30 @@ export default function ListItem({
         {isActive ? (
           <>
             {isPlaying ? (
-              <Animated.Image
-                source={{uri: item.artwork}}
-                style={[
-                  {borderRadius: 100, height: 45, width: 45},
-                  animatedStyle,
-                ]}
-              />
+              <View style={{justifyContent: 'center', alignItems: 'center'}}>
+                <Animated.Image
+                  source={{uri: item.artwork}}
+                  style={[
+                    {borderRadius: 100, height: 45, width: 45},
+                    animatedStyle,
+                  ]}
+                />
+                <Icon
+                  name="circle-thin"
+                  size={26}
+                  style={{position: 'absolute', color: '#fff', opacity: 0.7}}
+                />
+                <Icon
+                  name="circle"
+                  size={18}
+                  style={{position: 'absolute', color: '#fff', opacity: 0.5}}
+                />
+                <Icon
+                  name="circle"
+                  size={10}
+                  style={{position: 'absolute', color: '#000', opacity: 1}}
+                />
+              </View>
             ) : (
               <Image
                 source={{uri: item.artwork}}
@@ -149,19 +171,26 @@ export default function ListItem({
           justifyContent: 'center',
           gap: 3,
         }}>
-        {item.rating !== 0 ? (
-          <StarRatingDisplay
-            rating={item.rating}
-            starSize={16}
-            starStyle={{marginHorizontal: 0}}
-          />
-        ) : (
-          <Text>{formatTrackTime(item.duration)} mins</Text>
-        )}
-        <Text numberOfLines={1} style={{fontWeight: 'bold', marginRight: 3}}>
-          {item.plays || 0} play
-          {`${item.plays === 1 ? '' : 's'}`}
-        </Text>
+        <StarRatingDisplay
+          rating={item.rating}
+          starSize={16}
+          starStyle={{marginHorizontal: 0}}
+        />
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <Text numberOfLines={1} style={{fontWeight: 'bold'}}>
+            {item.plays || 0} play
+            {`${item.plays === 1 ? '' : 's'}`}
+          </Text>
+          <Text>{'  ◎  '}</Text>
+          <Text
+            style={{
+              fontSize: 14,
+              fontWeight: 'bold',
+              marginRight: 3,
+            }}>
+            {formatTrackTime(item.duration)} mins
+          </Text>
+        </View>
       </View>
     </Pressable>
   );

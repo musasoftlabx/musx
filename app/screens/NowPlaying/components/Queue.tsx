@@ -21,7 +21,7 @@ import SwipeableItem, {
 } from 'react-native-swipeable-item';
 
 // * Store
-import {HEIGHT, LIST_ITEM_HEIGHT, usePlayerStore} from '../../../store';
+import {HEIGHT, LIST_ITEM_HEIGHT, usePlayerStore, WIDTH} from '../../../store';
 
 // * Functions
 import {formatTrackTime} from '../../../functions';
@@ -80,7 +80,7 @@ export default function Queue() {
             source={{uri: item.artwork}}
             style={[{borderRadius: 10, height: 45, width: 45}]}
           />
-          <View style={{flexBasis: '60%', gap: 2}}>
+          <View style={{flexBasis: `${WIDTH * 0.12}%`, gap: 2}}>
             <Text
               numberOfLines={1}
               style={{fontSize: 16, fontWeight: '600', width: '97%'}}>
@@ -109,7 +109,7 @@ export default function Queue() {
               {item.plays || 0} play
               {`${item.plays === 1 ? '' : 's'}`}
             </Text>
-            <Text>{' / '}</Text>
+            <Text>{'  ◎  '}</Text>
             <Text
               style={{
                 fontSize: 14,

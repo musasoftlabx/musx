@@ -52,10 +52,10 @@ export default function Artist({
   },
 }: NativeStackScreenProps<RootStackParamList, 'Artist', ''>) {
   // ? Hooks
-  useBackHandler(() => {
-    navigation.goBack();
-    return true;
-  });
+  // useBackHandler(() => {
+  //   navigation.goBack();
+  //   return true;
+  // });
 
   const {
     data: artist,

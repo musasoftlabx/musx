@@ -2,7 +2,7 @@
 import React, {useState, useCallback, useRef, useEffect} from 'react';
 
 // * React Native
-import {Image, Pressable, StyleSheet, View} from 'react-native';
+import {BackHandler, Image, Pressable, StyleSheet, View} from 'react-native';
 
 // * Libraries
 import BottomSheet, {
@@ -43,6 +43,7 @@ import {arrayMove} from '../../functions';
 
 // * Assets
 import imageFiller from '../../assets/images/image-filler.png';
+import {useFocusEffect} from '@react-navigation/native';
 
 type LyricsButtonProps = {
   palette: string[];
@@ -76,6 +77,7 @@ export default function NowPlaying() {
 
   // ? States
   const [repeatMode, setRepeatMode] = useState<number>();
+  const [isNowPlayingVisible, setIsNowPlayingVisible] = useState(true);
 
   // ? StoreStates
   const bitrate = usePlayerStore(state => state.bitrate);
@@ -96,10 +98,29 @@ export default function NowPlaying() {
 
   // ? Hooks
   const orientation = useDeviceOrientation();
-  useBackHandler(() => {
-    closeNowPlaying(nowPlayingRef!);
-    return true;
-  });
+
+  //console.log('ffewf', nowPlayingRef.current);
+
+  useFocusEffect(
+    useCallback(() => {
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        () => {
+          closeNowPlaying(nowPlayingRef!);
+          
+          if (isNowPlayingVisible) {
+            setIsNowPlayingVisible(false);
+            return false;
+          } else {
+            setIsNowPlayingVisible(true);
+            return true;
+          }
+        },
+      );
+
+      return () => subscription.remove();
+    }, [isNowPlayingVisible]),
+  );
 
   // ? Functions
   const handleRepeatMode = async () => {

@@ -31,6 +31,13 @@ import {StarRatingDisplay} from 'react-native-star-rating-widget';
 import SwipeableItem, {
   SwipeableItemImperativeRef,
 } from 'react-native-swipeable-item';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
 import LinearGradientX from '../../components/LinearGradientX';
 
@@ -46,6 +53,11 @@ import StatusBarX from '../../components/StatusBarX';
 import {queryClient} from '../../../App';
 import VerticalListItem from '../../components/Skeletons/VerticalListItem';
 
+import {State} from 'react-native-track-player';
+
+// * Icons
+import Icon from 'react-native-vector-icons/FontAwesome';
+
 export default function Playlist({
   navigation,
   route: {
@@ -55,6 +67,20 @@ export default function Playlist({
   // ? Refs
   const swipeableItemRef = useRef<SwipeableItemImperativeRef>(null);
 
+  // ? StoreStates
+  const {state} = usePlayerStore(state => state.playbackState);
+  const activeTrack = usePlayerStore(state => state.activeTrack);
+
+  // ? Constants
+  const isActive = activeTrack.id === id;
+  const isPlaying = state === State.Playing;
+
+  const {data, isSuccess, isError, isFetching} = useQuery({
+    queryKey: ['playlist', id],
+    queryFn: ({queryKey}) => axios(`${API_URL}${queryKey[0]}/${queryKey[1]}`),
+    select: ({data}) => data,
+  });
+
   // ? States
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [playlistTracks, setPlaylistTracks] = useState<TracksProps>([]);
@@ -63,12 +89,6 @@ export default function Playlist({
   const palette = usePlayerStore(state => state.palette);
 
   const play = usePlayerStore(state => state.play);
-
-  const {data, isSuccess, isError, isFetching} = useQuery({
-    queryKey: ['playlist', id],
-    queryFn: ({queryKey}) => axios(`${API_URL}${queryKey[0]}/${queryKey[1]}`),
-    select: ({data}) => data,
-  });
 
   const {mutate: rearrangePlaylist} = useMutation({
     mutationFn: (body: {playlistId: number; trackIds: number[]}) =>
@@ -88,6 +108,21 @@ export default function Playlist({
     return true;
   });
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        rotateZ: withRepeat(
+          withSequence(
+            withTiming(0 + 'deg', {duration: 0, easing: Easing.linear}),
+            withTiming(360 + 'deg', {duration: 3000, easing: Easing.linear}),
+          ),
+          -1,
+          false,
+        ),
+      },
+    ],
+  }));
+
   useEffect(() => {
     if (data?.length > 0) setPlaylistTracks(data);
   }, [data]);
@@ -101,66 +136,120 @@ export default function Playlist({
   }, [navigation, activeTrackIndex]);
 
   // ? Functions
-  const ListItem = ({item}: {item: TrackProps}) => (
-    <Pressable onPress={() => play(playlistTracks, item)}>
-      <View
-        style={{
-          flex: 1,
-          flexWrap: 'nowrap',
-          flexDirection: 'row',
-          alignItems: 'center',
-          height: LIST_ITEM_HEIGHT,
-          marginHorizontal: 10,
-        }}>
-        {/* Track details */}
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
-          <Image
-            source={{uri: item.artwork}}
-            style={[{borderRadius: 10, height: 45, width: 45}]}
-          />
-          <View style={{flexBasis: '60%', gap: 2}}>
-            <Text
-              numberOfLines={1}
-              style={{fontSize: 16, fontWeight: '600', width: '97%'}}>
-              {item.position}. {item.title}
-            </Text>
-            <Text numberOfLines={1} style={{fontSize: 14, color: '#ffffff80'}}>
-              {item.artists ?? 'Unknown Artist'}
-            </Text>
-          </View>
-        </View>
-        {/* Rating, Plays & Duration */}
+  const ListItem = ({item}: {item: TrackProps}) => {
+    //console.log(playlistTracks?.length);
+
+    return (
+      <Pressable onPress={() => play(data, item)}>
         <View
           style={{
             flex: 1,
-            alignItems: 'flex-end',
-            justifyContent: 'center',
-            gap: 3,
+            flexWrap: 'nowrap',
+            flexDirection: 'row',
+            alignItems: 'center',
+            height: LIST_ITEM_HEIGHT,
+            marginHorizontal: 10,
           }}>
-          <StarRatingDisplay
-            rating={item.rating}
-            starSize={16}
-            starStyle={{marginHorizontal: 0}}
-          />
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Text numberOfLines={1} style={{fontWeight: 'bold'}}>
-              {item.plays || 0} play
-              {`${item.plays === 1 ? '' : 's'}`}
-            </Text>
-            <Text>{' / '}</Text>
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: 'bold',
-                marginRight: 3,
-              }}>
-              {formatTrackTime(item.duration)} mins
-            </Text>
+          {/* Track details */}
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+            {isActive ? (
+              <>
+                {isPlaying ? (
+                  <View
+                    style={{justifyContent: 'center', alignItems: 'center'}}>
+                    <Animated.Image
+                      source={{uri: item.artwork}}
+                      style={[
+                        {borderRadius: 100, height: 45, width: 45},
+                        animatedStyle,
+                      ]}
+                    />
+                    <Icon
+                      name="circle-thin"
+                      size={26}
+                      style={{
+                        position: 'absolute',
+                        color: '#fff',
+                        opacity: 0.7,
+                      }}
+                    />
+                    <Icon
+                      name="circle"
+                      size={18}
+                      style={{
+                        position: 'absolute',
+                        color: '#fff',
+                        opacity: 0.5,
+                      }}
+                    />
+                    <Icon
+                      name="circle"
+                      size={10}
+                      style={{position: 'absolute', color: '#000', opacity: 1}}
+                    />
+                  </View>
+                ) : (
+                  <Image
+                    source={{uri: item.artwork}}
+                    style={[{borderRadius: 100, height: 45, width: 45}]}
+                  />
+                )}
+              </>
+            ) : (
+              <Image
+                source={{uri: item.artwork}}
+                style={[
+                  {borderRadius: 10, height: 45, width: 45},
+                  animatedStyle,
+                ]}
+              />
+            )}
+            <View style={{flexBasis: '60%', gap: 2}}>
+              <Text
+                numberOfLines={1}
+                style={{fontSize: 16, fontWeight: '600', width: '97%'}}>
+                {item.position}. {item.title}
+              </Text>
+              <Text
+                numberOfLines={1}
+                style={{fontSize: 14, color: '#ffffff80'}}>
+                {item.artists ?? 'Unknown Artist'}
+              </Text>
+            </View>
+          </View>
+          {/* Rating, Plays & Duration */}
+          <View
+            style={{
+              flex: 1,
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+              gap: 3,
+            }}>
+            <StarRatingDisplay
+              rating={item.rating}
+              starSize={16}
+              starStyle={{marginHorizontal: 0}}
+            />
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <Text numberOfLines={1} style={{fontWeight: 'bold'}}>
+                {item.plays || 0} play
+                {`${item.plays === 1 ? '' : 's'}`}
+              </Text>
+              <Text>{' / '}</Text>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: 'bold',
+                  marginRight: 3,
+                }}>
+                {formatTrackTime(item.duration)} mins
+              </Text>
+            </View>
           </View>
         </View>
-      </View>
-    </Pressable>
-  );
+      </Pressable>
+    );
+  };
 
   const refetch = () =>
     queryClient
