@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {IAxiosError, TrackProps} from './types';
 import {API_URL} from './store';
+import {queryClient} from '../App';
 
 export const formatTrackTime = (secs: number) => {
   secs = Math.round(secs);
@@ -29,4 +30,24 @@ export const addPlaylistTrack = (track: TrackProps, trackId: number) => {
     })
     .then(() => {})
     .catch(err => console.error(err.message));
+};
+
+export const refreshScreens = (
+  activeTrack: TrackProps,
+  selectedPlaylist?: number | null,
+) => {
+  queryClient.refetchQueries({queryKey: ['dashboard']});
+  queryClient.refetchQueries({queryKey: ['mostPlayed']});
+  queryClient.refetchQueries({queryKey: ['recentlyPlayed']});
+  queryClient.refetchQueries({queryKey: ['libraryCount']});
+  queryClient.refetchQueries({
+    queryKey: ['artist', activeTrack.albumArtist],
+  });
+  queryClient.refetchQueries({
+    queryKey: ['album', activeTrack.albumArtist, activeTrack.album],
+  });
+  selectedPlaylist &&
+    queryClient.refetchQueries({
+      queryKey: ['playlist', selectedPlaylist],
+    });
 };

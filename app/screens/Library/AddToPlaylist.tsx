@@ -120,7 +120,11 @@ export default function AddToPlaylist({
                       startsAt: null,
                       endsAt: null,
                     })
-                    .then(() => navigation.goBack())
+                    .then(() => {
+                      queryClient.refetchQueries({queryKey: ['dashboard']});
+                      queryClient.refetchQueries({queryKey: ['playlists']});
+                      navigation.goBack();
+                    })
                     .catch(err => console.error(err.message))
 
                 //addPlaylistTrack(item, id)

@@ -31,6 +31,7 @@ import TrackPlayer, {
   useProgress,
   Track,
   RatingType,
+  usePlayWhenReady,
 } from 'react-native-track-player';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {PaperProvider, adaptNavigationTheme} from 'react-native-paper';
@@ -52,6 +53,7 @@ import {API_URL, AUDIO_URL, usePlayerStore} from './app/store';
 import {TrackProps} from './app/types';
 import TrackDetails from './app/components/TrackDetails';
 import NowPlaying from './app/screens/NowPlaying';
+import {refreshScreens} from './app/functions';
 
 // * Constants
 export const queryClient = new QueryClient();
@@ -88,6 +90,7 @@ export default function App(): React.JSX.Element {
   const castState = useCastState();
   const castSession = useCastSession();
   const playbackState = usePlaybackState();
+  const playWhenReady = usePlayWhenReady();
   const progress = useProgress();
   const streamPosition = useStreamPosition();
   const sessionManager = GoogleCast.getSessionManager();
@@ -101,6 +104,7 @@ export default function App(): React.JSX.Element {
   const streamViaHLS = usePlayerStore(state => state.streamViaHLS);
   const bitrate = usePlayerStore(state => state.bitrate);
   const trackDetails = usePlayerStore(state => state.trackDetails);
+  const selectedPlaylist = usePlayerStore(state => state.selectedPlaylist);
 
   // ? StoreActions
   const play = usePlayerStore(state => state.play);
@@ -315,6 +319,7 @@ export default function App(): React.JSX.Element {
   useTrackPlayerEvents(
     [
       Event.PlaybackActiveTrackChanged,
+      Event.PlaybackPlayWhenReadyChanged,
       Event.PlaybackProgressUpdated,
       Event.PlaybackState,
       Event.PlaybackQueueEnded,
@@ -325,7 +330,7 @@ export default function App(): React.JSX.Element {
           // ? Invoke transcoder to transcode the file to HLS chunks
           streamViaHLS && transcode(activeTrack!.path, activeTrack?.duration!);
 
-          setProgress({position: 0, buffered: 0, duration: 0});
+          // ? Clear progress & rating
           setTrackRating(0);
 
           // ? Save variables to store to be accessed by components
@@ -347,15 +352,15 @@ export default function App(): React.JSX.Element {
             `${AUDIO_URL}${activeTrack!.path.replace('.mp3', '.lrc')}`,
           );
 
-          TrackPlayer.getActiveTrackIndex().then(i => {
-            setActiveTrackIndex(i);
-            AsyncStorage.setItem('activeTrackIndex', i!.toString()); // ? Store the active track index to restore state incase the app crashes or is dismissed
-          });
+          // TrackPlayer.getActiveTrackIndex().then(i => {
+          //   setActiveTrackIndex(i);
+          //   AsyncStorage.setItem('activeTrackIndex', i!.toString()); // ? Store the active track index to restore state incase the app crashes or is dismissed
+          // });
 
-          TrackPlayer.getQueue().then(queue => {
-            setQueue(queue);
-            AsyncStorage.setItem('queue', JSON.stringify(queue)); // ? Store the queue to restore state incase the app crashes or is dismissed
-          });
+          // TrackPlayer.getQueue().then(queue => {
+          //   setQueue(queue);
+          //   AsyncStorage.setItem('queue', JSON.stringify(queue)); // ? Store the queue to restore state incase the app crashes or is dismissed
+          // });
         }
 
         if (event.type === Event.PlaybackProgressUpdated) {
@@ -374,6 +379,8 @@ export default function App(): React.JSX.Element {
                   ...activeTrack,
                   plays,
                 } as Track);
+
+                refreshScreens(_activeTrack, selectedPlaylist);
               })
               .catch(error => console.log(error));
 
@@ -445,10 +452,9 @@ export default function App(): React.JSX.Element {
           // }
         }
 
-        if (event.type === Event.PlaybackState) {
-          setPlaybackState(playbackState);
-          console.log('trackplayer:', playbackState);
-        }
+        if (event.type === Event.PlaybackState) setPlaybackState(playbackState);
+
+        // if (event.type === Event.PlaybackPlayWhenReadyChanged) console.log(playWhenReady);
 
         if (event.type === Event.PlaybackQueueEnded) {
           AsyncStorage.removeItem('queue');

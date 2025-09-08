@@ -86,14 +86,17 @@ export default function Playlist({
                         height: 150,
                         overflow: 'hidden',
                       }}>
-                      {item.artworks.map((artwork: string, i: number) => (
-                        <Image
-                          key={i}
-                          source={{uri: artwork}}
-                          style={{width: 75, height: 75}}
-                          resizeMode="cover"
-                        />
-                      ))}
+                      {item.artworks.map(
+                        (artwork: string, i: number) =>
+                          i <= 4 && (
+                            <Image
+                              key={i}
+                              source={{uri: artwork}}
+                              style={{width: 75, height: 75}}
+                              resizeMode="cover"
+                            />
+                          ),
+                      )}
                     </View>
                   ) : (
                     <Image

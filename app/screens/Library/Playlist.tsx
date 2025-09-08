@@ -57,6 +57,8 @@ import {State} from 'react-native-track-player';
 
 // * Icons
 import Icon from 'react-native-vector-icons/FontAwesome';
+import PlayIcon from 'react-native-vector-icons/Ionicons';
+import RefreshIcon from 'react-native-vector-icons/MaterialIcons';
 
 export default function Playlist({
   navigation,
@@ -70,10 +72,26 @@ export default function Playlist({
   // ? StoreStates
   const {state} = usePlayerStore(state => state.playbackState);
   const activeTrack = usePlayerStore(state => state.activeTrack);
+  const setSelectedPlaylist = usePlayerStore(
+    state => state.setSelectedPlaylist,
+  );
 
-  // ? Constants
-  const isActive = activeTrack.id === id;
+  // ? States
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [playlistTracks, setPlaylistTracks] = useState<TracksProps>([]);
+
   const isPlaying = state === State.Playing;
+
+  // const {
+  //   mutate: getTracks,
+  //   isSuccess,
+  //   isPending,
+  // } = useMutation({
+  //   mutationFn: () => axios(`${API_URL}playlist/${id}`),
+  //   onSuccess: ({data}) => setPlaylistTracks(data),
+  // });
+
+  //useEffect(() => getTracks(), []);
 
   const {data, isSuccess, isError, isFetching} = useQuery({
     queryKey: ['playlist', id],
@@ -81,9 +99,10 @@ export default function Playlist({
     select: ({data}) => data,
   });
 
-  // ? States
-  const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [playlistTracks, setPlaylistTracks] = useState<TracksProps>([]);
+  useEffect(() => {
+    if (data?.length > 0) setPlaylistTracks(data);
+    setSelectedPlaylist(id);
+  }, [data]);
 
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const palette = usePlayerStore(state => state.palette);
@@ -123,10 +142,6 @@ export default function Playlist({
     ],
   }));
 
-  useEffect(() => {
-    if (data?.length > 0) setPlaylistTracks(data);
-  }, [data]);
-
   // ? Effects
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -137,19 +152,33 @@ export default function Playlist({
 
   // ? Functions
   const ListItem = ({item}: {item: TrackProps}) => {
-    //console.log(playlistTracks?.length);
+    const isActive = activeTrack.id === item.id;
+    const isPlaying = state === State.Playing;
 
     return (
-      <Pressable onPress={() => play(data, item)}>
+      <Pressable onPress={() => play(playlistTracks, item)}>
         <View
-          style={{
-            flex: 1,
-            flexWrap: 'nowrap',
-            flexDirection: 'row',
-            alignItems: 'center',
-            height: LIST_ITEM_HEIGHT,
-            marginHorizontal: 10,
-          }}>
+          style={[
+            isActive
+              ? {
+                  backgroundColor: '#ffffff4d',
+                  borderRadius: 10,
+                  marginVertical: 3,
+                  marginHorizontal: 6,
+                  paddingHorizontal: 5,
+                }
+              : {marginHorizontal: 10},
+            {alignItems: 'center', flexDirection: 'row', paddingVertical: 7},
+          ]}
+          // style={{
+          //   flex: 1,
+          //   flexWrap: 'nowrap',
+          //   flexDirection: 'row',
+          //   alignItems: 'center',
+          //   height: LIST_ITEM_HEIGHT,
+          //   marginHorizontal: 10,
+          // }}
+        >
           {/* Track details */}
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
             {isActive ? (
@@ -235,7 +264,7 @@ export default function Playlist({
                 {item.plays || 0} play
                 {`${item.plays === 1 ? '' : 's'}`}
               </Text>
-              <Text>{' / '}</Text>
+              <Text>{'  ◎  '}</Text>
               <Text
                 style={{
                   fontSize: 14,
@@ -358,7 +387,7 @@ export default function Playlist({
         </OpacityDecorator>
       </ShadowDecorator>
     ),
-    [],
+    [playlistTracks, activeTrack, isPlaying],
   );
 
   return (
@@ -385,30 +414,42 @@ export default function Playlist({
           style={{
             alignItems: 'center',
             flexDirection: 'row',
-            gap: 13,
+            justifyContent: 'space-between',
             paddingHorizontal: 10,
             paddingVertical: 20,
           }}>
           {!artwork ? (
-            <View
-              style={{
-                borderRadius: 10,
-                flexDirection: 'row',
-                flexWrap: 'wrap',
-                marginTop: 0.5,
-                width: 100,
-                height: 100,
-                overflow: 'hidden',
-              }}>
-              {artworks.map((artwork: string, i: number) => (
+            <>
+              {playlistTracks.length >= 4 ? (
+                <View
+                  style={{
+                    borderRadius: 10,
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    marginTop: 0.5,
+                    width: 100,
+                    height: 100,
+                    overflow: 'hidden',
+                  }}>
+                  {artworks.map(
+                    (artwork: string, i: number) =>
+                      i <= 4 && (
+                        <Image
+                          key={i}
+                          source={{uri: artwork}}
+                          style={{width: 50, height: 50}}
+                          resizeMode="cover"
+                        />
+                      ),
+                  )}
+                </View>
+              ) : (
                 <Image
-                  key={i}
-                  source={{uri: artwork}}
-                  style={{width: 50, height: 50}}
-                  resizeMode="cover"
+                  source={{uri: artworks[0]}}
+                  style={{width: 150, height: 150, borderRadius: 10}}
                 />
-              ))}
-            </View>
+              )}
+            </>
           ) : (
             <Image
               source={{uri: artwork}}
@@ -438,10 +479,31 @@ export default function Playlist({
               {size}
             </Text>
           </View>
+
+          <View
+            style={{
+              alignItems: 'center',
+              flexDirection: 'row',
+              justifyContent: 'flex-end',
+              gap: 20,
+              zIndex: 3,
+            }}>
+            <Pressable
+              onPress={() => {
+                Vibration.vibrate(50);
+                refetch();
+              }}>
+              <RefreshIcon name="refresh" size={40} />
+            </Pressable>
+
+            <Pressable onPress={() => play(playlistTracks, playlistTracks[0])}>
+              <PlayIcon name="play-circle" size={70} style={{color: '#fff'}} />
+            </Pressable>
+          </View>
         </View>
       </ImageBackground>
 
-      {isFetching && <VerticalListItem />}
+      {isFetching && !data && <VerticalListItem />}
 
       {isSuccess && (
         <DraggableFlatList
@@ -450,7 +512,7 @@ export default function Playlist({
           onDragEnd={({data}) => {
             // ? Set the data with the new movements
             setPlaylistTracks(data);
-            // ? Store rearranged tracks on DB///
+            // ? Store rearranged tracks on DB
             rearrangePlaylist(
               {playlistId: id, trackIds: data.map(({id}) => id)},
               {

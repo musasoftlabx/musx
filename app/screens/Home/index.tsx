@@ -14,6 +14,7 @@ import {
 
 // * Libraries
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {useQuery} from '@tanstack/react-query';
 import _ from 'lodash';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
@@ -30,6 +31,8 @@ import {API_URL, WIDTH} from '../../store';
 
 // * Types
 import {RootStackParamList, TrackProps} from '../../types';
+import axios from 'axios';
+import {queryClient} from '../../../App';
 
 export type SectionProps = {
   data?: [number];
@@ -97,37 +100,38 @@ export default function Home({
     },
   ]);
 
-  // ? Effects
-  useEffect(() => fetchDashboard(), []);
+  useQuery({
+    queryKey: ['dashboard'],
+    queryFn: ({queryKey}) => {
+      let updated: any = [];
 
-  // ? Functions
-  const fetchDashboard = () => {
-    let updated: any = [];
+      const setter = (title: string, data: any) => {
+        const sectionIndex = sections.findIndex(
+          section => section.title === title,
+        );
 
-    const setter = (title: string, data: any) => {
-      const sectionIndex = sections.findIndex(
-        section => section.title === title,
+        sections.forEach(
+          (section, i) =>
+            i === sectionIndex && updated.push({...section, dataset: data}),
+        );
+
+        return updated;
+      };
+
+      fetch(`${API_URL}${queryKey[0]}`).then(res =>
+        res.json().then(data => {
+          Object.keys(data).forEach(key => setter(_.startCase(key), data[key]));
+          updated.unshift(sections[0]);
+          setSections(updated);
+          setStats(data.stats);
+          setLoading(false);
+          setRefreshing(false);
+        }),
       );
 
-      sections.forEach(
-        (section, i) =>
-          i === sectionIndex && updated.push({...section, dataset: data}),
-      );
-
-      return updated;
-    };
-
-    fetch(`${API_URL}dashboard`).then(res =>
-      res.json().then(data => {
-        Object.keys(data).forEach(key => setter(_.startCase(key), data[key]));
-        updated.unshift(sections[0]);
-        setSections(updated);
-        setStats(data.stats);
-        setLoading(false);
-        setRefreshing(false);
-      }),
-    );
-  };
+      return null;
+    },
+  });
 
   const SectionHeader = ({
     section,
@@ -174,7 +178,7 @@ export default function Home({
             refreshing={refreshing}
             onRefresh={() => {
               setRefreshing(true);
-              fetchDashboard();
+              queryClient.refetchQueries({queryKey: ['dashboard']});
             }}
           />
         }

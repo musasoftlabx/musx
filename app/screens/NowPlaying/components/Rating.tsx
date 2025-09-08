@@ -12,6 +12,7 @@ import TrackPlayer from 'react-native-track-player';
 
 // * Store
 import {usePlayerStore} from '../../../store';
+import {refreshScreens} from '../../../functions';
 
 export default function Rating() {
   // ? Mutations
@@ -24,6 +25,7 @@ export default function Rating() {
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const trackRating = usePlayerStore(state => state.trackRating);
+  const selectedPlaylist = usePlayerStore(state => state.selectedPlaylist);
 
   // ? StoreActions
   const setTrackRating = usePlayerStore(state => state.setTrackRating);
@@ -43,7 +45,10 @@ export default function Rating() {
           saveRating(
             {id: activeTrack?.id, rating},
             {
-              onSuccess: ({data}) => console.log(data),
+              onSuccess: ({data}) => {
+                // ? Refresh screens to apply changes of rated track
+                refreshScreens(activeTrack, selectedPlaylist);
+              },
               onError: error => console.log(error),
             },
           );

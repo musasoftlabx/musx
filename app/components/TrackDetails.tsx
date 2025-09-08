@@ -30,7 +30,7 @@ import imageFiller from '../assets/images/image-filler.png';
 import {BottomSheetDefaultBackdropProps} from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
 import {RootStackParamList, TrackProps} from '../types';
 import {lightTheme} from '../utils';
-import {addPlaylistTrack} from '../functions';
+import {addPlaylistTrack, refreshScreens} from '../functions';
 
 type PlaylistProps = RootStackParamList['Playlist'];
 
@@ -470,10 +470,8 @@ export default function TrackDetails({
                                   _track => _track.id !== track.id && track,
                                 ),
                               );
-                              // ? Fetch the tracks to update the User Interface listing
-                              queryClient.refetchQueries({
-                                queryKey: queriesToRefetch,
-                              });
+                              // ? Refresh screens to remove occurences of deleted track
+                              refreshScreens(activeTrack);
                             })
                             .catch((err: AxiosError) => {
                               setSnackbarMessage(err.message);

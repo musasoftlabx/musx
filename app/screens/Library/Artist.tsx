@@ -61,6 +61,8 @@ export default function Artist({
     data: artist,
     isError,
     isFetching,
+    isPending,
+    isRefetching,
     isSuccess,
   } = useQuery({
     enabled: albumArtist ? true : false,
@@ -134,7 +136,7 @@ export default function Artist({
         </View>
       </ImageBackground>
 
-      {isFetching && (
+      {isFetching && !artist && (
         <SectionList
           sections={[
             {title: 'Albums', data: [1], horizontal: true},

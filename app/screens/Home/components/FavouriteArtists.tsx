@@ -63,14 +63,17 @@ export default function FavouriteArtists({
                       height: 100,
                       overflow: 'hidden',
                     }}>
-                    {item.artworks.map((artwork: string, i: number) => (
-                      <Image
-                        key={i}
-                        source={{uri: artwork}}
-                        style={{width: 50, height: 50}}
-                        resizeMode="cover"
-                      />
-                    ))}
+                    {item.artworks.map(
+                      (artwork: string, i: number) =>
+                        i <= 4 && (
+                          <Image
+                            key={i}
+                            source={{uri: artwork}}
+                            style={{width: 50, height: 50}}
+                            resizeMode="cover"
+                          />
+                        ),
+                    )}
                   </View>
                 ) : (
                   <Image

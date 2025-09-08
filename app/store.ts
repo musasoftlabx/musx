@@ -105,6 +105,7 @@ interface IPlayerStore {
   castClient: RemoteMediaClient | null;
   streamViaHLS: boolean;
   bitrate: string;
+  selectedPlaylist: number | null;
   setProgress: (queue: Progress) => void;
   setPlaybackState: (playbackState: any) => void;
   setQueue: (queue: Track[]) => void;
@@ -140,6 +141,7 @@ interface IPlayerStore {
   addTrackToEndOfQueue: (track: TrackProps) => void;
   setStreamViaHLS: (streamViaHLS: boolean) => void;
   setBitrate: (bitrate: string) => void;
+  setSelectedPlaylist: (id: number) => void;
 }
 
 export const usePlayerStore = create<IPlayerStore>((set, get) => ({
@@ -164,6 +166,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   castClient: null,
   streamViaHLS: false,
   bitrate: '',
+  selectedPlaylist: null,
   setProgress: progress => set(state => ({...state, progress})),
   setPlaybackState: playbackState => set(state => ({...state, playbackState})),
   setQueue: queue => set(state => ({...state, queue})),
@@ -208,11 +211,11 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   setStreamViaHLS: (streamViaHLS: boolean) =>
     set(state => ({...state, streamViaHLS})),
   setBitrate: (bitrate: string) => set(state => ({...state, bitrate})),
+  setSelectedPlaylist: (id: number) => set(state => ({...state, id})),
 
   // ? Player actions
   play: async (data: TracksProps, selected: TrackProps, position?: number) => {
-    TrackPlayer.removeUpcomingTracks();
-
+    // ? Apply palette to all tracks enqueue
     const tracks = data.map((track: TrackProps) => {
       if (track.hasOwnProperty('format')) {
         const _palette = Array.isArray(track.palette)
@@ -276,8 +279,24 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
       await TrackPlayer.play();
     }
 
+    // ? Store the queue
+    get().setQueue(queue);
+
+    // ? Store the active track index
+    get().setActiveTrackIndex(selectedIndex);
+
+    // ? Show now playing screen
     const nowPlayingRef = get().nowPlayingRef!;
     get().openNowPlaying(nowPlayingRef);
+
+    // ? Store the active track index to restore state incase the app crashes or is dismissed
+    AsyncStorage.setItem('activeTrackIndex', selectedIndex.toString());
+
+    // ? Store the queue to restore state incase the app crashes or is dismissed
+    AsyncStorage.setItem('queue', JSON.stringify(queue));
+
+    // ? Purge queue for memory management
+    queue = [];
   },
   playPause: () => {
     Vibration.vibrate(50);

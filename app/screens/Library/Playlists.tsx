@@ -18,7 +18,7 @@ import {CastButton} from 'react-native-google-cast';
 import {FlashList} from '@shopify/flash-list';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useBackHandler} from '@react-native-community/hooks';
-import {useMutation} from '@tanstack/react-query';
+import {useMutation, useQuery} from '@tanstack/react-query';
 import axios from 'axios';
 import debounce from 'lodash/debounce';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -61,10 +61,15 @@ export default function Playlists({
     return true;
   });
 
-  const {mutate, isPending, isSuccess} = useMutation({
-    mutationKey: ['playlists'],
-    mutationFn: () => axios<PlaylistProps[]>(`${API_URL}playlists`),
-    onSuccess: ({data}) => (setFilter(data), setPlaylists(data)),
+  const {isPending, isSuccess} = useQuery({
+    queryKey: ['playlists'],
+    queryFn: () => {
+      axios<PlaylistProps[]>(`${API_URL}playlists`).then(({data}) => {
+        setFilter(data);
+        setPlaylists(data);
+      });
+      return null;
+    },
   });
 
   // ? Callbacks
@@ -82,9 +87,6 @@ export default function Playlists({
     }, 500),
     [],
   );
-
-  // ? Effects
-  useEffect(mutate, []);
 
   useEffect(() => {
     if (searchWord?.length >= 2)
@@ -301,14 +303,17 @@ export default function Playlists({
                       height: 100,
                       overflow: 'hidden',
                     }}>
-                    {item.artworks.map((artwork: string, i: number) => (
-                      <Image
-                        key={i}
-                        source={{uri: artwork}}
-                        style={{width: 50, height: 50}}
-                        resizeMode="cover"
-                      />
-                    ))}
+                    {item.artworks.map(
+                      (artwork: string, i: number) =>
+                        i <= 4 && (
+                          <Image
+                            key={i}
+                            source={{uri: artwork}}
+                            style={{width: 50, height: 50}}
+                            resizeMode="cover"
+                          />
+                        ),
+                    )}
                   </View>
                 ) : (
                   <Image

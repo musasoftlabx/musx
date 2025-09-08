@@ -76,7 +76,7 @@ export default function Album({
 
       <LinearGradientX />
 
-      {isFetching && <VerticalListItem />}
+      {isFetching && !tracks && <VerticalListItem />}
 
       {isSuccess && (
         <FlashList

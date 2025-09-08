@@ -1,5 +1,5 @@
 // * React
-import React from 'react';
+import React, {useEffect} from 'react';
 
 // * React Native
 import {View, Text, ActivityIndicator} from 'react-native';
@@ -12,6 +12,9 @@ import axios from 'axios';
 // * Components
 import LinearGradientX from '../../components/LinearGradientX';
 import StatusBarX from '../../components/StatusBarX';
+
+// * Components
+import {queryClient} from '../../../App';
 
 // * Store
 import {API_URL, HEIGHT, WIDTH} from '../../store';
@@ -28,6 +31,10 @@ export default function Scan({navigation}: any) {
     queryFn: ({queryKey}) => axios(`${API_URL}${queryKey[0]}`),
     select: ({data}) => data,
   });
+
+  useEffect(() => {
+    queryClient.refetchQueries({queryKey: ['libraryCount']});
+  }, [data]);
 
   return (
     <>
