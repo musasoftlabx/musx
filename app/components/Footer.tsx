@@ -13,25 +13,25 @@ import {
 
 // * Libraries
 import * as Progress from 'react-native-progress';
-import {MediaPlayerState} from 'react-native-google-cast';
-import {State} from 'react-native-track-player';
-import {Text} from 'react-native-paper';
+import { MediaPlayerState } from 'react-native-google-cast';
+import { State } from 'react-native-track-player';
+import { Text } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
 
 // * Store
-import {usePlayerStore} from '../store';
+import { usePlayerStore } from '../store';
 
 // * Functions
-import {formatTrackTime} from '../functions';
+import { formatTrackTime } from '../functions';
 
 // * Assets
 import imageFiller from '../assets/images/image-filler.png';
 
 export default function Footer() {
   // ? StoreStates
-  const {position, duration} = usePlayerStore(state => state.progress);
-  const {state} = usePlayerStore(state => state.playbackState);
+  const { position, duration } = usePlayerStore(state => state.progress);
+  const { state } = usePlayerStore(state => state.playbackState);
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const nowPlayingRef = usePlayerStore(state => state.nowPlayingRef);
@@ -52,6 +52,7 @@ export default function Footer() {
   const isIdle = state === MediaPlayerState.IDLE;
   const activeStates = [
     State.Playing,
+    State.Buffering,
     State.Paused,
     State.Loading,
     State.Buffering,
@@ -65,12 +66,13 @@ export default function Footer() {
           borderTopColor: palette?.[2],
           borderTopWidth: 0.5,
           paddingVertical: 10,
-        }}>
+        }}
+      >
         <LinearGradient
           colors={[palette?.[1] ?? '#fff', palette?.[0] ?? '#000']}
           useAngle={true}
           angle={290}
-          style={{position: 'absolute', top: 0, left: 0, bottom: 0, right: 0}}
+          style={{ position: 'absolute', top: 0, left: 0, bottom: 0, right: 0 }}
         />
 
         <View
@@ -79,7 +81,8 @@ export default function Footer() {
             flexDirection: 'row',
             gap: 40,
             paddingHorizontal: 20,
-          }}>
+          }}
+        >
           <Pressable
             style={{
               alignItems: 'center',
@@ -89,10 +92,13 @@ export default function Footer() {
             onPress={() => {
               Vibration.vibrate(50);
               openNowPlaying(nowPlayingRef!);
-            }}>
+            }}
+          >
             <Image
               source={
-                activeTrack?.artwork ? {uri: activeTrack?.artwork} : imageFiller
+                activeTrack?.artwork
+                  ? { uri: activeTrack?.artwork }
+                  : imageFiller
               }
               style={{
                 borderRadius: 10,
@@ -101,14 +107,15 @@ export default function Footer() {
                 width: 50,
               }}
             />
-            <View style={{flexBasis: '40%'}}>
+
+            <View style={{ flexBasis: '40%' }}>
               <Text numberOfLines={1} style={styles.title}>
                 {activeTrack?.title}
               </Text>
               <Text numberOfLines={1} style={styles.artists}>
                 {activeTrack?.albumArtist ?? 'Unknown Artist'}
               </Text>
-              <Text style={{fontSize: 12, marginTop: 2}}>
+              <Text style={{ fontSize: 12, marginTop: 2 }}>
                 {`${formatTrackTime(position)} / ${formatTrackTime(duration)}`}
               </Text>
             </View>
@@ -120,10 +127,12 @@ export default function Footer() {
               flexDirection: 'row',
               justifyContent: 'flex-end',
               gap: 20,
-            }}>
+            }}
+          >
             <Pressable
               disabled={(activeTrackIndex === 0 && position <= 10) || isIdle}
-              onPress={() => previous(position)}>
+              onPress={() => previous(position)}
+            >
               <Icon
                 name="play-back"
                 size={25}
@@ -139,7 +148,7 @@ export default function Footer() {
               size={50}
               progress={position / duration || 0}
               color="#fff"
-              style={{marginRight: -67.5, opacity: 1}}
+              style={{ marginRight: -67.5, opacity: 1 }}
             />
 
             {isLoading || isBuffering ? (
@@ -169,7 +178,8 @@ export default function Footer() {
 
             <Pressable
               disabled={activeTrackIndex === queue.length - 1}
-              onPress={next}>
+              onPress={next}
+            >
               <Icon
                 name="play-forward"
                 size={25}
@@ -188,6 +198,6 @@ export default function Footer() {
 }
 
 const styles = StyleSheet.create({
-  title: {fontSize: 17, fontWeight: '800'},
-  artists: {fontSize: 14, fontWeight: '500'},
+  title: { fontSize: 17, fontWeight: '800' },
+  artists: { fontSize: 14, fontWeight: '500' },
 });

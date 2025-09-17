@@ -2,7 +2,7 @@
 import React from 'react';
 
 // * Libraries
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 // * Screens
@@ -15,7 +15,7 @@ import Settings from '../screens/Settings';
 import LibraryStackNavigator from './LibraryStackNavigator';
 
 // * Store
-import {usePlayerStore} from '../store';
+import { usePlayerStore } from '../store';
 
 const Tab = createBottomTabNavigator();
 
@@ -25,9 +25,9 @@ export default function TabNavigator() {
 
   return (
     <Tab.Navigator
-      initialRouteName=""
-      screenOptions={({route}) => ({
-        tabBarIcon: ({focused, color, size}) => {
+      initialRouteName="HomeStackNavigator"
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
           let iconName;
 
           if (route.name === 'HomeStackNavigator') {
@@ -44,21 +44,22 @@ export default function TabNavigator() {
 
           return <MaterialIcons name={iconName!} size={24} color={color} />;
         },
-        tabBarStyle: {backgroundColor: `${palette?.[1]}`},
+        tabBarStyle: { backgroundColor: `${palette?.[1]}`, paddingTop: 4 },
         tabBarShowLabel: false,
         tabBarActiveTintColor: '#fff',
         tabBarInactiveTintColor: 'rgba(255, 255, 255, .4)',
-      })}>
+      })}
+    >
       <Tab.Screen
         name="HomeStackNavigator"
         component={HomeStackNavigator}
-        options={{headerShown: false}}
+        options={{ headerShown: false }}
       />
 
       <Tab.Screen
         name="LibraryStackNavigator"
         component={LibraryStackNavigator}
-        options={{headerShown: false}}
+        options={{ headerShown: false }}
       />
 
       <Tab.Screen name="Search" component={Search} />

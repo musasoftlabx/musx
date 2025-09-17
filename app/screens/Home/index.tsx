@@ -1,5 +1,5 @@
 // * React
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 
 // * React Native
 import {
@@ -8,13 +8,13 @@ import {
   RefreshControl,
   SectionList,
   SectionListData,
-  Text,
   View,
 } from 'react-native';
 
 // * Libraries
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {useQuery} from '@tanstack/react-query';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useQuery } from '@tanstack/react-query';
+import { Text } from 'react-native-paper';
 import _ from 'lodash';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
@@ -27,16 +27,16 @@ import RecentlyAddedAndPlayed from './components/RecentlyAddedAndPlayed';
 import StatusBarX from '../../components/StatusBarX';
 
 // * Store
-import {API_URL, WIDTH} from '../../store';
+import { API_URL, WIDTH } from '../../store';
 
 // * Types
-import {RootStackParamList, TrackProps} from '../../types';
+import { RootStackParamList, TrackProps } from '../../types';
 import axios from 'axios';
-import {queryClient} from '../../../App';
+import { queryClient } from '../../../App';
 
 export type SectionProps = {
   data?: [number];
-  dataset?: (TrackProps | {name?: string; icon?: string})[];
+  dataset?: (TrackProps | { name?: string; icon?: string })[];
   title: string;
   horizontal?: boolean;
 };
@@ -102,7 +102,7 @@ export default function Home({
 
   useQuery({
     queryKey: ['dashboard'],
-    queryFn: ({queryKey}) => {
+    queryFn: ({ queryKey }) => {
       let updated: any = [];
 
       const setter = (title: string, data: any) => {
@@ -112,7 +112,7 @@ export default function Home({
 
         sections.forEach(
           (section, i) =>
-            i === sectionIndex && updated.push({...section, dataset: data}),
+            i === sectionIndex && updated.push({ ...section, dataset: data }),
         );
 
         return updated;
@@ -154,12 +154,25 @@ export default function Home({
         marginTop: 20,
         marginBottom: 5,
         marginHorizontal: 10,
-      }}>
-      <Text style={{fontSize: 18, fontWeight: '800', color: '#fff'}}>
+      }}
+    >
+      <Text
+        style={{
+          color: '#fff',
+          fontSize: 18,
+          fontWeight: '800',
+          textDecorationLine: 'underline',
+        }}
+      >
         {section.title}
       </Text>
 
-      <FontAwesome name="chevron-right" size={12} style={{marginTop: 7}} />
+      <FontAwesome
+        color="#fff"
+        name="chevron-right"
+        size={12}
+        style={{ marginTop: 7 }}
+      />
     </Pressable>
   );
 
@@ -178,11 +191,11 @@ export default function Home({
             refreshing={refreshing}
             onRefresh={() => {
               setRefreshing(true);
-              queryClient.refetchQueries({queryKey: ['dashboard']});
+              queryClient.refetchQueries({ queryKey: ['dashboard'] });
             }}
           />
         }
-        renderSectionHeader={({section}) => (
+        renderSectionHeader={({ section }) => (
           <>
             {section.title !== 'Libraries' && (
               <>
@@ -201,7 +214,7 @@ export default function Home({
             )}
           </>
         )}
-        renderItem={({section}) => (
+        renderItem={({ section }) => (
           <>
             {section.horizontal ? (
               <>
@@ -231,7 +244,7 @@ export default function Home({
             ) : (
               <>
                 {section.title === 'Libraries' && (
-                  <View style={{flexDirection: 'row', flexWrap: 'wrap'}}>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                     {section.dataset?.map((item, i) => (
                       <Pressable
                         key={i}
@@ -242,24 +255,26 @@ export default function Home({
                           backgroundColor: 'rgba(10, 10, 20, 0.5)',
                           width: WIDTH / 2.5,
                           margin: 5,
-                        }}>
+                        }}
+                      >
                         <View
                           style={{
                             flexDirection: 'row',
                             paddingHorizontal: 6,
                             paddingVertical: 12,
                             overflow: 'hidden',
-                          }}>
+                          }}
+                        >
                           <Image
                             source={item.icon}
-                            style={{height: 45, marginRight: 5, width: 45}}
+                            style={{ height: 45, marginRight: 5, width: 45 }}
                           />
                           <View>
-                            <Text style={{fontSize: 20, fontWeight: 'bold'}}>
+                            <Text style={{ fontSize: 20, fontWeight: 'bold' }}>
                               {item.name}
                             </Text>
 
-                            <Text style={{fontSize: 16}}>
+                            <Text style={{ fontSize: 16 }}>
                               {stats
                                 ? Object.keys(stats).map(stat => {
                                     if (stat === item.name?.toLowerCase())
@@ -268,7 +283,7 @@ export default function Home({
                                 : 0}
                             </Text>
                           </View>
-                          <View style={{flex: 1}} />
+                          <View style={{ flex: 1 }} />
                           <Image
                             source={item.icon}
                             style={{

@@ -2,27 +2,28 @@
 import React from 'react';
 
 // * React Native
-import {Image, Text, View} from 'react-native';
+import { Image, View } from 'react-native';
 
 // * Libraries
-import {MediaPlayerState} from 'react-native-google-cast';
+import { MediaPlayerState } from 'react-native-google-cast';
+import { Text } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
 
 // * Store
-import {usePlayerStore, WIDTH} from '../../../store';
+import { usePlayerStore, WIDTH } from '../../../store';
 
 // * Functions
-import {formatTrackTime} from '../../../functions';
+import { formatTrackTime } from '../../../functions';
 
 // * Assets
 import imageFiller from '../../../assets/images/image-filler.png';
 
 export default function WaveformSlider() {
   // ? StoreStates
-  const {position, buffered, duration} = usePlayerStore(
+  const { position, buffered, duration } = usePlayerStore(
     state => state.progress,
   );
-  const {state} = usePlayerStore(state => state.playbackState);
+  const { state } = usePlayerStore(state => state.playbackState);
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const palette = usePlayerStore(state => state.palette);
 
@@ -40,10 +41,11 @@ export default function WaveformSlider() {
           alignItems: 'flex-start',
           top: -5,
           marginLeft: 8,
-        }}>
+        }}
+      >
         <Image
           source={
-            activeTrack?.waveform ? {uri: activeTrack?.waveform} : imageFiller
+            activeTrack?.waveform ? { uri: activeTrack?.waveform } : imageFiller
           }
           style={{
             left: '-49%',
@@ -67,10 +69,13 @@ export default function WaveformSlider() {
             overflow: 'hidden',
             position: 'absolute',
             zIndex: 1,
-          }}>
+          }}
+        >
           <Image
             source={
-              activeTrack?.waveform ? {uri: activeTrack?.waveform} : imageFiller
+              activeTrack?.waveform
+                ? { uri: activeTrack?.waveform }
+                : imageFiller
             }
             style={{
               height: 100,
@@ -95,23 +100,26 @@ export default function WaveformSlider() {
             overflow: 'hidden',
             position: 'absolute',
             zIndex: 2,
-          }}>
+          }}
+        >
           <Image
             source={
-              activeTrack?.waveform ? {uri: activeTrack?.waveform} : imageFiller
+              activeTrack?.waveform
+                ? { uri: activeTrack?.waveform }
+                : imageFiller
             }
             style={{
               height: 100,
               width: WIDTH * 0.95,
               position: 'absolute',
               resizeMode: 'stretch',
-              tintColor: palette[3],
+              tintColor: palette?.[3],
               zIndex: 2,
             }}
           />
         </View>
 
-        <View style={{flex: 0.01}} />
+        <View style={{ flex: 0.01 }} />
 
         <Slider
           style={{
@@ -127,7 +135,7 @@ export default function WaveformSlider() {
           onValueChange={value => seekTo((value / 100) * duration)}
           minimumValue={0}
           maximumValue={100}
-          minimumTrackTintColor={palette[0] || '#FFF'}
+          minimumTrackTintColor={palette?.[0] || '#FFF'}
           maximumTrackTintColor="#fff"
         />
       </View>
@@ -140,12 +148,13 @@ export default function WaveformSlider() {
           marginBottom: 10,
           marginHorizontal: 20,
           gap: 10,
-        }}>
-        <Text style={{fontSize: 16, fontWeight: 'bold'}}>
+        }}
+      >
+        <Text style={{ fontSize: 16, fontWeight: 'bold' }}>
           {formatTrackTime(position)}
         </Text>
-        <View style={{flex: 1}} />
-        <Text style={{fontSize: 16, fontWeight: 'bold'}}>
+        <View style={{ flex: 1 }} />
+        <Text style={{ fontSize: 16, fontWeight: 'bold' }}>
           {formatTrackTime(duration)}
         </Text>
       </View>

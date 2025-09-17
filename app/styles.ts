@@ -1,6 +1,6 @@
 // * React Native
-import {Platform, StyleSheet} from 'react-native';
-import {darkTheme, lightTheme} from './utils';
+import { Platform, StyleSheet } from 'react-native';
+import { darkTheme, lightTheme } from './utils';
 
 export const styles = StyleSheet.create({
   textInput: {
@@ -51,7 +51,7 @@ export const styles = StyleSheet.create({
     marginBottom: 20,
     overflow: 'hidden',
   },
-  helperText: {alignSelf: 'flex-end', marginTop: -25},
+  helperText: { alignSelf: 'flex-end', marginTop: -22, marginRight: -8 },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',

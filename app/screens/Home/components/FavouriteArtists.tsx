@@ -2,20 +2,21 @@
 import React from 'react';
 
 // * React Native
-import {Image, Pressable, Text, View} from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 
 // * Libraries
-import {Avatar} from 'react-native-paper';
-import {FlashList} from '@shopify/flash-list';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {useNavigation} from '@react-navigation/native';
+import { Avatar } from 'react-native-paper';
+import { FlashList } from '@shopify/flash-list';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
+import { Text } from 'react-native-paper';
 
 // * Components
 import HorizontalListItem from '../../../components/Skeletons/HorizontalListItem';
 
 // * Types
-import {SectionProps} from '..';
-import {RootStackParamList, TrackProps, TracksProps} from '../../../types';
+import { SectionProps } from '..';
+import { RootStackParamList, TrackProps, TracksProps } from '../../../types';
 
 export default function FavouriteArtists({
   loading,
@@ -40,7 +41,7 @@ export default function FavouriteArtists({
             horizontal
             keyExtractor={(_, index) => index.toString()}
             estimatedItemSize={20}
-            renderItem={({item}: {item: TrackProps}) => (
+            renderItem={({ item }: { item: TrackProps }) => (
               <Pressable
                 onPress={() =>
                   navigation.navigate('Artist', {
@@ -51,7 +52,8 @@ export default function FavouriteArtists({
                     url: item.url,
                   })
                 }
-                style={{alignItems: 'center', margin: 10, width: 100}}>
+                style={{ alignItems: 'center', margin: 10, width: 100 }}
+              >
                 {item.hasOwnProperty('artworks') ? (
                   <View
                     style={{
@@ -62,14 +64,15 @@ export default function FavouriteArtists({
                       width: 100,
                       height: 100,
                       overflow: 'hidden',
-                    }}>
+                    }}
+                  >
                     {item.artworks.map(
                       (artwork: string, i: number) =>
                         i <= 4 && (
                           <Image
                             key={i}
-                            source={{uri: artwork}}
-                            style={{width: 50, height: 50}}
+                            source={{ uri: artwork }}
+                            style={{ width: 50, height: 50 }}
                             resizeMode="cover"
                           />
                         ),
@@ -84,7 +87,7 @@ export default function FavouriteArtists({
                         .slice(0, -1)
                         .join('/')}/artist.jpg`,
                     }}
-                    style={{width: 100, height: 100, borderRadius: 100}}
+                    style={{ width: 100, height: 100, borderRadius: 100 }}
                   />
                 )}
 
@@ -95,13 +98,14 @@ export default function FavouriteArtists({
                     fontSize: 16,
                     marginTop: 5,
                     marginBottom: 1,
-                  }}>
+                  }}
+                >
                   {item.albumArtist.includes('Various Artists')
                     ? item.albumArtist.replace('Various Artists', 'V.A.')
                     : item.albumArtist}
                 </Text>
 
-                <Text style={{fontSize: 14, opacity: 0.5}}>
+                <Text style={{ fontSize: 14, opacity: 0.5 }}>
                   {item.rating.toFixed(2)} rating
                 </Text>
 
@@ -114,7 +118,8 @@ export default function FavouriteArtists({
                     fontSize: 14,
                     marginTop: 1,
                     paddingHorizontal: 5,
-                  }}>
+                  }}
+                >
                   {item.tracks} tracks
                 </Text>
               </Pressable>
@@ -127,11 +132,12 @@ export default function FavouriteArtists({
                   justifyContent: 'center',
                   marginHorizontal: 20,
                   marginTop: -60,
-                }}>
+                }}
+              >
                 <Avatar.Icon
                   size={60}
                   icon="chevron-right"
-                  style={{borderColor: '#ffffff4D', borderWidth: 1}}
+                  style={{ borderColor: '#ffffff4D', borderWidth: 1 }}
                 />
               </Pressable>
             }

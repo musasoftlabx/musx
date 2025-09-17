@@ -1,20 +1,21 @@
 // * React
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 
 // * React Native
-import {Text, View} from 'react-native';
+import { View } from 'react-native';
 
 // * Libraries
+import { Text } from 'react-native-paper';
 import DraggableFlatList from 'react-native-draggable-flatlist';
-import TrackPlayer, {Track} from 'react-native-track-player';
+import TrackPlayer, { Track } from 'react-native-track-player';
 
 // * Store
-import {usePlayerStore} from '../../../store';
+import { usePlayerStore } from '../../../store';
 
 // * Types
-import {TrackProps} from '../../../types';
+import { TrackProps } from '../../../types';
 
-export default function BackTo({RenderQueueListItem}: any) {
+export default function BackTo({ RenderQueueListItem }: any) {
   // ? StoreStates
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const queue = usePlayerStore(state => state.queue);
@@ -34,7 +35,7 @@ export default function BackTo({RenderQueueListItem}: any) {
   return (
     <DraggableFlatList
       data={data}
-      onDragEnd={({data, from, to}) => {
+      onDragEnd={({ data, from, to }) => {
         setData(data);
 
         const restoredQueue = [
@@ -67,19 +68,24 @@ export default function BackTo({RenderQueueListItem}: any) {
         //   ),
         // );
       }}
-      keyExtractor={({id}) => id.toString()}
+      keyExtractor={({ id }) => id.toString()}
       renderItem={RenderQueueListItem}
       activationDistance={10}
       renderPlaceholder={() => (
-        <View style={{backgroundColor: 'yellow', height: 600}} />
+        <View style={{ backgroundColor: 'yellow', height: 600 }} />
       )}
       ListEmptyComponent={() => (
         <View
-          style={{height: 300, justifyContent: 'center', alignItems: 'center'}}>
+          style={{
+            height: 300,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
           <Text>No tracks</Text>
         </View>
       )}
-      containerStyle={{marginVertical: 10}}
+      containerStyle={{ marginVertical: 10 }}
     />
   );
 }

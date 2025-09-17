@@ -1,34 +1,34 @@
 // * React
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 
 // * React Native
-import {Image, FlatList, Pressable, Text, View} from 'react-native';
+import { Image, FlatList, Pressable, Text, View } from 'react-native';
 
 // * Libraries
-import {Button, Snackbar, TextInput} from 'react-native-paper';
-import {useBackHandler} from '@react-native-community/hooks';
-import {useQuery} from '@tanstack/react-query';
+import { Button, Snackbar, TextInput } from 'react-native-paper';
+import { useBackHandler } from '@react-native-community/hooks';
+import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 
-import {queryClient} from '../../../App';
+import { queryClient } from '../../../App';
 import ButtonX from '../../components/ButtonX';
 import LinearGradientX from '../../components/LinearGradientX';
 import StatusBarX from '../../components/StatusBarX';
 
 // * Store
-import {API_URL} from '../../store';
+import { API_URL } from '../../store';
 
 // * Types
-import {TrackProps} from '../../types';
-import {addPlaylistTrack} from '../../functions';
+import { TrackProps } from '../../types';
+import { addPlaylistTrack } from '../../functions';
 
 export default function AddToPlaylist({
   navigation,
   route: {
-    params: {id},
+    params: { id },
   },
 }: any) {
-  console.log({id});
+  console.log({ id });
   // ? States
   const [name, setName] = useState('');
   const [snackbar, setSnackbar] = useState(false);
@@ -40,8 +40,8 @@ export default function AddToPlaylist({
     isFetching,
   } = useQuery({
     queryKey: ['playlists'],
-    queryFn: ({queryKey}) => axios(`${API_URL}${queryKey[0]}`),
-    select: ({data}) => data,
+    queryFn: ({ queryKey }) => axios(`${API_URL}${queryKey[0]}`),
+    select: ({ data }) => data,
   });
 
   useBackHandler(() => {
@@ -50,11 +50,11 @@ export default function AddToPlaylist({
   });
 
   const createPlaylist = async () => {
-    const {data} = await axios.post(`${API_URL}createPlaylist`, {
+    const { data } = await axios.post(`${API_URL}createPlaylist`, {
       name,
       trackId: id,
     });
-    queryClient.refetchQueries({queryKey: ['playlists']});
+    queryClient.refetchQueries({ queryKey: ['playlists'] });
     setName('');
     navigation.goBack();
   };
@@ -65,18 +65,20 @@ export default function AddToPlaylist({
 
       <LinearGradientX />
 
-      <View style={{marginHorizontal: 15}}>
+      <View style={{ marginHorizontal: 15 }}>
         <ButtonX
           icon={displayForm ? 'chevron-up' : 'plus'}
-          style={{marginTop: 70, marginBottom: 20}}
-          onPress={() => setDisplayForm(prev => !prev)}>
+          style={{ marginTop: 70, marginBottom: 20 }}
+          onPress={() => setDisplayForm(prev => !prev)}
+        >
           CREATE NEW
         </ButtonX>
 
         <View
           //animation="slideInDown"
           //duration={3000}
-          style={{display: displayForm ? 'flex' : 'none'}}>
+          style={{ display: displayForm ? 'flex' : 'none' }}
+        >
           <TextInput
             label="Playlist Name"
             value={name}
@@ -96,20 +98,21 @@ export default function AddToPlaylist({
             loading={false}
             disabled={false}
             onPress={createPlaylist}
-            style={{marginBottom: 40}}>
+            style={{ marginBottom: 40 }}
+          >
             CREATE
           </Button>
         </View>
 
         <FlatList
           data={playlists}
-          contentContainerStyle={{minHeight: '100%'}}
+          contentContainerStyle={{ minHeight: '100%' }}
           keyExtractor={(_, index) => index.toString()}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={() => (
-            <Text style={{fontSize: 16, marginBottom: 10}}>Playlists</Text>
+            <Text style={{ fontSize: 16, marginBottom: 10 }}>Playlists</Text>
           )}
-          renderItem={({item}: {item: TrackProps}) => (
+          renderItem={({ item }: { item: TrackProps }) => (
             <Pressable
               onPress={
                 () =>
@@ -121,20 +124,22 @@ export default function AddToPlaylist({
                       endsAt: null,
                     })
                     .then(() => {
-                      queryClient.refetchQueries({queryKey: ['dashboard']});
-                      queryClient.refetchQueries({queryKey: ['playlists']});
+                      queryClient.refetchQueries({ queryKey: ['dashboard'] });
+                      queryClient.refetchQueries({ queryKey: ['playlists'] });
                       navigation.goBack();
                     })
                     .catch(err => console.error(err.message))
 
                 //addPlaylistTrack(item, id)
-              }>
+              }
+            >
               <View
                 style={{
                   flexDirection: 'row',
                   marginVertical: 10,
                   marginHorizontal: 10,
-                }}>
+                }}
+              >
                 <View
                   style={{
                     borderRadius: 10,
@@ -144,11 +149,12 @@ export default function AddToPlaylist({
                     height: 50,
                     width: 50,
                     overflow: 'hidden',
-                  }}>
+                  }}
+                >
                   {item.artworks.length < 4 ? (
                     <Image
-                      source={{uri: item.artworks[0]}}
-                      style={{borderRadius: 10, width: 50, height: 50}}
+                      source={{ uri: item.artworks[0] }}
+                      style={{ borderRadius: 10, width: 50, height: 50 }}
                       resizeMode="cover"
                     />
                   ) : (
@@ -157,21 +163,22 @@ export default function AddToPlaylist({
                         i < 4 && (
                           <Image
                             key={i}
-                            source={{uri: artwork}}
-                            style={{width: 25, height: 25}}
+                            source={{ uri: artwork }}
+                            style={{ width: 25, height: 25 }}
                             resizeMode="cover"
                           />
                         ),
                     )
                   )}
                 </View>
-                <View style={{justifyContent: 'center', marginLeft: -110}}>
+                <View style={{ justifyContent: 'center', marginLeft: -110 }}>
                   <Text
                     numberOfLines={1}
-                    style={{fontSize: 18, fontWeight: 'bold'}}>
+                    style={{ fontSize: 18, fontWeight: 'bold' }}
+                  >
                     {item.name}
                   </Text>
-                  <Text numberOfLines={1} style={{opacity: 0.7}}>
+                  <Text numberOfLines={1} style={{ opacity: 0.7 }}>
                     {item.tracks.length} track
                     {item.tracks.length === 1 ? '' : 's'}
                   </Text>

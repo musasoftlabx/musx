@@ -1,5 +1,10 @@
 // * React
-import React, {useState, useEffect, useLayoutEffect, useCallback} from 'react';
+import React, {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+} from 'react';
 
 // * React-Native
 import {
@@ -7,18 +12,17 @@ import {
   Image,
   View,
   Pressable,
-  Text,
   TextInput,
   Vibration,
 } from 'react-native';
 
 // * Libraries
-import {Divider, Menu} from 'react-native-paper';
-import {CastButton} from 'react-native-google-cast';
-import {FlashList} from '@shopify/flash-list';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {useBackHandler} from '@react-native-community/hooks';
-import {useMutation} from '@tanstack/react-query';
+import { Divider, Menu, Text } from 'react-native-paper';
+import { CastButton } from 'react-native-google-cast';
+import { FlashList } from '@shopify/flash-list';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useBackHandler } from '@react-native-community/hooks';
+import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import debounce from 'lodash/debounce';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -30,13 +34,13 @@ import LinearGradientX from '../../components/LinearGradientX';
 import StatusBarX from '../../components/StatusBarX';
 
 // * Store
-import {API_URL, HEIGHT, WIDTH, usePlayerStore} from '../../store';
+import { API_URL, HEIGHT, WIDTH, usePlayerStore } from '../../store';
 
 // * Constants
-import {queryClient} from '../../../App';
+import { queryClient } from '../../../App';
 
 // * Types
-import {RootStackParamList} from '../../types';
+import { RootStackParamList } from '../../types';
 
 type ArtistProps = RootStackParamList['Artist'];
 
@@ -61,10 +65,10 @@ export default function Artists({
     return true;
   });
 
-  const {mutate, isPending, isSuccess} = useMutation({
+  const { mutate, isPending, isSuccess } = useMutation({
     mutationKey: ['artists'],
     mutationFn: () => axios<ArtistProps[]>(`${API_URL}artists`),
-    onSuccess: ({data}) => (setFilter(data), setArtists(data)),
+    onSuccess: ({ data }) => (setFilter(data), setArtists(data)),
   });
 
   // ? Callbacks
@@ -109,7 +113,7 @@ export default function Artists({
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      header: ({route: {name}}) =>
+      header: ({ route: { name } }) =>
         showSearch ? (
           <View
             style={{
@@ -119,7 +123,8 @@ export default function Artists({
               gap: 10,
               paddingHorizontal: 20,
               paddingVertical: 5,
-            }}>
+            }}
+          >
             <Pressable
               onPress={() => {
                 Vibration.vibrate(50);
@@ -127,7 +132,8 @@ export default function Artists({
                 setSearchWord('');
                 setFilter(artists);
               }}
-              style={{marginRight: 10, opacity: 0.8}}>
+              style={{ marginRight: 10, opacity: 0.8 }}
+            >
               <Ionicons name="arrow-back" size={22} color="white" />
             </Pressable>
 
@@ -153,7 +159,8 @@ export default function Artists({
                 setSearchWord('');
                 setFilter(artists);
               }}
-              style={{opacity: 0.8}}>
+              style={{ opacity: 0.8 }}
+            >
               <Ionicons name="close" size={22} color="white" />
             </Pressable>
           </View>
@@ -166,23 +173,26 @@ export default function Artists({
               gap: 40,
               paddingHorizontal: 20,
               paddingVertical: 10,
-            }}>
+            }}
+          >
             <Pressable
               onPress={() => navigation.goBack()}
-              style={{opacity: 0.8}}>
+              style={{ opacity: 0.8 }}
+            >
               <Ionicons name="arrow-back" size={22} color="white" />
             </Pressable>
 
-            <View style={{marginLeft: -10}}>
-              <Text style={{fontSize: 22}}>{name}</Text>
-              <Text style={{fontSize: 12}}>{artists?.length} artists</Text>
+            <View style={{ marginLeft: -10 }}>
+              <Text style={{ fontSize: 22 }}>{name}</Text>
+              <Text style={{ fontSize: 12 }}>{artists?.length} artists</Text>
             </View>
 
-            <View style={{flex: 1}} />
+            <View style={{ flex: 1 }} />
 
             <Pressable
               onPress={() => (Vibration.vibrate(50), setShowSearch(true))}
-              style={{marginRight: 10, opacity: 0.8}}>
+              style={{ marginRight: 10, opacity: 0.8 }}
+            >
               <Ionicons name="search" size={22} color="white" />
             </Pressable>
 
@@ -195,10 +205,12 @@ export default function Artists({
                   onPress={() => (
                     Vibration.vibrate(50), setIsSortMenuVisible(true)
                   )}
-                  style={{marginRight: 10, opacity: 0.8}}>
+                  style={{ marginRight: 10, opacity: 0.8 }}
+                >
                   <MaterialCommunityIcons name="sort" size={22} color="white" />
                 </Pressable>
-              }>
+              }
+            >
               <Menu.Item
                 onPress={() => sortArtists('albumArtist')}
                 title="Sort by artist"
@@ -214,7 +226,7 @@ export default function Artists({
               />
             </Menu>
 
-            <CastButton style={{height: 24, width: 24, marginRight: 5}} />
+            <CastButton style={{ height: 24, width: 24, marginRight: 5 }} />
           </View>
         ),
     });
@@ -234,13 +246,14 @@ export default function Artists({
           ).fill(0)}
           numColumns={Number((WIDTH / 150).toFixed(0))}
           keyExtractor={(_, index) => index.toString()}
-          contentContainerStyle={{alignItems: 'center'}}
+          contentContainerStyle={{ alignItems: 'center' }}
           renderItem={() => (
-            <View style={{paddingHorizontal: 20}}>
+            <View style={{ paddingHorizontal: 20 }}>
               <SkeletonPlaceholder
                 highlightColor="#fff5"
-                backgroundColor="#fff5">
-                <View style={{alignItems: 'center', paddingTop: 20}}>
+                backgroundColor="#fff5"
+              >
+                <View style={{ alignItems: 'center', paddingTop: 20 }}>
                   <View
                     style={{
                       borderRadius: 100,
@@ -249,9 +262,11 @@ export default function Artists({
                       width: 100,
                     }}
                   />
-                  <View style={{borderRadius: 5, gap: 8}}>
-                    <Text style={{fontSize: 14, lineHeight: 16}} />
-                    <Text style={{fontSize: 14, lineHeight: 10, width: 80}} />
+                  <View style={{ borderRadius: 5, gap: 8 }}>
+                    <Text style={{ fontSize: 14, lineHeight: 16 }}>{''}</Text>
+                    <Text style={{ fontSize: 14, lineHeight: 10, width: 80 }}>
+                      {''}
+                    </Text>
                   </View>
                 </View>
               </SkeletonPlaceholder>
@@ -270,10 +285,10 @@ export default function Artists({
           onRefresh={() => {
             setRefreshing(true);
             queryClient
-              .refetchQueries({queryKey: ['artists']})
+              .refetchQueries({ queryKey: ['artists'] })
               .then(() => setRefreshing(false));
           }}
-          renderItem={({item}: {item: ArtistProps}) => (
+          renderItem={({ item }: { item: ArtistProps }) => (
             <Pressable
               onPress={() =>
                 navigation.navigate('Artist', {
@@ -284,8 +299,9 @@ export default function Artists({
                   url: item.url,
                 })
               }
-              style={{flex: 1}}>
-              <View style={{paddingVertical: 12, alignItems: 'center'}}>
+              style={{ flex: 1 }}
+            >
+              <View style={{ paddingVertical: 12, alignItems: 'center' }}>
                 {item.artworks?.length === 4 ? (
                   <View
                     style={{
@@ -296,12 +312,13 @@ export default function Artists({
                       width: 100,
                       height: 100,
                       overflow: 'hidden',
-                    }}>
+                    }}
+                  >
                     {item.artworks.map((artwork: string, i: number) => (
                       <Image
                         key={i}
-                        source={{uri: artwork}}
-                        style={{width: 50, height: 50}}
+                        source={{ uri: artwork }}
+                        style={{ width: 50, height: 50 }}
                         resizeMode="cover"
                       />
                     ))}
@@ -315,7 +332,7 @@ export default function Artists({
                         .join('/')}/artist.jpg`,
                     }}
                     defaultSource={require('../../assets/images/musician.png')}
-                    style={{width: 100, height: 100, borderRadius: 100}}
+                    style={{ width: 100, height: 100, borderRadius: 100 }}
                     resizeMode="cover"
                   />
                 )}
@@ -326,7 +343,8 @@ export default function Artists({
                     color: 'white',
                     marginTop: 5,
                     marginBottom: 1,
-                  }}>
+                  }}
+                >
                   {item.albumArtist?.includes('Various Artists')
                     ? item.albumArtist.replace('Various Artists', 'V.A.')
                     : item.albumArtist}
@@ -335,14 +353,15 @@ export default function Artists({
                   style={{
                     fontSize: 14,
                     opacity: 0.5,
-                  }}>
+                  }}
+                >
                   {item.tracks} tracks
                 </Text>
               </View>
             </Pressable>
           )}
           ListEmptyComponent={
-            <View style={{alignItems: 'center', flex: 1}}>
+            <View style={{ alignItems: 'center', flex: 1 }}>
               <Text>Empty</Text>
             </View>
           }

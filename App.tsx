@@ -1,16 +1,12 @@
 // * React
-import React, {useEffect, useRef} from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 
 // * React Native
-import {Appearance, StatusBar} from 'react-native';
+import { Appearance, StatusBar } from 'react-native';
 
 // * Libraries
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {
-  DefaultTheme as RNLightTheme,
-  DarkTheme as RNDarkTheme,
-  NavigationContainer,
-} from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { NavigationContainer } from '@react-navigation/native';
 import GoogleCast, {
   MediaInfo,
   MediaPlayerState,
@@ -26,42 +22,45 @@ import TrackPlayer, {
   Capability,
   useTrackPlayerEvents,
   Event,
-  usePlaybackState,
   useActiveTrack,
   useProgress,
   Track,
   RatingType,
-  usePlayWhenReady,
 } from 'react-native-track-player';
-import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {PaperProvider, adaptNavigationTheme} from 'react-native-paper';
-import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { PaperProvider } from 'react-native-paper';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios, {Axios, AxiosError} from 'axios';
 import BottomSheet from '@gorhom/bottom-sheet';
+import axios, { AxiosError } from 'axios';
 import Sound from 'react-native-sound';
 
-// * Screens
+// * Navigators
 import TabNavigator from './app/navigators/TabNavigator';
 
 // * Utils
-import {darkTheme} from './app/utils';
+import { darkTheme, ReactNavigationDarkTheme } from './app/utils';
 
 // * Store
-import {API_URL, AUDIO_URL, usePlayerStore} from './app/store';
-import {TrackProps} from './app/types';
+import { API_URL, AUDIO_URL, usePlayerStore } from './app/store';
+
+// * Types
+import { TrackProps } from './app/types';
+
+// * Functions
+import { refreshScreens } from './app/functions';
+
+// * Components
 import TrackDetails from './app/components/TrackDetails';
+
+// * Screens
 import NowPlaying from './app/screens/NowPlaying';
-import {refreshScreens} from './app/functions';
+import tinycolor from 'tinycolor2';
 
 // * Constants
 export const queryClient = new QueryClient();
 const Stack = createNativeStackNavigator();
-const {DarkTheme} = adaptNavigationTheme({
-  reactNavigationDark: RNDarkTheme,
-  reactNavigationLight: RNLightTheme,
-});
 
 // ? Axios config
 axios.defaults.baseURL = API_URL;
@@ -73,8 +72,9 @@ axios.defaults.headers.post['Accept'] = 'application/json';
 Appearance.setColorScheme('dark');
 
 // ? Setup Track Player
-TrackPlayer.setupPlayer({autoHandleInterruptions: true});
+TrackPlayer.setupPlayer({ autoHandleInterruptions: true });
 
+// ? Remove track items in storage
 AsyncStorage.removeItem('queue');
 AsyncStorage.removeItem('activeTrackIndex');
 
@@ -89,24 +89,23 @@ export default function App(): React.JSX.Element {
   const castMediaStatus = useMediaStatus();
   const castState = useCastState();
   const castSession = useCastSession();
-  const playbackState = usePlaybackState();
-  const playWhenReady = usePlayWhenReady();
   const progress = useProgress();
   const streamPosition = useStreamPosition();
   const sessionManager = GoogleCast.getSessionManager();
 
-  // ? StoreStates
+  // ? Store States
   const _activeTrack = usePlayerStore(state => state.activeTrack);
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
+  const bitrate = usePlayerStore(state => state.bitrate);
   const isCrossFading = usePlayerStore(state => state.isCrossFading);
   const playRegistered = usePlayerStore(state => state.playRegistered);
   const queue = usePlayerStore(state => state.queue);
-  const streamViaHLS = usePlayerStore(state => state.streamViaHLS);
-  const bitrate = usePlayerStore(state => state.bitrate);
-  const trackDetails = usePlayerStore(state => state.trackDetails);
   const selectedPlaylist = usePlayerStore(state => state.selectedPlaylist);
+  const streamViaHLS = usePlayerStore(state => state.streamViaHLS);
+  const trackDetails = usePlayerStore(state => state.trackDetails);
 
-  // ? StoreActions
+  // ? Store Actions
+  const openNowPlaying = usePlayerStore(state => state.openNowPlaying);
   const play = usePlayerStore(state => state.play);
   const setPlaybackState = usePlayerStore(state => state.setPlaybackState);
   const setProgress = usePlayerStore(state => state.setProgress);
@@ -122,7 +121,6 @@ export default function App(): React.JSX.Element {
   const setPalette = usePlayerStore(state => state.setPalette);
   const setLyrics = usePlayerStore(state => state.setLyrics);
   const setLyricsVisible = usePlayerStore(state => state.setLyricsVisible);
-  const openNowPlaying = usePlayerStore(state => state.openNowPlaying);
   const setTrackDetailsRef = usePlayerStore(state => state.setTrackDetailsRef);
   const setNowPlayingRef = usePlayerStore(state => state.setNowPlayingRef);
   const setCastState = usePlayerStore(state => state.setCastState);
@@ -133,7 +131,7 @@ export default function App(): React.JSX.Element {
   // ? Functions
   const fetchLyrics = (url: string) => {
     axios(url)
-      .then(({data: lyrics}) => {
+      .then(({ data: lyrics }) => {
         setLyrics(lyrics);
         setLyricsVisible(true);
       })
@@ -172,14 +170,14 @@ export default function App(): React.JSX.Element {
           Capability.Stop,
           Capability.SeekTo,
         ],
-        compactCapabilities: [
-          Capability.Play,
-          Capability.Pause,
-          Capability.SkipToNext,
-          Capability.SkipToPrevious,
-          Capability.Stop,
-          Capability.SeekTo,
-        ],
+        // compactCapabilities: [
+        //   Capability.Play,
+        //   Capability.Pause,
+        //   Capability.SkipToNext,
+        //   Capability.SkipToPrevious,
+        //   Capability.Stop,
+        //   Capability.SeekTo,
+        // ],
         notificationCapabilities: [
           Capability.Play,
           Capability.Pause,
@@ -234,9 +232,9 @@ export default function App(): React.JSX.Element {
   useEffect(() => {
     if (castMediaStatus?.currentItemId) {
       castClient?.getMediaStatus().then(status => {
-        const {mediaInfo} = status as MediaStatus;
-        const {customData} = mediaInfo as MediaInfo;
-        const {id, rating, plays, palette, duration, path} =
+        const { mediaInfo } = status as MediaStatus;
+        const { customData } = mediaInfo as MediaInfo;
+        const { id, rating, plays, palette, duration, path } =
           customData as TrackProps;
 
         // ? Invoke transcoder to transcode the file to HLS chunks
@@ -248,8 +246,17 @@ export default function App(): React.JSX.Element {
         setActiveTrack(customData as TrackProps);
         setTrackRating(rating);
         setTrackPlayCount(plays);
-        setPalette(palette as unknown as string[]);
-        setProgress({position: 0, buffered: 0, duration});
+        setProgress({ position: 0, buffered: 0, duration });
+
+        // ? Compute palette colors
+        setPalette(
+          JSON.parse(palette).map((color: string) => {
+            const brightness = tinycolor(color).getBrightness();
+            if (brightness >= 150)
+              return `#${tinycolor(color).darken(50).toHex()}`;
+            else return color;
+          }),
+        );
 
         // ? Get active track lyrics. Display the lyrics if found else display artwork
         fetchLyrics(`${AUDIO_URL}${path.replace('.mp3', '.lrc')}`);
@@ -268,7 +275,7 @@ export default function App(): React.JSX.Element {
 
   useEffect(() => {
     if (castMediaStatus) {
-      setPlaybackState({state: castMediaStatus?.playerState});
+      setPlaybackState({ state: castMediaStatus?.playerState });
 
       console.log('cms;', castMediaStatus?.playerState);
 
@@ -300,7 +307,7 @@ export default function App(): React.JSX.Element {
             // @ts-ignore
             id: castMediaStatus?.mediaInfo?.customData?.id,
           })
-          .then(({data: {plays}}) => {
+          .then(({ data: { plays } }) => {
             setTrackPlayCount(plays);
             // const updateQueued = queue.map(track =>
             //   // @ts-ignore
@@ -323,6 +330,7 @@ export default function App(): React.JSX.Element {
       Event.PlaybackProgressUpdated,
       Event.PlaybackState,
       Event.PlaybackQueueEnded,
+      Event.PlayerError,
     ],
     event => {
       if (!castSession) {
@@ -340,16 +348,28 @@ export default function App(): React.JSX.Element {
           setActiveTrack(activeTrack);
           setTrackRating(activeTrack?.rating);
           setTrackPlayCount(activeTrack?.plays);
-          setPalette(activeTrack?.palette);
           setProgress({
             position: 0,
             buffered: 0,
             duration: activeTrack?.duration!,
           });
 
+          // ? Compute palette colors
+          if (activeTrack && JSON.stringify(activeTrack) !== '{}') {
+            const palette = JSON.parse(activeTrack?.palette).map(
+              (color: string) => {
+                const brightness = tinycolor(color).getBrightness();
+                if (brightness >= 150)
+                  return `#${tinycolor(color).darken(50).toHex()}`;
+                else return color;
+              },
+            );
+            setPalette(palette);
+          }
+
           // ? Get active track lyrics. Display the lyrics if found else display artwork
           fetchLyrics(
-            `${AUDIO_URL}${activeTrack!.path.replace('.mp3', '.lrc')}`,
+            `${AUDIO_URL}${activeTrack!?.path.replace('.mp3', '.lrc')}`,
           );
 
           // TrackPlayer.getActiveTrackIndex().then(i => {
@@ -372,8 +392,8 @@ export default function App(): React.JSX.Element {
             //return false;
             // ? Update the active track play count
             axios
-              .patch('updatePlayCount', {id: activeTrack?.id})
-              .then(({data: {plays}}) => {
+              .patch('updatePlayCount', { id: activeTrack?.id })
+              .then(({ data: { plays } }) => {
                 setTrackPlayCount(plays);
                 TrackPlayer.updateMetadataForTrack(activeTrackIndex!, {
                   ...activeTrack,
@@ -452,48 +472,55 @@ export default function App(): React.JSX.Element {
           // }
         }
 
-        if (event.type === Event.PlaybackState) setPlaybackState(playbackState);
-
-        // if (event.type === Event.PlaybackPlayWhenReadyChanged) console.log(playWhenReady);
+        if (event.type === Event.PlaybackState) {
+          setPlaybackState({ state: event.state });
+        }
 
         if (event.type === Event.PlaybackQueueEnded) {
           AsyncStorage.removeItem('queue');
           AsyncStorage.removeItem('activeTrackIndex');
         }
+
+        // if (event.type === Event.PlaybackPlayWhenReadyChanged) console.log(event.playWhenReady);
+        // if (event.type === Event.PlayerError) console.log({ code: event.code, message: event.message });
       }
     },
   );
 
-  return (
-    <GestureHandlerRootView style={{flex: 1}}>
-      <StatusBar
-        animated
-        backgroundColor="transparent"
-        barStyle="light-content"
-        translucent
-      />
+  const RenderApp = useCallback(
+    () => (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <StatusBar
+          animated
+          backgroundColor="transparent"
+          barStyle="light-content"
+          translucent
+        />
 
-      <QueryClientProvider client={queryClient}>
-        <PaperProvider theme={darkTheme}>
-          <SafeAreaProvider>
-            <NavigationContainer theme={DarkTheme}>
-              <Stack.Navigator>
-                <Stack.Screen
-                  name="TabNavigator"
-                  component={TabNavigator}
-                  options={{headerShown: false}}
+        <QueryClientProvider client={queryClient}>
+          <PaperProvider theme={darkTheme}>
+            <SafeAreaProvider>
+              <NavigationContainer theme={ReactNavigationDarkTheme}>
+                <Stack.Navigator>
+                  <Stack.Screen
+                    name="TabNavigator"
+                    component={TabNavigator}
+                    options={{ headerShown: false }}
+                  />
+                </Stack.Navigator>
+                <TrackDetails
+                  trackDetailsRef={trackDetailsRef}
+                  track={trackDetails}
                 />
-              </Stack.Navigator>
-              <TrackDetails
-                trackDetailsRef={trackDetailsRef}
-                track={trackDetails}
-                queriesToRefetch={['']}
-              />
-              <NowPlaying />
-            </NavigationContainer>
-          </SafeAreaProvider>
-        </PaperProvider>
-      </QueryClientProvider>
-    </GestureHandlerRootView>
+                <NowPlaying />
+              </NavigationContainer>
+            </SafeAreaProvider>
+          </PaperProvider>
+        </QueryClientProvider>
+      </GestureHandlerRootView>
+    ),
+    [],
   );
+
+  return RenderApp();
 }

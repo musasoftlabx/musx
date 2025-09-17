@@ -1,13 +1,13 @@
 // * React
-import React, {useState, useRef, useLayoutEffect} from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 
 // * React Native
-import {ActivityIndicator, View, Text} from 'react-native';
+import { ActivityIndicator, View, Text } from 'react-native';
 
 // * Libraries
-import {FlashList} from '@shopify/flash-list';
-import {useBackHandler} from '@react-native-community/hooks';
-import {useInfiniteQuery} from '@tanstack/react-query';
+import { FlashList } from '@shopify/flash-list';
+import { useBackHandler } from '@react-native-community/hooks';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import BottomSheet from '@gorhom/bottom-sheet';
 
@@ -18,18 +18,18 @@ import StatusBarX from '../../components/StatusBarX';
 import TrackDetails from '../../components/TrackDetails';
 
 // * Store
-import {API_URL, HEIGHT, LIST_ITEM_HEIGHT} from '../../store';
+import { API_URL, HEIGHT, LIST_ITEM_HEIGHT } from '../../store';
 
 // * Constants
-import {queryClient} from '../../../App';
+import { queryClient } from '../../../App';
 
 // * Types
-import {TrackProps, TracksProps} from '../../types';
+import { TrackProps, TracksProps } from '../../types';
 
 export default function RecentlyPlayed({
   navigation,
   route: {
-    params: {queryKey, title},
+    params: { queryKey, title },
   },
 }: any) {
   // ? Refs
@@ -45,7 +45,7 @@ export default function RecentlyPlayed({
   });
 
   useLayoutEffect(() => {
-    navigation.setOptions({title});
+    navigation.setOptions({ title });
   });
 
   const {
@@ -57,7 +57,7 @@ export default function RecentlyPlayed({
     isFetchingNextPage,
   } = useInfiniteQuery({
     queryKey,
-    queryFn: ({pageParam, queryKey}) =>
+    queryFn: ({ pageParam, queryKey }) =>
       axios.get(`${API_URL}${queryKey[0]}?limit=${limit}&offset=${pageParam}`),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages, lastPageParam) => {
@@ -85,7 +85,7 @@ export default function RecentlyPlayed({
         onRefresh={() => {
           setRefreshing(true);
           queryClient
-            .refetchQueries({queryKey})
+            .refetchQueries({ queryKey })
             .then(() => setRefreshing(false));
         }}
         onEndReached={() =>
@@ -94,15 +94,15 @@ export default function RecentlyPlayed({
         onEndReachedThreshold={0.1}
         ListFooterComponent={() =>
           isFetchingNextPage ? (
-            <View style={{alignItems: 'center', marginTop: 10}}>
+            <View style={{ alignItems: 'center', marginTop: 10 }}>
               <ActivityIndicator size="large" />
             </View>
           ) : (
             <View />
           )
         }
-        ListFooterComponentStyle={{height: isFetchingNextPage ? 80 : 0}}
-        renderItem={({item}: {item: TrackProps}) => (
+        ListFooterComponentStyle={{ height: isFetchingNextPage ? 80 : 0 }}
+        renderItem={({ item }: { item: TrackProps }) => (
           <ListItem
             data={
               data?.pages.map(page => page.data.plays).flat() as TracksProps
@@ -119,11 +119,11 @@ export default function RecentlyPlayed({
             <ActivityIndicator
               size="large"
               color="#fff"
-              style={{marginTop: '50%'}}
+              style={{ marginTop: '50%' }}
             />
           ) : isError ? (
             <View>
-              <Text style={{fontFamily: 'Abel'}}>Empty</Text>
+              <Text style={{ fontFamily: 'Abel' }}>Empty</Text>
             </View>
           ) : (
             <View />

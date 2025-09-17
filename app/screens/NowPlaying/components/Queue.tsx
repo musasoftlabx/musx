@@ -1,8 +1,8 @@
 // * React
-import React, {useState, useCallback, useRef, useEffect} from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 
 // * React Native
-import {FlatList, Image, View, Text, Vibration} from 'react-native';
+import { FlatList, Image, View, Vibration } from 'react-native';
 
 // * Libraries
 import {
@@ -11,23 +11,28 @@ import {
   ScaleDecorator,
   ShadowDecorator,
 } from 'react-native-draggable-flatlist';
-import {SegmentedButtons} from 'react-native-paper';
-import {StarRatingDisplay} from 'react-native-star-rating-widget';
-import {TouchableOpacity} from 'react-native-gesture-handler';
-import {Track} from 'react-native-track-player';
+import { SegmentedButtons, Text } from 'react-native-paper';
+import { StarRatingDisplay } from 'react-native-star-rating-widget';
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import { Track } from 'react-native-track-player';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import SwipeableItem, {
   SwipeableItemImperativeRef,
 } from 'react-native-swipeable-item';
 
 // * Store
-import {HEIGHT, LIST_ITEM_HEIGHT, usePlayerStore, WIDTH} from '../../../store';
+import {
+  HEIGHT,
+  LIST_ITEM_HEIGHT,
+  usePlayerStore,
+  WIDTH,
+} from '../../../store';
 
 // * Functions
-import {formatTrackTime} from '../../../functions';
+import { formatTrackTime } from '../../../functions';
 
 // * Types
-import {TrackProps, TracksProps} from '../../../types';
+import { TrackProps, TracksProps } from '../../../types';
 
 export default function Queue() {
   // ? Refs
@@ -63,7 +68,7 @@ export default function Queue() {
   }, [queue, activeTrackIndex]);
 
   // ? Functions
-  const ListItem = ({item}: {item: TrackProps}) => (
+  const ListItem = ({ item }: { item: TrackProps }) => (
     <TouchableOpacity activeOpacity={1} onPress={() => skipTo(item)}>
       <View
         style={{
@@ -73,20 +78,25 @@ export default function Queue() {
           alignItems: 'center',
           height: LIST_ITEM_HEIGHT,
           marginHorizontal: 10,
-        }}>
+        }}
+      >
         {/* Track details */}
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Image
-            source={{uri: item.artwork}}
-            style={[{borderRadius: 10, height: 45, width: 45}]}
+            source={{ uri: item.artwork }}
+            style={[{ borderRadius: 10, height: 45, width: 45 }]}
           />
-          <View style={{flexBasis: `${WIDTH * 0.12}%`, gap: 2}}>
+          <View style={{ flexBasis: `${WIDTH * 0.12}%`, gap: 2 }}>
             <Text
               numberOfLines={1}
-              style={{fontSize: 16, fontWeight: '600', width: '97%'}}>
+              style={{ fontSize: 16, fontWeight: '600', width: '97%' }}
+            >
               {item.title}
             </Text>
-            <Text numberOfLines={1} style={{fontSize: 14, color: '#ffffff80'}}>
+            <Text
+              numberOfLines={1}
+              style={{ fontSize: 14, color: '#ffffff80' }}
+            >
               {item.artists ?? 'Unknown Artist'}
             </Text>
           </View>
@@ -98,14 +108,15 @@ export default function Queue() {
             alignItems: 'flex-end',
             justifyContent: 'center',
             gap: 3,
-          }}>
+          }}
+        >
           <StarRatingDisplay
             rating={item.rating}
             starSize={16}
-            starStyle={{marginHorizontal: 0}}
+            starStyle={{ marginHorizontal: 0 }}
           />
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Text numberOfLines={1} style={{fontWeight: 'bold'}}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text numberOfLines={1} style={{ fontWeight: 'bold' }}>
               {item.plays || 0} play
               {`${item.plays === 1 ? '' : 's'}`}
             </Text>
@@ -115,7 +126,8 @@ export default function Queue() {
                 fontSize: 14,
                 fontWeight: 'bold',
                 marginRight: 3,
-              }}>
+              }}
+            >
               {formatTrackTime(item.duration)} mins
             </Text>
           </View>
@@ -126,7 +138,7 @@ export default function Queue() {
 
   // ? Callbacks
   const RenderQueueListItem = useCallback(
-    ({item, drag, isActive}: RenderItemParams<any>) => (
+    ({ item, drag, isActive }: RenderItemParams<any>) => (
       <ShadowDecorator>
         <ScaleDecorator>
           <OpacityDecorator>
@@ -134,11 +146,12 @@ export default function Queue() {
               activeOpacity={1}
               onPress={() => skipTo(item)}
               onLongPress={drag}
-              disabled={isActive}>
+              disabled={isActive}
+            >
               <SwipeableItem
                 ref={swipeableItemRef}
                 item={item}
-                onChange={({openDirection}) =>
+                onChange={({ openDirection }) =>
                   openDirection === 'none' ? {} : {}
                 }
                 renderUnderlayLeft={() => (
@@ -149,12 +162,14 @@ export default function Queue() {
                       flexDirection: 'row',
                       paddingHorizontal: 15,
                       paddingVertical: 10,
-                    }}>
+                    }}
+                  >
                     <TouchableOpacity
                       onPress={() => {
-                        swipeableItemRef.current?.close({animated: true});
+                        swipeableItemRef.current?.close({ animated: true });
                         remove(item);
-                      }}>
+                      }}
+                    >
                       <Text
                         style={{
                           backgroundColor: 'red',
@@ -169,14 +184,16 @@ export default function Queue() {
                           paddingBottom: 8,
                           paddingLeft: 15,
                           zIndex: 2,
-                        }}>
+                        }}
+                      >
                         DELETE
                       </Text>
                     </TouchableOpacity>
                   </View>
                 )}
                 activationThreshold={0}
-                snapPointsLeft={[150]}>
+                snapPointsLeft={[150]}
+              >
                 <ListItem item={item} />
               </SwipeableItem>
             </TouchableOpacity>
@@ -197,29 +214,29 @@ export default function Queue() {
             {
               value: 'backTo',
               label: 'BACK TO',
-              labelStyle: {fontWeight: 'bold'},
+              labelStyle: { fontWeight: 'bold' },
               checkedColor: '#000',
               uncheckedColor: '#fff',
-              style: {borderColor: '#fff'},
+              style: { borderColor: '#fff' },
             },
             {
               value: 'upNext',
               label: 'UP NEXT',
-              labelStyle: {fontWeight: 'bold'},
+              labelStyle: { fontWeight: 'bold' },
               checkedColor: '#000',
               uncheckedColor: '#fff',
-              style: {borderColor: '#fff'},
+              style: { borderColor: '#fff' },
             },
           ]}
-          style={{marginHorizontal: 60, marginTop: 20}}
-          theme={{colors: {secondaryContainer: '#fff'}}}
+          style={{ marginHorizontal: 60, marginTop: 20 }}
+          theme={{ colors: { secondaryContainer: '#fff' } }}
         />
 
         {tab === 'upNext' ? (
           <DraggableFlatList
             data={upNextData}
             onDragBegin={() => Vibration.vibrate(50)}
-            onDragEnd={({data, from, to}) => {
+            onDragEnd={({ data, from, to }) => {
               // ? Set the data with the new movements
               //setUpNextData(data);
               tab === 'upNext'
@@ -250,7 +267,7 @@ export default function Queue() {
               // ? Set the store queue with the new movements
               setQueue(restoredQueue);
             }}
-            keyExtractor={({id}) => id.toString()}
+            keyExtractor={({ id }) => id.toString()}
             renderItem={RenderQueueListItem}
             activationDistance={0}
             ListEmptyComponent={() => (
@@ -259,20 +276,21 @@ export default function Queue() {
                   height: HEIGHT / 3,
                   justifyContent: 'center',
                   alignItems: 'center',
-                }}>
+                }}
+              >
                 <Text>No tracks</Text>
               </View>
             )}
-            containerStyle={{marginVertical: 10}}
+            containerStyle={{ marginVertical: 10 }}
           />
         ) : (
           <FlatList
             data={backToData as TracksProps}
-            keyExtractor={({id}) => id.toString()}
-            renderItem={({item}: {item: TrackProps}) => (
+            keyExtractor={({ id }) => id.toString()}
+            renderItem={({ item }: { item: TrackProps }) => (
               <ListItem item={item} />
             )}
-            style={{marginVertical: 5}}
+            style={{ marginVertical: 5 }}
           />
         )}
       </>
@@ -290,29 +308,29 @@ export default function Queue() {
             {
               value: 'backTo',
               label: 'BACK TO',
-              labelStyle: {fontWeight: 'bold'},
+              labelStyle: { fontWeight: 'bold' },
               checkedColor: '#000',
               uncheckedColor: '#fff',
-              style: {borderColor: '#fff'},
+              style: { borderColor: '#fff' },
             },
             {
               value: 'upNext',
               label: 'UP NEXT',
-              labelStyle: {fontWeight: 'bold'},
+              labelStyle: { fontWeight: 'bold' },
               checkedColor: '#000',
               uncheckedColor: '#fff',
-              style: {borderColor: '#fff'},
+              style: { borderColor: '#fff' },
             },
           ]}
-          style={{marginHorizontal: 60, marginTop: 20}}
-          theme={{colors: {secondaryContainer: '#fff'}}}
+          style={{ marginHorizontal: 60, marginTop: 20 }}
+          theme={{ colors: { secondaryContainer: '#fff' } }}
         />
 
         {tab === 'upNext' ? (
           <DraggableFlatList
             data={upNextData}
             onDragBegin={() => Vibration.vibrate(50)}
-            onDragEnd={({data, from, to}) => {
+            onDragEnd={({ data, from, to }) => {
               // ? Set the data with the new movements
               //setUpNextData(data);
               tab === 'upNext'
@@ -353,20 +371,21 @@ export default function Queue() {
                   height: HEIGHT / 3,
                   justifyContent: 'center',
                   alignItems: 'center',
-                }}>
+                }}
+              >
                 <Text>No tracks</Text>
               </View>
             )}
-            containerStyle={{flex: 1, marginVertical: 10}}
+            containerStyle={{ flex: 1, marginVertical: 10 }}
           />
         ) : (
           <FlatList
             data={backToData as TracksProps}
-            keyExtractor={({id}) => id.toString()}
-            renderItem={({item}: {item: TrackProps}) => (
+            keyExtractor={({ id }) => id.toString()}
+            renderItem={({ item }: { item: TrackProps }) => (
               <ListItem item={item} />
             )}
-            style={{marginVertical: 5}}
+            style={{ marginVertical: 5 }}
           />
         )}
       </>

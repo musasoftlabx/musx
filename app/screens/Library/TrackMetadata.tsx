@@ -1,79 +1,160 @@
 // * React
-import React, {useEffect, useState} from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 // * React Native
-import {Text, View, Alert, Image} from 'react-native';
+import { View, Alert } from 'react-native';
 
 // * Libraries
-import * as Yup from 'yup';
-import {FlashList} from '@shopify/flash-list';
-import {Formik} from 'formik';
-import {HelperText, Snackbar, TextInput, useTheme} from 'react-native-paper';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {useBackHandler} from '@react-native-community/hooks';
-import {useMutation} from '@tanstack/react-query';
+import { FlashList } from '@shopify/flash-list';
+import {
+  HelperText,
+  Snackbar,
+  Text,
+  TextInput,
+  useTheme,
+} from 'react-native-paper';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useBackHandler } from '@react-native-community/hooks';
+import { useMutation } from '@tanstack/react-query';
+import { Controller, useForm } from 'react-hook-form';
+import { InferType, object } from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
 import axios from 'axios';
+import Animated from 'react-native-reanimated';
+import Slider, { MarkerProps } from '@react-native-community/slider';
 
 // * Components
 import ButtonX from '../../components/ButtonX';
 import LinearGradientX from '../../components/LinearGradientX';
 
 // * Store
-import {usePlayerStore, WIDTH} from '../../store';
+import { usePlayerStore } from '../../store';
 
 // * Types
-import {RootStackParamList} from '../../types';
+import { RootStackParamList } from '../../types';
 
 // * Functions
-import {formatTrackTime} from '../../functions';
+import { formatTrackTime, refreshScreens } from '../../functions';
 
-import {styles} from '../../styles';
-import Slider from '@react-native-community/slider';
+// * Styles
+import { styles } from '../../styles';
+
+// * Constants
+import { yupString } from '../../constants/yup';
+
+// * Icons
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import useRotate360Animation from '../../shared/hooks/useRotate360Animation';
+
+const schema = object({
+  title: yupString,
+  album: yupString,
+  albumArtist: yupString,
+  artists: yupString,
+  genre: yupString,
+  year: yupString,
+});
+
+type Form = InferType<typeof schema>;
 
 export default function TrackMetadata({
   navigation,
-  route: {params: _params},
+  route: { params: _params },
 }: NativeStackScreenProps<RootStackParamList, 'TrackMetadata', ''>) {
-  const theme = useTheme();
-
-  // ? StoreStates
+  // ? Store States
+  const activeTrack = usePlayerStore(state => state.activeTrack);
+  const closeTrackDetails = usePlayerStore(state => state.closeTrackDetails);
   const palette = usePlayerStore(state => state.palette);
 
+  // ? States
   const [snackbar, setSnackbar] = useState(false);
   const [trackGainDisabled, setTrackGainDisabled] = useState(false);
-  const [refreshMetadataLoading, setRefreshMetadataLoading] = useState(false);
+  const [isRefreshMetadataLoading, setRefreshMetadataLoading] = useState(false);
   const [params, setParams] = useState(_params);
   const [trackGain, setTrackGain] = useState(0);
 
-  const {mutate: updateMetadata} = useMutation({
-    mutationFn: (data: HTMLFormElement) => axios.post('updateMetadata', data),
+  // ? Hooks
+  const theme = useTheme();
+  const rotate = useRotate360Animation();
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting, dirtyFields: dirty },
+  } = useForm({
+    mode: 'onChange',
+    resolver: yupResolver(schema),
+    defaultValues: {
+      title: params?.title,
+      album: params?.album,
+      albumArtist: params?.albumArtist,
+      artists: params?.artists,
+      genre: params?.genre,
+      year: params?.year,
+    },
   });
 
-  const {mutate: updateTrackGain} = useMutation({
+  // ? Mutations
+  const { mutate: updateTrackGain } = useMutation({
     mutationFn: (data: HTMLFormElement) => axios.put('updateTrackGain', data),
   });
 
-  const {mutate: refreshMetadata} = useMutation({
-    mutationFn: () => axios.post(`refreshMetadata`, {path: params?.path}),
+  const { mutate: refreshMetadata } = useMutation({
+    mutationFn: () => axios.post(`refreshMetadata`, { path: params?.path }),
     onSuccess: () => {
-      axios.get(`trackMetadata/${params?.id}`).then(({data}) => {
+      axios.get(`trackMetadata/${params?.id}`).then(({ data }) => {
         setParams(data);
         setRefreshMetadataLoading(false);
+        refreshScreens(activeTrack);
       });
     },
   });
 
   // ? Effects
+  useEffect(() => closeTrackDetails(), []);
+
   useEffect(() => {
     navigation.setOptions({
-      headerStyle: {backgroundColor: palette?.[1] ?? '#000'},
+      headerStyle: { backgroundColor: palette?.[1] ?? '#000' },
     });
   });
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () =>
+        isRefreshMetadataLoading ? (
+          <Animated.View style={[{ marginRight: 10 }, rotate]}>
+            <Ionicons color="#fff" name="refresh-circle-outline" size={24} />
+          </Animated.View>
+        ) : (
+          <Ionicons
+            color="#fff"
+            name="refresh-sharp"
+            size={24}
+            style={{ marginRight: 10 }}
+            onPress={() => {
+              setRefreshMetadataLoading(true);
+              refreshMetadata();
+            }}
+          />
+        ),
+    });
+  }, [isRefreshMetadataLoading]);
 
   useBackHandler(() => {
     navigation.goBack();
     return true;
   });
+
+  // ? Callbacks
+  const StepMarker = useCallback(
+    ({ stepMarked, currentValue }: MarkerProps) => (
+      <Text style={{ color: '#fff', fontSize: 10 }}>
+        {stepMarked ? currentValue : ''}
+      </Text>
+    ),
+    [],
+  );
 
   return (
     <>
@@ -81,7 +162,7 @@ export default function TrackMetadata({
 
       <FlashList
         data={[
-          {label: 'Id', value: params?.id.toString()},
+          { label: 'Id', value: params?.id.toString() },
           {
             label: 'Bitrate',
             value: `${(params?.bitrate / 1000).toFixed(3)} Kbps`,
@@ -90,8 +171,8 @@ export default function TrackMetadata({
             label: 'Sample Rate',
             value: `${(params?.sampleRate / 1000).toFixed(3)} Khz`,
           },
-          {label: 'Channel Layout', value: params?.channelLayout},
-          {label: 'Channels', value: params?.channels.toString()},
+          { label: 'Channel Layout', value: params?.channelLayout },
+          { label: 'Channels', value: params?.channels.toString() },
           {
             label: 'Size',
             value: `${Number(
@@ -102,44 +183,239 @@ export default function TrackMetadata({
             label: 'Duration',
             value: `${formatTrackTime(params?.duration)} mins`,
           },
-          {label: 'Format', value: params?.format.toLocaleUpperCase()},
-          {label: 'Encoder', value: params?.encoder},
+          { label: 'Format', value: params?.format.toLocaleUpperCase() },
+          { label: 'Encoder', value: params?.encoder },
         ]}
         numColumns={3}
         keyExtractor={(_, index) => index.toString()}
-        estimatedItemSize={10}
-        renderItem={({item}: {item: {label: string; value: string}}) => (
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item }: { item: { label: string; value: string } }) => (
           <View
             style={{
-              flex: 1,
               alignItems: 'center',
               backgroundColor: '#fff5',
               borderColor: '#fff8',
               borderRadius: 30,
               borderWidth: 1,
+              flex: 1,
               margin: 10,
               paddingVertical: 20,
-            }}>
-            <Text style={{fontWeight: 'bold'}}>{item.label}</Text>
+            }}
+          >
+            <Text style={{ fontWeight: 'bold' }}>{item.label}</Text>
             <Text>{item.value}</Text>
           </View>
         )}
         ListFooterComponent={
-          <>
-            <ButtonX
-              loading={refreshMetadataLoading}
-              style={{marginTop: 10}}
-              onPress={() => {
-                setRefreshMetadataLoading(true);
-                refreshMetadata();
-              }}>
-              REFRESH METADATA
-            </ButtonX>
+          <View style={{ padding: 20 }}>
+            {/* Title */}
+            <Controller
+              name="title"
+              control={control}
+              rules={{ required: true }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <>
+                  <TextInput
+                    label="Title *"
+                    placeholder=""
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    maxLength={50}
+                    value={value}
+                    style={styles.darkTextInput}
+                    activeUnderlineColor={
+                      dirty.title && Boolean(errors.title)
+                        ? theme.colors.error
+                        : theme.colors.primary
+                    }
+                  />
+
+                  <HelperText
+                    type="error"
+                    style={styles.helperText}
+                    visible={dirty.title && errors.title ? true : false}
+                  >
+                    {errors.title?.message as string}
+                  </HelperText>
+                </>
+              )}
+            />
+
+            {/* Album */}
+            <Controller
+              name="album"
+              control={control}
+              rules={{ required: true }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <>
+                  <TextInput
+                    label="Album *"
+                    placeholder=""
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    maxLength={50}
+                    value={value}
+                    style={styles.darkTextInput}
+                    activeUnderlineColor={
+                      dirty.album && Boolean(errors.album)
+                        ? theme.colors.error
+                        : theme.colors.primary
+                    }
+                  />
+
+                  <HelperText
+                    type="error"
+                    style={styles.helperText}
+                    visible={dirty.album && errors.album ? true : false}
+                  >
+                    {errors.album?.message as string}
+                  </HelperText>
+                </>
+              )}
+            />
+
+            {/* Album Artist */}
+            <Controller
+              name="albumArtist"
+              control={control}
+              rules={{ required: true }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <>
+                  <TextInput
+                    label="Album Artist *"
+                    placeholder=""
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    maxLength={100}
+                    value={value}
+                    style={styles.darkTextInput}
+                    activeUnderlineColor={
+                      dirty.albumArtist && Boolean(errors.albumArtist)
+                        ? theme.colors.error
+                        : theme.colors.primary
+                    }
+                  />
+
+                  <HelperText
+                    type="error"
+                    style={styles.helperText}
+                    visible={
+                      dirty.albumArtist && errors.albumArtist ? true : false
+                    }
+                  >
+                    {errors.albumArtist?.message as string}
+                  </HelperText>
+                </>
+              )}
+            />
+
+            {/* Artists */}
+            <Controller
+              name="artists"
+              control={control}
+              rules={{ required: true }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <>
+                  <TextInput
+                    label="Artists *"
+                    placeholder=""
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    maxLength={100}
+                    value={value}
+                    style={styles.darkTextInput}
+                    activeUnderlineColor={
+                      dirty.artists && Boolean(errors.artists)
+                        ? theme.colors.error
+                        : theme.colors.primary
+                    }
+                  />
+
+                  <HelperText
+                    type="error"
+                    style={styles.helperText}
+                    visible={dirty.artists && errors.artists ? true : false}
+                  >
+                    {errors.artists?.message as string}
+                  </HelperText>
+                </>
+              )}
+            />
+
+            {/* Genre */}
+            <Controller
+              name="genre"
+              control={control}
+              rules={{ required: true }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <>
+                  <TextInput
+                    label="Genre *"
+                    placeholder=""
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    maxLength={50}
+                    value={value}
+                    style={styles.darkTextInput}
+                    activeUnderlineColor={
+                      dirty.genre && Boolean(errors.genre)
+                        ? theme.colors.error
+                        : theme.colors.primary
+                    }
+                  />
+
+                  <HelperText
+                    type="error"
+                    style={styles.helperText}
+                    visible={dirty.genre && errors.genre ? true : false}
+                  >
+                    {errors.genre?.message as string}
+                  </HelperText>
+                </>
+              )}
+            />
+
+            {/* Year */}
+            <Controller
+              name="year"
+              control={control}
+              rules={{ required: true }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <>
+                  <TextInput
+                    label="Year *"
+                    placeholder=""
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    maxLength={5}
+                    value={value}
+                    style={styles.darkTextInput}
+                    activeUnderlineColor={
+                      dirty.year && Boolean(errors.year)
+                        ? theme.colors.error
+                        : theme.colors.primary
+                    }
+                  />
+
+                  <HelperText
+                    type="error"
+                    style={styles.helperText}
+                    visible={dirty.year && errors.year ? true : false}
+                  >
+                    {errors.year?.message as string}
+                  </HelperText>
+                </>
+              )}
+            />
+
+            <Text style={{ marginTop: 10, textAlign: 'center' }}>
+              Adjust volume (gain) for this track by +3dB or -3dB
+            </Text>
 
             <Slider
               value={trackGain}
               step={3}
-              style={{paddingVertical: 30, width: WIDTH}}
+              style={{ paddingVertical: 10 }}
               disabled={trackGainDisabled}
               onValueChange={value => {
                 setTrackGain(value);
@@ -153,7 +429,7 @@ export default function TrackMetadata({
                     path: _params?.path,
                   },
                   {
-                    onSuccess: ({data}) => {
+                    onSuccess: ({ data }) => {
                       console.log(data);
                       setTrackGainDisabled(false);
                     },
@@ -170,231 +446,50 @@ export default function TrackMetadata({
               minimumTrackTintColor="rgb(135, 255, 151)"
               maximumTrackTintColor="rgb(255, 108, 108)"
               renderStepNumber
-              StepMarker={(stepMarked, currentValue) => (
-                <Text style={{fontSize: 10}}>
-                  {stepMarked ? currentValue : ''}
-                </Text>
-              )}
+              StepMarker={StepMarker}
             />
 
-            <Formik
-              initialValues={{
-                title: params?.title,
-                album: params?.album,
-                albumArtist: params?.albumArtist,
-                artists: params?.artists,
-                genre: params?.genre,
-                year: params?.year,
+            {/*<View
+              style={{
+                alignItems: 'center',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
               }}
-              validationSchema={Yup.object({
-                title: Yup.string()
-                  .max(20, 'Max of ${max} chars')
-                  .required('Required'),
-                album: Yup.string()
-                  .max(20, 'Max of ${max} chars')
-                  .required('Required'),
-                albumArtist: Yup.string()
-                  .max(100, 'Max of ${max} chars')
-                  .required('Required'),
-                artists: Yup.string()
-                  .max(20, 'Max of ${max} chars')
-                  .required('Required'),
-                genre: Yup.string()
-                  .max(20, 'Max of ${max} chars')
-                  .required('Required'),
-                year: Yup.string()
-                  .max(20, 'Max of ${max} chars')
-                  .required('Required'),
-              })}
-              onSubmit={(values, {setSubmitting, resetForm}) => {
-                let formData: any = new FormData();
-                formData.append('title', values.title);
-                formData.append('album', values.album);
-                formData.append('albumArtist', values.albumArtist);
-                formData.append('artists', values.artists);
-                formData.append('genre', values.genre);
-                formData.append('year', values.year);
+            >
+              <ButtonX
+                loading={isRefreshMetadataLoading}
+                borderRadius={10}
+                onPress={() => {
+                  setRefreshMetadataLoading(true);
+                  refreshMetadata();
+                }}
+              >
+                Refresh Metadata
+              </ButtonX>
 
-                updateMetadata(formData, {
-                  onSuccess: () => {
-                    resetForm();
-                  },
-                  onError: (error: any) => {
-                    Alert.alert(
-                      error.response.data.subject,
-                      error.response.data.body,
-                      [{text: 'OK'}],
-                    );
-                  },
-                  onSettled: () => setSubmitting(false),
-                });
-              }}>
-              {({
-                values,
-                errors,
-                touched,
-                handleChange,
-                handleBlur,
-                handleSubmit,
-                isSubmitting,
-                setFieldValue,
-                setFieldTouched,
-              }) => (
-                <View style={{padding: 20}}>
-                  <Text style={{marginBottom: 10}}>Update track metadata</Text>
-
-                  {/* Title */}
-                  <TextInput
-                    label="Title *"
-                    placeholder=""
-                    activeUnderlineColor={
-                      touched.title && Boolean(errors.title)
-                        ? theme.colors.error
-                        : theme.colors.secondary
-                    }
-                    error={touched.title && Boolean(errors.title)}
-                    maxLength={50}
-                    onBlur={handleBlur('title')}
-                    onChangeText={handleChange('title')}
-                    style={styles.darkTextInput}
-                    value={values.title}
-                  />
-                  <HelperText
-                    type="error"
-                    style={styles.helperText}
-                    visible={touched.title && errors.title ? true : false}>
-                    {errors.title}
-                  </HelperText>
-
-                  {/* Album */}
-                  <TextInput
-                    label="Album *"
-                    placeholder=""
-                    activeUnderlineColor={
-                      touched.album && Boolean(errors.album)
-                        ? theme.colors.error
-                        : theme.colors.secondary
-                    }
-                    error={touched.album && Boolean(errors.album)}
-                    maxLength={50}
-                    onBlur={handleBlur('album')}
-                    onChangeText={handleChange('album')}
-                    style={styles.darkTextInput}
-                    value={values.album}
-                  />
-                  <HelperText
-                    type="error"
-                    style={styles.helperText}
-                    visible={touched.album && errors.album ? true : false}>
-                    {errors.album}
-                  </HelperText>
-
-                  {/* Album Artist */}
-                  <TextInput
-                    label="Album Artist *"
-                    placeholder=""
-                    activeUnderlineColor={
-                      touched.albumArtist && Boolean(errors.albumArtist)
-                        ? theme.colors.error
-                        : theme.colors.secondary
-                    }
-                    error={touched.albumArtist && Boolean(errors.albumArtist)}
-                    maxLength={100}
-                    onBlur={handleBlur('albumArtist')}
-                    onChangeText={handleChange('albumArtist')}
-                    style={styles.darkTextInput}
-                    value={values.albumArtist}
-                  />
-                  <HelperText
-                    type="error"
-                    style={styles.helperText}
-                    visible={
-                      touched.albumArtist && errors.albumArtist ? true : false
-                    }>
-                    {errors.albumArtist}
-                  </HelperText>
-
-                  {/* Artists */}
-                  <TextInput
-                    label="Artists *"
-                    placeholder=""
-                    activeUnderlineColor={
-                      touched.artists && Boolean(errors.artists)
-                        ? theme.colors.error
-                        : theme.colors.secondary
-                    }
-                    error={touched.artists && Boolean(errors.artists)}
-                    maxLength={100}
-                    onBlur={handleBlur('artists')}
-                    onChangeText={handleChange('artists')}
-                    style={styles.darkTextInput}
-                    value={values.artists}
-                  />
-                  <HelperText
-                    type="error"
-                    style={styles.helperText}
-                    visible={touched.artists && errors.artists ? true : false}>
-                    {errors.artists}
-                  </HelperText>
-
-                  {/* Genre */}
-                  <TextInput
-                    label="Genre *"
-                    placeholder=""
-                    activeUnderlineColor={
-                      touched.genre && Boolean(errors.genre)
-                        ? theme.colors.error
-                        : theme.colors.secondary
-                    }
-                    error={touched.genre && Boolean(errors.genre)}
-                    maxLength={50}
-                    onBlur={handleBlur('genre')}
-                    onChangeText={handleChange('genre')}
-                    style={styles.darkTextInput}
-                    value={values.genre}
-                  />
-                  <HelperText
-                    type="error"
-                    style={styles.helperText}
-                    visible={touched.genre && errors.genre ? true : false}>
-                    {errors.genre}
-                  </HelperText>
-
-                  {/* Year */}
-                  <TextInput
-                    label="Year *"
-                    placeholder=""
-                    activeUnderlineColor={
-                      touched.year && Boolean(errors.year)
-                        ? theme.colors.error
-                        : theme.colors.secondary
-                    }
-                    error={touched.year && Boolean(errors.year)}
-                    maxLength={10}
-                    onBlur={handleBlur('year')}
-                    onChangeText={handleChange('year')}
-                    style={styles.darkTextInput}
-                    value={values.year}
-                  />
-                  <HelperText
-                    type="error"
-                    style={styles.helperText}
-                    visible={touched.year && errors.year ? true : false}>
-                    {errors.year}
-                  </HelperText>
-
-                  <ButtonX
-                    errors={errors}
-                    isSubmitting={isSubmitting}
-                    touched={touched}
-                    values={values}
-                    onPress={() => handleSubmit()}>
-                    UPDATE
-                  </ButtonX>
-                </View>
-              )}
-            </Formik>
-          </>
+              <ButtonX
+                errors={errors}
+                isSubmitting={isSubmitting}
+                touched={dirty}
+                borderRadius={10}
+                onPress={handleSubmit(formData =>
+                  updateMetadata(formData, {
+                    onSuccess: () => reset(),
+                    onError: (error: any) => {
+                      Alert.alert(
+                        error.response.data.subject,
+                        error.response.data.body,
+                        [{ text: 'OK' }],
+                      );
+                    },
+                    onSettled: () => isSubmitting,
+                  }),
+                )}
+              >
+                UPDATE
+              </ButtonX> 
+            </View>*/}
+          </View>
         }
       />
 

@@ -1,5 +1,10 @@
 // * React
-import React, {useState, useEffect, useLayoutEffect, useCallback} from 'react';
+import React, {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+} from 'react';
 
 // * React-Native
 import {
@@ -7,18 +12,18 @@ import {
   Image,
   View,
   Pressable,
-  Text,
   TextInput,
   Vibration,
 } from 'react-native';
 
 // * Libraries
-import {Button, Divider, Menu} from 'react-native-paper';
-import {CastButton} from 'react-native-google-cast';
-import {FlashList} from '@shopify/flash-list';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {useBackHandler} from '@react-native-community/hooks';
-import {useMutation, useQuery} from '@tanstack/react-query';
+import { Button, Divider, Menu } from 'react-native-paper';
+import { CastButton } from 'react-native-google-cast';
+import { FlashList } from '@shopify/flash-list';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useBackHandler } from '@react-native-community/hooks';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Text } from 'react-native-paper';
 import axios from 'axios';
 import debounce from 'lodash/debounce';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -30,13 +35,13 @@ import LinearGradientX from '../../components/LinearGradientX';
 import StatusBarX from '../../components/StatusBarX';
 
 // * Store
-import {API_URL, HEIGHT, WIDTH, usePlayerStore} from '../../store';
+import { API_URL, HEIGHT, WIDTH, usePlayerStore } from '../../store';
 
 // * Constants
-import {queryClient} from '../../../App';
+import { queryClient } from '../../../App';
 
 // * Types
-import {RootStackParamList} from '../../types';
+import { RootStackParamList } from '../../types';
 
 type PlaylistProps = RootStackParamList['Playlists'];
 
@@ -61,10 +66,10 @@ export default function Playlists({
     return true;
   });
 
-  const {isPending, isSuccess} = useQuery({
+  const { isPending, isSuccess } = useQuery({
     queryKey: ['playlists'],
     queryFn: () => {
-      axios<PlaylistProps[]>(`${API_URL}playlists`).then(({data}) => {
+      axios<PlaylistProps[]>(`${API_URL}playlists`).then(({ data }) => {
         setFilter(data);
         setPlaylists(data);
       });
@@ -113,7 +118,7 @@ export default function Playlists({
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      header: ({route: {name}}) =>
+      header: ({ route: { name } }) =>
         showSearch ? (
           <View
             style={{
@@ -123,7 +128,8 @@ export default function Playlists({
               gap: 10,
               paddingHorizontal: 20,
               paddingVertical: 5,
-            }}>
+            }}
+          >
             <Pressable
               onPress={() => {
                 Vibration.vibrate(50);
@@ -131,7 +137,8 @@ export default function Playlists({
                 setSearchWord('');
                 setFilter(playlists);
               }}
-              style={{marginRight: 10, opacity: 0.8}}>
+              style={{ marginRight: 10, opacity: 0.8 }}
+            >
               <Ionicons name="arrow-back" size={22} color="white" />
             </Pressable>
 
@@ -157,7 +164,8 @@ export default function Playlists({
                 setSearchWord('');
                 setFilter(playlists);
               }}
-              style={{opacity: 0.8}}>
+              style={{ opacity: 0.8 }}
+            >
               <Ionicons name="close" size={22} color="white" />
             </Pressable>
           </View>
@@ -170,23 +178,28 @@ export default function Playlists({
               gap: 40,
               paddingHorizontal: 20,
               paddingVertical: 10,
-            }}>
+            }}
+          >
             <Pressable
               onPress={() => navigation.goBack()}
-              style={{opacity: 0.8}}>
+              style={{ opacity: 0.8 }}
+            >
               <Ionicons name="arrow-back" size={22} color="white" />
             </Pressable>
 
-            <View style={{marginLeft: -10}}>
-              <Text style={{fontSize: 22}}>{name}</Text>
-              <Text style={{fontSize: 12}}>{playlists?.length} playlists</Text>
+            <View style={{ marginLeft: -10 }}>
+              <Text style={{ fontSize: 22 }}>{name}</Text>
+              <Text style={{ fontSize: 12 }}>
+                {playlists?.length} playlists
+              </Text>
             </View>
 
-            <View style={{flex: 1}} />
+            <View style={{ flex: 1 }} />
 
             <Pressable
               onPress={() => (Vibration.vibrate(50), setShowSearch(true))}
-              style={{marginRight: 10, opacity: 0.8}}>
+              style={{ marginRight: 10, opacity: 0.8 }}
+            >
               <Ionicons name="search" size={22} color="white" />
             </Pressable>
 
@@ -199,10 +212,12 @@ export default function Playlists({
                   onPress={() => (
                     Vibration.vibrate(50), setIsSortMenuVisible(true)
                   )}
-                  style={{marginRight: 10, opacity: 0.8}}>
+                  style={{ marginRight: 10, opacity: 0.8 }}
+                >
                   <MaterialCommunityIcons name="sort" size={22} color="white" />
                 </Pressable>
-              }>
+              }
+            >
               <Menu.Item
                 onPress={() => sortPlaylists('name')}
                 title="Sort by name"
@@ -227,11 +242,18 @@ export default function Playlists({
               />
             </Menu>
 
-            <CastButton style={{height: 24, width: 24, marginRight: 5}} />
+            <CastButton style={{ height: 24, width: 24, marginRight: 5 }} />
           </View>
         ),
     });
-  }, [navigation, showSearch, searchWord, playlists, isSortMenuVisible]);
+  }, [
+    navigation,
+    palette,
+    showSearch,
+    searchWord,
+    playlists,
+    isSortMenuVisible,
+  ]);
 
   return (
     <>
@@ -247,13 +269,14 @@ export default function Playlists({
           ).fill(0)}
           numColumns={Number((WIDTH / 150).toFixed(0))}
           keyExtractor={(_, index) => index.toString()}
-          contentContainerStyle={{alignItems: 'center'}}
+          contentContainerStyle={{ alignItems: 'center' }}
           renderItem={() => (
-            <View style={{paddingHorizontal: 20}}>
+            <View style={{ paddingHorizontal: 20 }}>
               <SkeletonPlaceholder
                 highlightColor="#fff5"
-                backgroundColor="#fff5">
-                <View style={{alignItems: 'center', paddingTop: 20}}>
+                backgroundColor="#fff5"
+              >
+                <View style={{ alignItems: 'center', paddingTop: 20 }}>
                   <View
                     style={{
                       borderRadius: 10,
@@ -262,10 +285,14 @@ export default function Playlists({
                       width: 100,
                     }}
                   />
-                  <View style={{alignItems: 'center', borderRadius: 5, gap: 8}}>
-                    <Text style={{fontSize: 14, lineHeight: 16, width: 100}} />
-                    <Text style={{fontSize: 14, lineHeight: 10, width: 80}} />
-                    <Text style={{fontSize: 14, lineHeight: 8, width: 50}} />
+                  <View
+                    style={{ alignItems: 'center', borderRadius: 5, gap: 8 }}
+                  >
+                    <Text
+                      style={{ fontSize: 14, lineHeight: 16, width: 100 }}
+                    />
+                    <Text style={{ fontSize: 14, lineHeight: 10, width: 80 }} />
+                    <Text style={{ fontSize: 14, lineHeight: 8, width: 50 }} />
                   </View>
                 </View>
               </SkeletonPlaceholder>
@@ -284,14 +311,17 @@ export default function Playlists({
           onRefresh={() => {
             setRefreshing(true);
             queryClient
-              .refetchQueries({queryKey: ['playlists']})
+              .refetchQueries({ queryKey: ['playlists'] })
               .then(() => setRefreshing(false));
           }}
-          renderItem={({item}: {item: PlaylistProps}) => (
+          renderItem={({ item }: { item: PlaylistProps }) => (
             <Pressable
               onPress={() => navigation.navigate('Playlist', item)}
-              style={{flex: 1}}>
-              <View style={{paddingVertical: 12, alignItems: 'center', gap: 3}}>
+              style={{ flex: 1 }}
+            >
+              <View
+                style={{ paddingVertical: 12, alignItems: 'center', gap: 3 }}
+              >
                 {item.tracks >= 4 ? (
                   <View
                     style={{
@@ -302,14 +332,15 @@ export default function Playlists({
                       width: 100,
                       height: 100,
                       overflow: 'hidden',
-                    }}>
+                    }}
+                  >
                     {item.artworks.map(
                       (artwork: string, i: number) =>
                         i <= 4 && (
                           <Image
                             key={i}
-                            source={{uri: artwork}}
-                            style={{width: 50, height: 50}}
+                            source={{ uri: artwork }}
+                            style={{ width: 50, height: 50 }}
                             resizeMode="cover"
                           />
                         ),
@@ -317,19 +348,21 @@ export default function Playlists({
                   </View>
                 ) : (
                   <Image
-                    source={{uri: item.artworks[0]}}
-                    style={{width: 100, height: 100, borderRadius: 10}}
+                    source={{ uri: item.artworks[0] }}
+                    style={{ width: 100, height: 100, borderRadius: 10 }}
                   />
                 )}
 
                 <Text
                   numberOfLines={1}
-                  style={{color: '#fff', fontSize: 16, marginTop: 5}}>
+                  style={{ color: '#fff', fontSize: 16, marginTop: 5 }}
+                >
                   {item.name}
                 </Text>
 
                 <View
-                  style={{alignItems: 'center', flexDirection: 'row', gap: 3}}>
+                  style={{ alignItems: 'center', flexDirection: 'row', gap: 3 }}
+                >
                   <Text
                     numberOfLines={1}
                     style={{
@@ -341,23 +374,24 @@ export default function Playlists({
                       marginTop: 1,
                       paddingLeft: 5,
                       paddingRight: 3,
-                    }}>
+                    }}
+                  >
                     {item.size}
                   </Text>
 
-                  <Text style={{fontSize: 14, opacity: 0.5}}>
+                  <Text style={{ fontSize: 14, opacity: 0.5 }}>
                     {item.tracks} tracks
                   </Text>
                 </View>
 
-                <Text style={{fontSize: 14, opacity: 0.5}}>
+                <Text style={{ fontSize: 14, opacity: 0.5 }}>
                   {item.duration} mins
                 </Text>
               </View>
             </Pressable>
           )}
           ListEmptyComponent={
-            <View style={{alignItems: 'center', flex: 1}}>
+            <View style={{ alignItems: 'center', flex: 1 }}>
               <Text>Empty</Text>
             </View>
           }

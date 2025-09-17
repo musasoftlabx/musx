@@ -1,22 +1,23 @@
 // * React
-import React, {useState, useEffect, useRef} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 // * React Native
-import {Text, TouchableOpacity, View} from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 // * Libraries
+import { Text } from 'react-native-paper';
 import BottomSheet from '@gorhom/bottom-sheet';
 import DraggableFlatList from 'react-native-draggable-flatlist';
-import TrackPlayer, {Track} from 'react-native-track-player';
+import TrackPlayer, { Track } from 'react-native-track-player';
 
 // * Store
-import {usePlayerStore} from '../../../store';
+import { usePlayerStore } from '../../../store';
 
 // * Types
-import {TrackProps} from '../../../types';
-import {arrayMove} from '../../../functions';
+import { TrackProps } from '../../../types';
+import { arrayMove } from '../../../functions';
 
-export default function UpNext({RenderQueueListItem}: any) {
+export default function UpNext({ RenderQueueListItem }: any) {
   // ? Refs
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -44,7 +45,7 @@ export default function UpNext({RenderQueueListItem}: any) {
   return (
     <DraggableFlatList
       data={data}
-      onDragEnd={({data, from, to}) => {
+      onDragEnd={({ data, from, to }) => {
         setData(data);
 
         const restoredQueue = [
@@ -74,16 +75,21 @@ export default function UpNext({RenderQueueListItem}: any) {
           //setQueue(_queue);
         });
       }}
-      keyExtractor={({id}) => id.toString()}
+      keyExtractor={({ id }) => id.toString()}
       renderItem={RenderQueueListItem}
       activationDistance={0}
       ListEmptyComponent={() => (
         <View
-          style={{height: 300, justifyContent: 'center', alignItems: 'center'}}>
+          style={{
+            height: 300,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
           <Text>No tracks</Text>
         </View>
       )}
-      containerStyle={{marginVertical: 10}}
+      containerStyle={{ marginVertical: 10 }}
     />
   );
 }

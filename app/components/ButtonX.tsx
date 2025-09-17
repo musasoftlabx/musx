@@ -1,6 +1,6 @@
-import {View, ViewProps} from 'react-native';
-import {Button, ButtonProps, useTheme} from 'react-native-paper';
-import {RFPercentage as s} from 'react-native-responsive-fontsize';
+import { View, ViewProps } from 'react-native';
+import { Button, ButtonProps, useTheme } from 'react-native-paper';
+import { RFPercentage as s } from 'react-native-responsive-fontsize';
 
 type TAttributes = {
   parent?: String | 'light';
@@ -10,10 +10,11 @@ type TAttributes = {
   loading?: boolean;
   touched?: Object;
   values?: Object;
+  borderRadius?: number;
 } & ButtonProps;
 
 const ButtonX = (props: TAttributes) => {
-  const {parent, errors, isSubmitting, loading, touched, values} = props;
+  const { parent, errors, isSubmitting, loading, touched, values } = props;
 
   const theme = useTheme();
 
@@ -42,16 +43,16 @@ const ButtonX = (props: TAttributes) => {
         backgroundColor: inactive ? 'transparent' : theme.colors.primary,
         borderColor: theme.colors.background,
         borderStyle: parent === 'light' || !parent ? 'solid' : 'dashed',
-        borderRadius: 40,
+        borderRadius: props.borderRadius,
         borderWidth: 1,
         opacity: inactive ? 0.5 : 1,
-      }}>
+      }}
+    >
       <Button
         {...props}
         contentStyle={{
           borderColor: theme.colors.background,
-          borderRadius: 40,
-          borderWidth: 1,
+          borderRadius: props.borderRadius,
           borderStyle: parent === 'light' || !parent ? 'solid' : 'dotted',
           paddingVertical: 0,
           margin: 2,
@@ -64,9 +65,10 @@ const ButtonX = (props: TAttributes) => {
         loading={isSubmitting || loading}
         mode="contained"
         onPress={props.onPress}
-        style={{elevation: inactive ? 0 : 20}}
+        style={{ elevation: inactive ? 0 : 20 }}
         textColor="white"
-        theme={{roundness: 6}}>
+        theme={{ roundness: 6 }}
+      >
         {props.children}
       </Button>
     </View>

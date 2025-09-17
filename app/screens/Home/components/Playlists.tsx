@@ -2,20 +2,21 @@
 import React from 'react';
 
 // * React Native
-import {FlatList, Image, Pressable, Text, View} from 'react-native';
+import { FlatList, Image, Pressable, View } from 'react-native';
 
 // * Libraries
-import {FlashList} from '@shopify/flash-list';
-import {useNavigation} from '@react-navigation/native';
+import { FlashList } from '@shopify/flash-list';
+import { useNavigation } from '@react-navigation/native';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import { Text } from 'react-native-paper';
 
 // * Store
-import {WIDTH} from '../../../store';
+import { WIDTH } from '../../../store';
 
 // * Types
-import {RootStackParamList} from '../../../types';
+import { RootStackParamList } from '../../../types';
 
 dayjs.extend(relativeTime);
 
@@ -36,13 +37,14 @@ export default function Playlist({
           data={new Array(Number((WIDTH / 150).toFixed(0))).fill(0)}
           horizontal
           keyExtractor={(_, index) => index.toString()}
-          contentContainerStyle={{alignItems: 'center'}}
+          contentContainerStyle={{ alignItems: 'center' }}
           renderItem={() => (
-            <View style={{paddingHorizontal: 10}}>
+            <View style={{ paddingHorizontal: 10 }}>
               <SkeletonPlaceholder
                 highlightColor="#fff5"
-                backgroundColor="#fff5">
-                <View style={{alignItems: 'center', paddingTop: 20}}>
+                backgroundColor="#fff5"
+              >
+                <View style={{ alignItems: 'center', paddingTop: 20 }}>
                   <View
                     style={{
                       borderRadius: 10,
@@ -51,10 +53,14 @@ export default function Playlist({
                       width: 150,
                     }}
                   />
-                  <View style={{alignItems: 'center', borderRadius: 5, gap: 8}}>
-                    <Text style={{fontSize: 14, lineHeight: 16, width: 100}} />
-                    <Text style={{fontSize: 14, lineHeight: 10, width: 80}} />
-                    <Text style={{fontSize: 14, lineHeight: 8, width: 50}} />
+                  <View
+                    style={{ alignItems: 'center', borderRadius: 5, gap: 8 }}
+                  >
+                    <Text
+                      style={{ fontSize: 14, lineHeight: 16, width: 100 }}
+                    />
+                    <Text style={{ fontSize: 14, lineHeight: 10, width: 80 }} />
+                    <Text style={{ fontSize: 14, lineHeight: 8, width: 50 }} />
                   </View>
                 </View>
               </SkeletonPlaceholder>
@@ -67,14 +73,15 @@ export default function Playlist({
             data={dataset}
             horizontal
             keyExtractor={(_, index) => index.toString()}
-            estimatedItemSize={20}
             showsHorizontalScrollIndicator={false}
-            renderItem={({item}) => (
+            renderItem={({ item }) => (
               <Pressable
                 onPress={() => navigation.navigate('Playlist', item)}
-                style={{marginHorizontal: 15}}>
+                style={{ marginHorizontal: 15 }}
+              >
                 <View
-                  style={{paddingVertical: 12, alignItems: 'center', gap: 3}}>
+                  style={{ paddingVertical: 12, alignItems: 'center', gap: 3 }}
+                >
                   {item.tracks >= 4 ? (
                     <View
                       style={{
@@ -85,14 +92,15 @@ export default function Playlist({
                         width: 150,
                         height: 150,
                         overflow: 'hidden',
-                      }}>
+                      }}
+                    >
                       {item.artworks.map(
                         (artwork: string, i: number) =>
                           i <= 4 && (
                             <Image
                               key={i}
-                              source={{uri: artwork}}
-                              style={{width: 75, height: 75}}
+                              source={{ uri: artwork }}
+                              style={{ width: 75, height: 75 }}
                               resizeMode="cover"
                             />
                           ),
@@ -100,14 +108,15 @@ export default function Playlist({
                     </View>
                   ) : (
                     <Image
-                      source={{uri: item.artworks[0]}}
-                      style={{width: 150, height: 150, borderRadius: 10}}
+                      source={{ uri: item.artworks[0] }}
+                      style={{ width: 150, height: 150, borderRadius: 10 }}
                     />
                   )}
 
                   <Text
                     numberOfLines={1}
-                    style={{color: '#fff', fontSize: 16, marginTop: 5}}>
+                    style={{ color: '#fff', fontSize: 16, marginTop: 5 }}
+                  >
                     {item.name}
                   </Text>
 
@@ -116,7 +125,8 @@ export default function Playlist({
                       alignItems: 'center',
                       flexDirection: 'row',
                       gap: 3,
-                    }}>
+                    }}
+                  >
                     <Text
                       numberOfLines={1}
                       style={{
@@ -128,16 +138,17 @@ export default function Playlist({
                         marginTop: 1,
                         paddingLeft: 5,
                         paddingRight: 3,
-                      }}>
+                      }}
+                    >
                       {item.size}
                     </Text>
 
-                    <Text style={{fontSize: 14, opacity: 0.5}}>
+                    <Text style={{ fontSize: 14, opacity: 0.5 }}>
                       {item.tracks} tracks
                     </Text>
                   </View>
 
-                  <Text style={{fontSize: 14, opacity: 0.5}}>
+                  <Text style={{ fontSize: 14, opacity: 0.5 }}>
                     {item.duration} mins
                   </Text>
                 </View>

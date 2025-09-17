@@ -1,13 +1,13 @@
 // * React
-import React, {useState, useRef, useLayoutEffect, useCallback} from 'react';
+import React, { useState, useRef, useLayoutEffect, useCallback } from 'react';
 
 // * React Native
-import {ActivityIndicator, Text, View, Vibration} from 'react-native';
+import { ActivityIndicator, Text, View, Vibration } from 'react-native';
 
 // * Libraries
-import {FlashList} from '@shopify/flash-list';
-import {useBackHandler} from '@react-native-community/hooks';
-import {useInfiniteQuery} from '@tanstack/react-query';
+import { FlashList } from '@shopify/flash-list';
+import { useBackHandler } from '@react-native-community/hooks';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import BottomSheet from '@gorhom/bottom-sheet';
 import MonthPicker from 'react-native-month-year-picker';
@@ -19,21 +19,21 @@ import StatusBarX from '../../components/StatusBarX';
 import TrackDetails from '../../components/TrackDetails';
 
 // * Store
-import {API_URL, HEIGHT, LIST_ITEM_HEIGHT, usePlayerStore} from '../../store';
+import { API_URL, HEIGHT, LIST_ITEM_HEIGHT, usePlayerStore } from '../../store';
 
 // * Constants
-import {queryClient} from '../../../App';
+import { queryClient } from '../../../App';
 
 // * Types
-import {CastButton} from 'react-native-google-cast';
-import {TrackProps, TracksProps} from '../../types';
+import { CastButton } from 'react-native-google-cast';
+import { TrackProps, TracksProps } from '../../types';
 import dayjs from 'dayjs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 export default function MostPlayed({
   navigation,
   route: {
-    params: {queryKey, title},
+    params: { queryKey, title },
   },
 }: any) {
   // ? Refs
@@ -67,7 +67,7 @@ export default function MostPlayed({
     isFetchingNextPage,
   } = useInfiniteQuery({
     queryKey,
-    queryFn: ({pageParam, queryKey}) =>
+    queryFn: ({ pageParam, queryKey }) =>
       axios.get(
         `${API_URL}${queryKey[0]}?limit=${limit}&offset=${pageParam}&date=${date}`,
       ),
@@ -83,30 +83,30 @@ export default function MostPlayed({
       const selectedDate = newDate || date;
       setShow(false);
       setDate(selectedDate);
-      queryClient.refetchQueries({queryKey});
+      queryClient.refetchQueries({ queryKey });
     },
     [date, show],
   );
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerStyle: {backgroundColor: palette?.[1] ?? '#000'},
+      headerStyle: { backgroundColor: palette?.[1] ?? '#000' },
       headerLeft: () => (
-        <View style={{justifyContent: 'center'}}>
-          <Text style={{color: '#fff', fontSize: 20}}>{title}</Text>
+        <View style={{ justifyContent: 'center' }}>
+          <Text style={{ color: '#fff', fontSize: 20 }}>{title}</Text>
           <Text>In {dayjs(date).format('MMMM, YYYY').toLocaleString()}</Text>
         </View>
       ),
       headerRight: () => (
-        <View style={{alignItems: 'center', flexDirection: 'row', gap: 40}}>
+        <View style={{ alignItems: 'center', flexDirection: 'row', gap: 40 }}>
           <Ionicons
             name="calendar-outline"
             size={22}
             color="white"
-            style={{marginRight: 10, opacity: 0.8}}
+            style={{ marginRight: 10, opacity: 0.8 }}
             onPress={() => (Vibration.vibrate(50), setShow(true))}
           />
-          <CastButton style={{height: 24, width: 24, marginRight: 5}} />
+          <CastButton style={{ height: 24, width: 24, marginRight: 5 }} />
         </View>
       ),
     });
@@ -134,7 +134,7 @@ export default function MostPlayed({
         onRefresh={() => {
           setRefreshing(true);
           queryClient
-            .refetchQueries({queryKey})
+            .refetchQueries({ queryKey })
             .then(() => setRefreshing(false));
         }}
         onEndReached={() =>
@@ -143,15 +143,15 @@ export default function MostPlayed({
         onEndReachedThreshold={0.1}
         ListFooterComponent={() =>
           isFetchingNextPage ? (
-            <View style={{alignItems: 'center', marginTop: 10}}>
+            <View style={{ alignItems: 'center', marginTop: 10 }}>
               <ActivityIndicator size="large" />
             </View>
           ) : (
             <View />
           )
         }
-        ListFooterComponentStyle={{height: isFetchingNextPage ? 80 : 0}}
-        renderItem={({item}: {item: TrackProps}) => (
+        ListFooterComponentStyle={{ height: isFetchingNextPage ? 80 : 0 }}
+        renderItem={({ item }: { item: TrackProps }) => (
           <ListItem
             data={
               data?.pages.map(page => page.data.plays).flat() as TracksProps
@@ -168,11 +168,11 @@ export default function MostPlayed({
             <ActivityIndicator
               size="large"
               color="#fff"
-              style={{marginTop: '50%'}}
+              style={{ marginTop: '50%' }}
             />
           ) : isError ? (
             <View>
-              <Text style={{fontFamily: 'Abel'}}>Empty</Text>
+              <Text style={{ fontFamily: 'Abel' }}>Empty</Text>
             </View>
           ) : (
             <View />

@@ -1,16 +1,16 @@
 // * React Native
-import {Dimensions, Vibration} from 'react-native';
+import { Dimensions, Vibration } from 'react-native';
 
 // * Libraries
-import {create} from 'zustand';
+import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomSheet from '@gorhom/bottom-sheet';
 import Sound from 'react-native-sound';
-import TrackPlayer, {Progress, State, Track} from 'react-native-track-player';
+import TrackPlayer, { Progress, State, Track } from 'react-native-track-player';
 import tinycolor from 'tinycolor2';
 
 // * Types
-import {TrackProps, TracksProps} from './types';
+import { TrackProps, TracksProps } from './types';
 import {
   MediaHlsSegmentFormat,
   MediaInfo,
@@ -18,7 +18,7 @@ import {
   MediaStreamType,
   RemoteMediaClient,
 } from 'react-native-google-cast';
-import {DownloadDirectoryPath, mkdir} from '@dr.pogodin/react-native-fs';
+import { DownloadDirectoryPath, mkdir } from '@dr.pogodin/react-native-fs';
 
 export const SERVER_URL = `http://75.119.137.255`;
 export const API_URL = `${SERVER_URL}:3000/`;
@@ -52,7 +52,7 @@ const mediaInfo = (streamViaHLS: boolean, track: TrackProps): MediaInfo => ({
   contentType: 'audio/mpeg',
   metadata: {
     type: 'musicTrack',
-    images: [{url: track.artwork}],
+    images: [{ url: track.artwork }],
     title: track.title,
     albumTitle: track.album,
     albumArtist: track.albumArtist,
@@ -145,7 +145,7 @@ interface IPlayerStore {
 }
 
 export const usePlayerStore = create<IPlayerStore>((set, get) => ({
-  progress: {position: 0, buffered: 0, duration: 0},
+  progress: { position: 0, buffered: 0, duration: 0 },
   playbackState: {},
   queue: [],
   activeTrack: {},
@@ -167,33 +167,37 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   streamViaHLS: false,
   bitrate: '',
   selectedPlaylist: null,
-  setProgress: progress => set(state => ({...state, progress})),
-  setPlaybackState: playbackState => set(state => ({...state, playbackState})),
-  setQueue: queue => set(state => ({...state, queue})),
-  setActiveTrack: activeTrack => set(state => ({...state, activeTrack})),
+  setProgress: progress => set(state => ({ ...state, progress })),
+  setPlaybackState: playbackState =>
+    set(state => ({ ...state, playbackState })),
+  setQueue: queue => set(state => ({ ...state, queue })),
+  setActiveTrack: activeTrack => set(state => ({ ...state, activeTrack })),
   setActiveTrackIndex: activeTrackIndex =>
-    set(state => ({...state, activeTrackIndex})),
-  setArtworkQueue: artworkQueue => set(state => ({...state, artworkQueue})),
-  setCarouselQueue: carouselQueue => set(state => ({...state, carouselQueue})),
-  setTrackRating: trackRating => set(state => ({...state, trackRating})),
+    set(state => ({ ...state, activeTrackIndex })),
+  setArtworkQueue: artworkQueue => set(state => ({ ...state, artworkQueue })),
+  setCarouselQueue: carouselQueue =>
+    set(state => ({ ...state, carouselQueue })),
+  setTrackRating: trackRating => set(state => ({ ...state, trackRating })),
   setTrackPlayCount: trackPlayCount =>
-    set(state => ({...state, trackPlayCount})),
+    set(state => ({ ...state, trackPlayCount })),
   setPlayRegistered: playRegistered =>
-    set(state => ({...state, playRegistered})),
-  setIsCrossFading: isCrossFading => set(state => ({...state, isCrossFading})),
-  setPalette: palette => set(state => ({...state, palette})),
-  setLyricsVisible: lyricsVisible => set(state => ({...state, lyricsVisible})),
-  setLyrics: lyrics => set(state => ({...state, lyrics})),
+    set(state => ({ ...state, playRegistered })),
+  setIsCrossFading: isCrossFading =>
+    set(state => ({ ...state, isCrossFading })),
+  setPalette: palette => set(state => ({ ...state, palette })),
+  setLyricsVisible: lyricsVisible =>
+    set(state => ({ ...state, lyricsVisible })),
+  setLyrics: lyrics => set(state => ({ ...state, lyrics })),
   openNowPlaying: (nowPlayingRef: any) => {
-    set(state => ({...state, nowPlayingRef}));
+    set(state => ({ ...state, nowPlayingRef }));
     nowPlayingRef.current?.snapToIndex(0);
   },
   closeNowPlaying: (nowPlayingRef: any) => {
-    set(state => ({...state, nowPlayingRef}));
+    set(state => ({ ...state, nowPlayingRef }));
     nowPlayingRef.current?.close();
   },
   setNowPlayingRef: (nowPlayingRef: any) =>
-    set(state => ({...state, nowPlayingRef})),
+    set(state => ({ ...state, nowPlayingRef })),
   openTrackDetails: () => {
     const trackDetailsRef: any = get().trackDetailsRef;
     trackDetailsRef.current?.snapToIndex(0);
@@ -203,40 +207,31 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     trackDetailsRef.current?.close();
   },
   setTrackDetailsRef: (trackDetailsRef: any) =>
-    set(state => ({...state, trackDetailsRef})),
+    set(state => ({ ...state, trackDetailsRef })),
   setTrackDetails: (trackDetails: TrackProps) =>
-    set(state => ({...state, trackDetails})),
-  setCastState: (castState: any) => set(state => ({...state, castState})),
-  setCastClient: (castClient: any) => set(state => ({...state, castClient})),
+    set(state => ({ ...state, trackDetails })),
+  setCastState: (castState: any) => set(state => ({ ...state, castState })),
+  setCastClient: (castClient: any) => set(state => ({ ...state, castClient })),
   setStreamViaHLS: (streamViaHLS: boolean) =>
-    set(state => ({...state, streamViaHLS})),
-  setBitrate: (bitrate: string) => set(state => ({...state, bitrate})),
-  setSelectedPlaylist: (id: number) => set(state => ({...state, id})),
+    set(state => ({ ...state, streamViaHLS })),
+  setBitrate: (bitrate: string) => set(state => ({ ...state, bitrate })),
+  setSelectedPlaylist: (id: number) => set(state => ({ ...state, id })),
 
   // ? Player actions
   play: async (data: TracksProps, selected: TrackProps, position?: number) => {
-    // ? Apply palette to all tracks enqueue
-    const tracks = data.map((track: TrackProps) => {
-      if (track.hasOwnProperty('format')) {
-        const _palette = Array.isArray(track.palette)
-          ? track.palette
-          : JSON.parse(track.palette);
-
-        // const palette = _palette.map((color: string) => {
-        //   const brightness = tinycolor(color).getBrightness();
-
-        //   if (brightness >= 150)
-        //     return `#${tinycolor(color).darken(50).toHex()}`;
-        //   else return color;
-        // });
-
-        //return {...track, palette};
-        return {...track, palette: ['#000', '#000']};
-      }
-    });
+    // ? Load from local files
+    // const tracks = data.map((track: TrackProps) => {
+    //   if (track.hasOwnProperty('format')) {
+    //     track.url = `${DOWNLOADS_PATH}${track.path.replaceAll('/', '_')}`;
+    //     track.artwork = `${DOWNLOADS_PATH}${track.artwork.replaceAll('/', '_')}`;
+    //     track.waveform = `${DOWNLOADS_PATH}${track.waveform.replaceAll('/', '_')}`;
+    //     return { ...track,  };
+    //   }
+    // });
 
     // ? Remove undefined items (folders)
-    const _queue: any = tracks.filter((track: any) => track);
+    const _queue: any = data.filter((track: any) => track);
+    //const _queue: any = tracks.filter((track: any) => track);
 
     let queue: any = [];
 
@@ -253,7 +248,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     const setActiveTrack = get().setActiveTrack;
 
     if (castState === 'connected') {
-      set({queue});
+      set({ queue });
 
       setActiveTrack(get().queue[selectedIndex]);
 
@@ -268,7 +263,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
           },
         })
         .then(() => {
-          position && castClient.seek({position});
+          position && castClient.seek({ position });
           castClient.play();
           AsyncStorage.setItem('queue', JSON.stringify(queue));
           AsyncStorage.setItem('activeTrackIndex', selectedIndex.toString());
@@ -302,7 +297,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     Vibration.vibrate(50);
 
     // ? Retrieve playBack state, castClient & castState state
-    const {state} = get().playbackState;
+    const { state } = get().playbackState;
     const castClient = get().castClient;
     const castState = get().castState;
 
@@ -327,7 +322,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
         : TrackPlayer.skipToPrevious();
     else
       castState === 'connected'
-        ? castClient?.seek({position: 0})
+        ? castClient?.seek({ position: 0 })
         : TrackPlayer.seekTo(0);
   },
   next: () => {
@@ -347,7 +342,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     const castClient = get().castClient;
     const castState = get().castState;
 
-    if (castState === 'connected') castClient?.seek({position});
+    if (castState === 'connected') castClient?.seek({ position });
     else TrackPlayer.seekTo(position);
   },
   skipTo: (track: TrackProps) => {
@@ -361,7 +356,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     const queue = get().queue;
 
     // ? Get the index of the track in queue to skip to
-    const skipToIndex = queue.findIndex(({id}) => id === track.id);
+    const skipToIndex = queue.findIndex(({ id }) => id === track.id);
 
     if (castState === 'connected')
       castClient?.loadMedia({
@@ -373,7 +368,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
               contentType: 'audio/mpeg',
               metadata: {
                 type: 'musicTrack',
-                images: [{url: track.artwork}],
+                images: [{ url: track.artwork }],
                 title: track.title,
                 albumTitle: track.albumArtist,
                 albumArtist: track.albumArtist,
@@ -433,7 +428,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
               contentType: 'audio/mpeg',
               metadata: {
                 type: 'musicTrack',
-                images: [{url: track.artwork}],
+                images: [{ url: track.artwork }],
                 title: track.title,
                 albumTitle: track.albumArtist,
                 albumArtist: track.albumArtist,
@@ -487,7 +482,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
               contentType: 'audio/mpeg',
               metadata: {
                 type: 'musicTrack',
-                images: [{url: track.artwork}],
+                images: [{ url: track.artwork }],
                 title: track.title,
                 albumTitle: track.albumArtist,
                 albumArtist: track.albumArtist,

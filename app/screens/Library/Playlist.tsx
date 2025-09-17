@@ -1,77 +1,89 @@
 // * React
-import React, {
-  useState,
-  useLayoutEffect,
-  useRef,
-  useCallback,
-  useEffect,
-} from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 
 // * React Native
 import {
   Image,
   ImageBackground,
   Pressable,
-  Text,
   Vibration,
   View,
 } from 'react-native';
 
 // * Libraries
-import {TouchableOpacity} from 'react-native-gesture-handler';
-import {useMutation, useQuery} from '@tanstack/react-query';
-import {useBackHandler} from '@react-native-community/hooks';
+import * as Progress from 'react-native-progress';
+import { downloadFile } from '@dr.pogodin/react-native-fs';
+import { FlashList } from '@shopify/flash-list';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  useBackHandler,
+  useDeviceOrientation,
+} from '@react-native-community/hooks';
 import axios from 'axios';
 import DraggableFlatList, {
   OpacityDecorator,
   RenderItemParams,
   ShadowDecorator,
 } from 'react-native-draggable-flatlist';
-import {StarRatingDisplay} from 'react-native-star-rating-widget';
+import { StarRatingDisplay } from 'react-native-star-rating-widget';
 import SwipeableItem, {
   SwipeableItemImperativeRef,
 } from 'react-native-swipeable-item';
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
+import { State } from 'react-native-track-player';
+import { CastButton } from 'react-native-google-cast';
+import { useNavigation } from '@react-navigation/native';
+import { Divider, Menu, Snackbar, Text, useTheme } from 'react-native-paper';
+import dayjs from 'dayjs';
+import Animated from 'react-native-reanimated';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
+import _ListItem from '../../components/ListItem';
 import LinearGradientX from '../../components/LinearGradientX';
 
-import {API_URL, LIST_ITEM_HEIGHT, usePlayerStore} from '../../store';
+// * Store
+import { API_URL, DOWNLOADS_PATH, usePlayerStore, WIDTH } from '../../store';
 
-// * Assets
-import imageFiller from '../../assets/images/image-filler.png';
+import { formatTrackTime } from '../../functions';
 
-import {formatTrackTime} from '../../functions';
-
-import {TrackProps, TracksProps} from '../../types';
+import { TrackProps, TracksProps } from '../../types';
 import StatusBarX from '../../components/StatusBarX';
-import {queryClient} from '../../../App';
+import { queryClient } from '../../../App';
 import VerticalListItem from '../../components/Skeletons/VerticalListItem';
-
-import {State} from 'react-native-track-player';
 
 // * Icons
 import Icon from 'react-native-vector-icons/FontAwesome';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import PlayIcon from 'react-native-vector-icons/Ionicons';
-import RefreshIcon from 'react-native-vector-icons/MaterialIcons';
+
+import useRotate360Animation from '../../shared/hooks/useRotate360Animation';
+
+import duration from 'dayjs/plugin/duration';
+
+dayjs.extend(duration);
 
 export default function Playlist({
-  navigation,
   route: {
-    params: {id, name, duration, tracks, artwork, artworks, size},
+    params: { id, name, duration, tracks, artwork, artworks, size },
   },
 }: any) {
   // ? Refs
   const swipeableItemRef = useRef<SwipeableItemImperativeRef>(null);
 
-  // ? StoreStates
-  const {state} = usePlayerStore(state => state.playbackState);
-  const activeTrack = usePlayerStore(state => state.activeTrack);
+  // ? Hooks
+  const navigation = useNavigation();
+  const orientation = useDeviceOrientation();
+  const rotate = useRotate360Animation();
+  const theme = useTheme();
+  useBackHandler(() => {
+    navigation.goBack();
+    return true;
+  });
+
+  // ? Store States
+  const { state } = usePlayerStore(state => state.playbackState);
+  const activeTrack: TrackProps = usePlayerStore(state => state.activeTrack);
+  const palette = usePlayerStore(state => state.palette);
+  const play = usePlayerStore(state => state.play);
   const setSelectedPlaylist = usePlayerStore(
     state => state.setSelectedPlaylist,
   );
@@ -79,80 +91,177 @@ export default function Playlist({
   // ? States
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [playlistTracks, setPlaylistTracks] = useState<TracksProps>([]);
+  const [isSortMenuVisible, setIsSortMenuVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [downloadSize, setDownloadSize] = useState(0);
+  const [tracksDownloaded, setTracksDownloaded] = useState(0);
 
+  // ? Constants
   const isPlaying = state === State.Playing;
 
-  // const {
-  //   mutate: getTracks,
-  //   isSuccess,
-  //   isPending,
-  // } = useMutation({
-  //   mutationFn: () => axios(`${API_URL}playlist/${id}`),
-  //   onSuccess: ({data}) => setPlaylistTracks(data),
-  // });
-
-  //useEffect(() => getTracks(), []);
-
-  const {data, isSuccess, isError, isFetching} = useQuery({
+  // ? Queries
+  const { data, isSuccess, isFetching } = useQuery({
     queryKey: ['playlist', id],
-    queryFn: ({queryKey}) => axios(`${API_URL}${queryKey[0]}/${queryKey[1]}`),
-    select: ({data}) => data,
+    queryFn: ({ queryKey }) => {
+      axios(`${API_URL}${queryKey[0]}/${queryKey[1]}`).then(({ data }) => {
+        setPlaylistTracks(data);
+        setSelectedPlaylist(id);
+      });
+      return null;
+    },
   });
 
-  useEffect(() => {
-    if (data?.length > 0) setPlaylistTracks(data);
-    setSelectedPlaylist(id);
-  }, [data]);
-
-  const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
-  const palette = usePlayerStore(state => state.palette);
-
-  const play = usePlayerStore(state => state.play);
-
-  const {mutate: rearrangePlaylist} = useMutation({
-    mutationFn: (body: {playlistId: number; trackIds: number[]}) =>
+  // ? Mutations
+  const { mutate: rearrangePlaylist } = useMutation({
+    mutationFn: (body: { playlistId: number; trackIds: number[] }) =>
       axios.put(`rearrangePlaylist`, body),
   });
 
-  const {mutate: deletePlaylistTrack} = useMutation({
-    mutationFn: (body: {playlistId: number; trackId: number}) =>
+  const { mutate: deletePlaylistTrack } = useMutation({
+    mutationFn: (body: { playlistId: number; trackId: number }) =>
       axios.delete(
         `deletePlaylistTrack?playlistId=${body.playlistId}&trackId=${body.trackId}`,
       ),
   });
 
-  // ? Hooks
-  useBackHandler(() => {
-    navigation.goBack();
-    return true;
-  });
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      {
-        rotateZ: withRepeat(
-          withSequence(
-            withTiming(0 + 'deg', {duration: 0, easing: Easing.linear}),
-            withTiming(360 + 'deg', {duration: 3000, easing: Easing.linear}),
-          ),
-          -1,
-          false,
-        ),
-      },
-    ],
-  }));
-
   // ? Effects
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
-      title: name,
-      headerStyle: {backgroundColor: palette?.[1] ?? '#000'},
+      header: () => (
+        <View
+          style={{
+            alignItems: 'center',
+            backgroundColor: palette?.[1] ?? '#000',
+            flexDirection: 'row',
+            gap: 20,
+            paddingLeft: 20,
+            paddingRight: 10,
+            paddingVertical: 10,
+          }}
+        >
+          <Pressable style={{ flex: 0.05 }} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={22} color="white" />
+          </Pressable>
+
+          <View style={{ flex: 0.45 }}>
+            <Text numberOfLines={1} style={{ fontSize: 20 }}>
+              {activeTrack?.title ?? name}
+            </Text>
+
+            <Text numberOfLines={1} style={{ fontSize: 12 }}>
+              {activeTrack.artists ?? `${tracks} tracks`}
+            </Text>
+          </View>
+
+          <View
+            style={{
+              flex: 0.5,
+              flexDirection: 'row',
+              gap: 40,
+              justifyContent: 'flex-end',
+            }}
+          >
+            {isDownloading ? (
+              <Progress.Circle
+                color="#fff"
+                showsText
+                textStyle={{ fontSize: 10 }}
+                formatText={_ =>
+                  `${((downloadProgress / downloadSize) * 100).toFixed(0)}%`
+                }
+                progress={downloadProgress / downloadSize || downloadSize}
+                size={30}
+              />
+            ) : (
+              <MaterialCommunityIcons
+                color="#fff"
+                name="progress-download"
+                size={24}
+                onPress={() => {
+                  Vibration.vibrate(100);
+                  playlistTracks.map(({ url, path }: TrackProps) => {
+                    try {
+                      downloadFile({
+                        fromUrl: url,
+                        toFile: `${DOWNLOADS_PATH}/${path.replaceAll(
+                          '/',
+                          '_',
+                        )}`,
+                        background: false,
+                        progress({ bytesWritten, contentLength }) {
+                          setIsDownloading(true);
+                          setDownloadProgress(bytesWritten);
+                          setDownloadSize(contentLength);
+                        },
+                      })
+                        .promise.then(() => {
+                          setTracksDownloaded(prev => prev + 1);
+                          //setTracksDownloaded(tracksDownloaded + 1);
+                        })
+                        .catch(error => {
+                          setSnackbarMessage(
+                            `Error downloading ${name}: ${error}`,
+                          );
+                          setSnackbarVisible(!snackbarVisible);
+                        })
+                        .finally(() => {
+                          setIsDownloading(false);
+                          //setTracksDownloaded(prev => prev++);
+                        });
+                    } catch (error) {
+                      setSnackbarMessage(`Error downloading ${name}: ${error}`);
+                      setSnackbarVisible(!snackbarVisible);
+                    }
+                  });
+                }}
+              />
+            )}
+
+            <CastButton style={{ height: 24, width: 24, tintColor: '#fff' }} />
+
+            <Menu
+              mode="elevated"
+              visible={isSortMenuVisible}
+              onDismiss={() => setIsSortMenuVisible(false)}
+              anchor={
+                <Pressable
+                  onPress={() => (
+                    Vibration.vibrate(50), setIsSortMenuVisible(true)
+                  )}
+                >
+                  <MaterialCommunityIcons
+                    name="dots-vertical"
+                    size={22}
+                    color="white"
+                  />
+                </Pressable>
+              }
+            >
+              <Menu.Item onPress={() => {}} title="Edit playlist" />
+              <Divider />
+              <Menu.Item onPress={() => {}} title="Refresh" />
+            </Menu>
+          </View>
+        </View>
+      ),
     });
-  }, [navigation, activeTrackIndex]);
+  }, [
+    activeTrack,
+    navigation,
+    palette,
+    isSortMenuVisible,
+    downloadProgress,
+    isDownloading,
+    playlistTracks,
+    tracksDownloaded,
+  ]);
 
   // ? Functions
-  const ListItem = ({item}: {item: TrackProps}) => {
-    const isActive = activeTrack.id === item.id;
+  const ListItem = ({ item }: { item: TrackProps }) => {
+    const isActive = activeTrack?.id === item.id;
     const isPlaying = state === State.Playing;
 
     return (
@@ -167,8 +276,8 @@ export default function Playlist({
                   marginHorizontal: 6,
                   paddingHorizontal: 5,
                 }
-              : {marginHorizontal: 10},
-            {alignItems: 'center', flexDirection: 'row', paddingVertical: 7},
+              : { marginHorizontal: 10 },
+            { alignItems: 'center', flexDirection: 'row', paddingVertical: 7 },
           ]}
           // style={{
           //   flex: 1,
@@ -180,72 +289,77 @@ export default function Playlist({
           // }}
         >
           {/* Track details */}
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             {isActive ? (
               <>
                 {isPlaying ? (
                   <View
-                    style={{justifyContent: 'center', alignItems: 'center'}}>
+                    style={{ justifyContent: 'center', alignItems: 'center' }}
+                  >
                     <Animated.Image
-                      source={{uri: item.artwork}}
+                      source={{ uri: item.artwork }}
                       style={[
-                        {borderRadius: 100, height: 45, width: 45},
-                        animatedStyle,
+                        { borderRadius: 100, height: 45, width: 45 },
+                        rotate,
                       ]}
                     />
                     <Icon
                       name="circle-thin"
                       size={26}
                       style={{
-                        position: 'absolute',
                         color: '#fff',
                         opacity: 0.7,
+                        position: 'absolute',
                       }}
                     />
                     <Icon
                       name="circle"
                       size={18}
                       style={{
-                        position: 'absolute',
                         color: '#fff',
                         opacity: 0.5,
+                        position: 'absolute',
                       }}
                     />
                     <Icon
                       name="circle"
                       size={10}
-                      style={{position: 'absolute', color: '#000', opacity: 1}}
+                      style={{
+                        color: '#000',
+                        opacity: 1,
+                        position: 'absolute',
+                      }}
                     />
                   </View>
                 ) : (
                   <Image
-                    source={{uri: item.artwork}}
-                    style={[{borderRadius: 100, height: 45, width: 45}]}
+                    source={{ uri: item.artwork }}
+                    style={[{ borderRadius: 100, height: 45, width: 45 }]}
                   />
                 )}
               </>
             ) : (
               <Image
-                source={{uri: item.artwork}}
-                style={[
-                  {borderRadius: 10, height: 45, width: 45},
-                  animatedStyle,
-                ]}
+                source={{ uri: item.artwork }}
+                style={[{ borderRadius: 10, height: 45, width: 45 }]}
               />
             )}
-            <View style={{flexBasis: '60%', gap: 2}}>
+            <View style={{ flexBasis: '60%', gap: 2 }}>
               <Text
                 numberOfLines={1}
-                style={{fontSize: 16, fontWeight: '600', width: '97%'}}>
+                style={{ fontSize: 16, fontWeight: '600', width: '70%' }}
+              >
                 {item.position}. {item.title}
               </Text>
               <Text
                 numberOfLines={1}
-                style={{fontSize: 14, color: '#ffffff80'}}>
+                style={{ fontSize: 14, color: '#ffffff80' }}
+              >
                 {item.artists ?? 'Unknown Artist'}
               </Text>
             </View>
           </View>
+
           {/* Rating, Plays & Duration */}
           <View
             style={{
@@ -253,14 +367,15 @@ export default function Playlist({
               alignItems: 'flex-end',
               justifyContent: 'center',
               gap: 3,
-            }}>
+            }}
+          >
             <StarRatingDisplay
               rating={item.rating}
               starSize={16}
-              starStyle={{marginHorizontal: 0}}
+              starStyle={{ marginHorizontal: 0 }}
             />
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
-              <Text numberOfLines={1} style={{fontWeight: 'bold'}}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text numberOfLines={1} style={{ fontWeight: 'bold' }}>
                 {item.plays || 0} play
                 {`${item.plays === 1 ? '' : 's'}`}
               </Text>
@@ -270,7 +385,8 @@ export default function Playlist({
                   fontSize: 14,
                   fontWeight: 'bold',
                   marginRight: 3,
-                }}>
+                }}
+              >
                 {formatTrackTime(item.duration)} mins
               </Text>
             </View>
@@ -282,22 +398,23 @@ export default function Playlist({
 
   const refetch = () =>
     queryClient
-      .refetchQueries({queryKey: ['playlist', id]})
+      .refetchQueries({ queryKey: ['playlist', id] })
       .then(() => setRefreshing(false));
 
   // ? Callbacks
   const RenderQueueListItem = useCallback(
-    ({item, drag, isActive}: RenderItemParams<any>) => (
+    ({ item, drag, isActive }: RenderItemParams<any>) => (
       <ShadowDecorator>
         <OpacityDecorator>
-          <TouchableOpacity
-            activeOpacity={1}
+          <Pressable
+            //activeOpacity={1}
             onLongPress={drag}
-            disabled={isActive}>
+            disabled={isActive}
+          >
             <SwipeableItem
               ref={swipeableItemRef}
               item={item}
-              onChange={({openDirection}) =>
+              onChange={({ openDirection }) =>
                 openDirection === 'none' ? {} : {}
               }
               renderUnderlayRight={() => (
@@ -307,11 +424,13 @@ export default function Playlist({
                     flexDirection: 'row',
                     paddingHorizontal: 15,
                     paddingVertical: 10,
-                  }}>
-                  <TouchableOpacity
+                  }}
+                >
+                  <Pressable
                     onPress={() => {
-                      swipeableItemRef.current?.close({animated: true});
-                    }}>
+                      swipeableItemRef.current?.close({ animated: true });
+                    }}
+                  >
                     <Text
                       style={{
                         backgroundColor: '#0005',
@@ -326,10 +445,11 @@ export default function Playlist({
                         paddingBottom: 8,
                         paddingLeft: 15,
                         zIndex: 2,
-                      }}>
+                      }}
+                    >
                       EDIT
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               )}
               renderUnderlayLeft={() => (
@@ -340,24 +460,26 @@ export default function Playlist({
                     flexDirection: 'row',
                     paddingHorizontal: 15,
                     paddingVertical: 10,
-                  }}>
-                  <TouchableOpacity
+                  }}
+                >
+                  <Pressable
                     onPress={() => {
                       // ? Close the item
-                      swipeableItemRef.current?.close({animated: true});
+                      swipeableItemRef.current?.close({ animated: true });
                       // ? Remove the track from list
                       playlistTracks.filter(
                         _track => _track.id !== item.id && _track,
                       );
                       // ? Delete track from playlist table
                       deletePlaylistTrack(
-                        {playlistId: id, trackId: item.id},
+                        { playlistId: id, trackId: item.id },
                         {
                           onSuccess: refetch,
                           onError: error => console.log(error.message),
                         },
                       );
-                    }}>
+                    }}
+                  >
                     <Text
                       style={{
                         backgroundColor: 'red',
@@ -372,18 +494,20 @@ export default function Playlist({
                         paddingBottom: 8,
                         paddingLeft: 15,
                         zIndex: 2,
-                      }}>
+                      }}
+                    >
                       DELETE
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               )}
               activationThreshold={50}
               snapPointsRight={[80]}
-              snapPointsLeft={[100]}>
+              snapPointsLeft={[100]}
+            >
               <ListItem item={item} />
             </SwipeableItem>
-          </TouchableOpacity>
+          </Pressable>
         </OpacityDecorator>
       </ShadowDecorator>
     ),
@@ -396,137 +520,307 @@ export default function Playlist({
 
       <LinearGradientX />
 
-      <ImageBackground source={imageFiller} resizeMode="cover" blurRadius={20}>
-        <View
-          style={{
-            backgroundColor: 'black',
-            position: 'absolute',
-            top: 0,
-            bottom: 0,
-            right: 0,
-            left: 0,
-            opacity: 0,
-            zIndex: 2,
-          }}
-        />
+      {orientation === 'portrait' ? (
+        <>
+          <ImageBackground
+            source={{ uri: artworks?.[0] }}
+            resizeMode="cover"
+            blurRadius={20}
+          >
+            <View
+              style={{
+                backgroundColor: 'rgba(0,0,0,.5)',
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                right: 0,
+                left: 0,
+                opacity: 0.2,
+                zIndex: 2,
+              }}
+            />
 
-        <View
-          style={{
-            alignItems: 'center',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            paddingHorizontal: 10,
-            paddingVertical: 20,
-          }}>
-          {!artwork ? (
-            <>
-              {playlistTracks.length >= 4 ? (
-                <View
-                  style={{
-                    borderRadius: 10,
-                    flexDirection: 'row',
-                    flexWrap: 'wrap',
-                    marginTop: 0.5,
-                    width: 100,
-                    height: 100,
-                    overflow: 'hidden',
-                  }}>
-                  {artworks.map(
-                    (artwork: string, i: number) =>
-                      i <= 4 && (
-                        <Image
-                          key={i}
-                          source={{uri: artwork}}
-                          style={{width: 50, height: 50}}
-                          resizeMode="cover"
-                        />
-                      ),
+            <View
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 10,
+              }}
+            >
+              {!artwork ? (
+                <>
+                  {playlistTracks.length >= 4 ? (
+                    <View
+                      style={{
+                        borderColor: '#b1b1b1ff',
+                        borderRadius: 10,
+                        borderWidth: 1,
+                        flexDirection: 'row',
+                        flexWrap: 'wrap',
+                        marginTop: 0.5,
+                        width: 102,
+                        height: 102,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {artworks.map(
+                        (artwork: string, i: number) =>
+                          i <= 4 && (
+                            <Image
+                              key={i}
+                              source={{ uri: artwork }}
+                              style={{ width: 50, height: 50 }}
+                              resizeMode="cover"
+                            />
+                          ),
+                      )}
+                    </View>
+                  ) : (
+                    <Image
+                      source={{ uri: artworks[0] }}
+                      style={{ width: 100, height: 100, borderRadius: 10 }}
+                    />
                   )}
-                </View>
+                </>
               ) : (
                 <Image
-                  source={{uri: artworks[0]}}
-                  style={{width: 150, height: 150, borderRadius: 10}}
+                  source={{ uri: artwork }}
+                  defaultSource={require('../../assets/images/musician.png')}
+                  style={{ width: 100, height: 100, borderRadius: 100 }}
+                  resizeMode="cover"
                 />
               )}
-            </>
-          ) : (
-            <Image
-              source={{uri: artwork}}
-              defaultSource={require('../../assets/images/musician.png')}
-              style={{width: 100, height: 100, borderRadius: 100}}
-              resizeMode="cover"
-            />
-          )}
 
-          <View style={{gap: 5}}>
-            <Text style={{fontSize: 24, fontWeight: '800'}}>
-              {tracks} tracks
-            </Text>
-            <Text style={{fontSize: 20, opacity: 0.5}}>{duration} mins</Text>
+              <View style={{ alignItems: 'center' }}>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontFamily: 'Pacifico',
+                    fontSize: 30,
+                    textAlign: 'center',
+                    textShadowColor: '#000',
+                    textShadowRadius: 10,
+                    width: WIDTH / 1.5,
+                  }}
+                >
+                  {name}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: 'Rubik',
+                    fontSize: 18,
+                    marginTop: -2,
+                    textShadowColor: '#000',
+                    textShadowRadius: 5,
+                  }}
+                >
+                  {tracks} tracks
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: 'Rubik',
+                    fontSize: 20,
+                    marginTop: 3,
+                    opacity: 0.6,
+                    textShadowColor: '#000',
+                    textShadowRadius: 5,
+                  }}
+                >
+                  {duration} mins
+                </Text>
+              </View>
+            </View>
+
+            <PlayIcon
+              color="#fff"
+              name="play-circle"
+              size={60}
+              style={{
+                position: 'absolute',
+                borderColor: '#fff',
+                borderRadius: 100,
+                borderWidth: 2,
+                borderStyle: 'dashed',
+                bottom: 10,
+                right: 10,
+                zIndex: 5,
+              }}
+              onPress={() => play(playlistTracks, playlistTracks[0])}
+            />
+
             <Text
               numberOfLines={1}
               style={{
                 alignSelf: 'flex-start',
-                borderColor: '#ffffff4D',
+                backgroundColor: '#fff',
+                borderColor: '#fff',
                 borderWidth: 1,
                 borderRadius: 5,
-                fontSize: 18,
-                marginTop: 3,
-                paddingLeft: 5,
-                paddingRight: 3,
-              }}>
+                color: '#000',
+                fontSize: 14,
+                fontWeight: 'bold',
+                paddingHorizontal: 5,
+                paddingTop: 1,
+                position: 'absolute',
+                left: 10,
+                top: 10,
+              }}
+            >
               {size}
             </Text>
+          </ImageBackground>
+
+          {/* <Text style={{ fontSize: 13, textAlign: 'right' }}>
+            {dayjs
+              .duration(554, 'seconds')
+              .format('HH [hrs] mm [mins] ss [sec]')}
+          </Text> */}
+
+          {tracksDownloaded === playlistTracks.length && (
+            <Progress.Bar
+              borderColor="#fff"
+              borderRadius={0}
+              color={theme.colors.primary}
+              height={3}
+              width={WIDTH}
+              progress={(tracksDownloaded / playlistTracks.length) * 100}
+            />
+          )}
+
+          {isFetching && !data && <VerticalListItem />}
+
+          {isSuccess && (
+            <DraggableFlatList
+              data={playlistTracks ?? []}
+              onDragBegin={() => Vibration.vibrate(50)}
+              onDragEnd={({ data }) => {
+                // ? Set the data with the new movements
+                setPlaylistTracks(data);
+                // ? Store rearranged tracks on DB
+                rearrangePlaylist(
+                  { playlistId: id, trackIds: data.map(({ id }) => id) },
+                  {
+                    onSuccess: refetch,
+                    onError: error => console.log(error.message),
+                  },
+                );
+              }}
+              keyExtractor={(_, index) => index.toString()}
+              renderItem={RenderQueueListItem}
+              activationDistance={10}
+              containerStyle={{ flex: 1, marginVertical: 10 }}
+            />
+          )}
+        </>
+      ) : (
+        <View
+          style={{
+            flex: 1,
+            flexDirection: 'row',
+            gap: 100,
+            paddingHorizontal: 50,
+            paddingTop: 30,
+          }}
+        >
+          <View style={{ flex: 0.2 }}>
+            {!artwork ? (
+              <>
+                {playlistTracks.length >= 4 ? (
+                  <View
+                    style={{
+                      borderRadius: 10,
+                      flexDirection: 'row',
+                      flexWrap: 'wrap',
+                      marginTop: 0.5,
+                      width: 400,
+                      height: 400,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {artworks.map(
+                      (artwork: string, i: number) =>
+                        i <= 4 && (
+                          <Image
+                            key={i}
+                            source={{ uri: artwork }}
+                            style={{ width: 200, height: 200 }}
+                            resizeMode="cover"
+                          />
+                        ),
+                    )}
+                  </View>
+                ) : (
+                  <Image
+                    source={{ uri: artworks[0] }}
+                    style={{ width: 400, height: 400, borderRadius: 10 }}
+                  />
+                )}
+              </>
+            ) : (
+              <Image
+                source={{ uri: artwork }}
+                defaultSource={require('../../assets/images/musician.png')}
+                style={{ width: 400, height: 400, borderRadius: 100 }}
+                resizeMode="cover"
+              />
+            )}
+
+            <View
+              style={{
+                alignItems: 'center',
+                flexDirection: 'row',
+                gap: 20,
+                marginTop: 10,
+              }}
+            >
+              <Pressable
+                onPress={() => play(playlistTracks, playlistTracks[0])}
+              >
+                <PlayIcon color="#fff" name="play-circle" size={70} />
+              </Pressable>
+              <View>
+                <Text style={{ fontSize: 24 }}>{tracks} tracks</Text>
+                <Text style={{ fontSize: 20, opacity: 0.5 }}>
+                  {duration} mins
+                </Text>
+              </View>
+            </View>
           </View>
 
-          <View
-            style={{
-              alignItems: 'center',
-              flexDirection: 'row',
-              justifyContent: 'flex-end',
-              gap: 20,
-              zIndex: 3,
-            }}>
-            <Pressable
-              onPress={() => {
-                Vibration.vibrate(50);
-                refetch();
-              }}>
-              <RefreshIcon name="refresh" size={40} />
-            </Pressable>
-
-            <Pressable onPress={() => play(playlistTracks, playlistTracks[0])}>
-              <PlayIcon name="play-circle" size={70} style={{color: '#fff'}} />
-            </Pressable>
+          <View style={{ flex: 0.8 }}>
+            {isSuccess && (
+              <FlashList
+                data={playlistTracks ?? []}
+                keyExtractor={(_, index) => index.toString()}
+                refreshing={refreshing}
+                onRefresh={() => {
+                  setRefreshing(true);
+                  queryClient
+                    .refetchQueries({ queryKey: ['playlist', id] })
+                    .then(() => setRefreshing(false));
+                }}
+                renderItem={({ item }: { item: TrackProps }) => (
+                  <ListItem item={item} />
+                )}
+                // renderItem={({ item }: { item: TrackProps }) => (
+                //   <_ListItem
+                //     data={playlistTracks}
+                //     item={item}
+                //     display="bitrate"
+                //   />
+                // )}
+              />
+            )}
           </View>
         </View>
-      </ImageBackground>
-
-      {isFetching && !data && <VerticalListItem />}
-
-      {isSuccess && (
-        <DraggableFlatList
-          data={playlistTracks}
-          onDragBegin={() => Vibration.vibrate(50)}
-          onDragEnd={({data}) => {
-            // ? Set the data with the new movements
-            setPlaylistTracks(data);
-            // ? Store rearranged tracks on DB
-            rearrangePlaylist(
-              {playlistId: id, trackIds: data.map(({id}) => id)},
-              {
-                onSuccess: refetch,
-                onError: error => console.log(error.message),
-              },
-            );
-          }}
-          keyExtractor={(_, index) => index.toString()}
-          renderItem={RenderQueueListItem}
-          activationDistance={10}
-          containerStyle={{flex: 1, marginVertical: 10}}
-        />
       )}
+
+      <Snackbar
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+      >
+        {snackbarMessage}
+      </Snackbar>
     </>
   );
 }

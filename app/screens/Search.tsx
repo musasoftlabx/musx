@@ -10,7 +10,6 @@ import React, {
 // * React-Native
 import {
   View,
-  Text,
   SectionList,
   Pressable,
   Image,
@@ -19,10 +18,11 @@ import {
 } from 'react-native';
 
 // * Libraries
-import {useBackHandler} from '@react-native-community/hooks';
-import {CastButton} from 'react-native-google-cast';
-import {FlashList} from '@shopify/flash-list';
-import {useMutation, useQuery} from '@tanstack/react-query';
+import { useBackHandler } from '@react-native-community/hooks';
+import { CastButton } from 'react-native-google-cast';
+import { FlashList } from '@shopify/flash-list';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Text } from 'react-native-paper';
 import axios from 'axios';
 import BottomSheet from '@gorhom/bottom-sheet';
 import debounce from 'lodash/debounce';
@@ -38,10 +38,10 @@ import ListItem from '../components/ListItem';
 import StatusBarX from '../components/StatusBarX';
 
 // * Store
-import {HEIGHT, usePlayerStore, WIDTH} from '../store';
+import { HEIGHT, usePlayerStore, WIDTH } from '../store';
 
 // * Types
-import {TrackProps, TracksProps} from '../types';
+import { TrackProps, TracksProps } from '../types';
 
 type SearchProps = {
   tracks: TracksProps;
@@ -49,7 +49,7 @@ type SearchProps = {
   artists: [];
 };
 
-export default function Search({navigation}: any) {
+export default function Search({ navigation }: any) {
   // ? States
   const [searchWord, setSearchWord] = useState('');
   const [data, setData] = useState<SearchProps>();
@@ -59,15 +59,15 @@ export default function Search({navigation}: any) {
   const palette = usePlayerStore(state => state.palette);
 
   // ? Hooks
-  const {data: searchHistory} = useQuery({
+  const { data: searchHistory } = useQuery({
     queryKey: ['searchHistory'],
-    queryFn: ({queryKey}) => axios(queryKey[0]),
-    select: ({data}) => data,
+    queryFn: ({ queryKey }) => axios(queryKey[0]),
+    select: ({ data }) => data,
   });
 
-  const {mutate: search, isPending} = useMutation({
+  const { mutate: search, isPending } = useMutation({
     mutationFn: () => axios(`search?query=${searchWord}`),
-    onSuccess: ({data}) => setData(data),
+    onSuccess: ({ data }) => setData(data),
   });
 
   useBackHandler(() => {
@@ -76,10 +76,10 @@ export default function Search({navigation}: any) {
   });
 
   // ? Effects
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       headerTransparent: true,
-      headerStyle: {backgroundColor: palette?.[1] ?? '#000'},
+      headerStyle: { backgroundColor: palette?.[1] ?? '#000' },
       header: () =>
         showSearch ? (
           <View
@@ -89,10 +89,12 @@ export default function Search({navigation}: any) {
               gap: 10,
               paddingHorizontal: 15,
               paddingVertical: 5,
-            }}>
+            }}
+          >
             <Pressable
               onPress={() => (Vibration.vibrate(50), setShowSearch(false))}
-              style={{marginRight: 10, opacity: 0.8}}>
+              style={{ marginRight: 10, opacity: 0.8 }}
+            >
               <Ionicons name="arrow-back" size={22} color="white" />
             </Pressable>
             <TextInput
@@ -113,7 +115,8 @@ export default function Search({navigation}: any) {
                 setSearchWord('');
                 setData(undefined);
               }}
-              style={{marginRight: 10, opacity: 0.8}}>
+              style={{ marginRight: 10, opacity: 0.8 }}
+            >
               <Ionicons name="close" size={22} color="white" />
             </Pressable>
           </View>
@@ -124,15 +127,17 @@ export default function Search({navigation}: any) {
               flexDirection: 'row',
               gap: 40,
               padding: 17,
-            }}>
-            <Text style={{fontSize: 22}}>Search</Text>
-            <View style={{flex: 1}} />
+            }}
+          >
+            <Text style={{ fontSize: 22 }}>Search</Text>
+            <View style={{ flex: 1 }} />
             <Pressable
               onPress={() => (Vibration.vibrate(50), setShowSearch(true))}
-              style={{marginRight: 10, opacity: 0.8}}>
+              style={{ marginRight: 10, opacity: 0.8 }}
+            >
               <Ionicons name="search" size={22} color="white" />
             </Pressable>
-            <CastButton style={{height: 24, width: 24, marginRight: 5}} />
+            <CastButton style={{ height: 24, width: 24, marginRight: 5 }} />
           </View>
         ),
     });
@@ -159,10 +164,10 @@ export default function Search({navigation}: any) {
       {data ? (
         <SectionList
           sections={[
-            {title: 'Albums', data: [1], horizontal: true},
-            {title: 'Singles', data: [1]},
+            { title: 'Albums', data: [1], horizontal: true },
+            { title: 'Singles', data: [1] },
           ]}
-          renderSectionHeader={({section: {title}}) =>
+          renderSectionHeader={({ section: { title } }) =>
             data.albums.length > 0 ? (
               <Text
                 numberOfLines={1}
@@ -173,7 +178,8 @@ export default function Search({navigation}: any) {
                   marginTop: 10,
                   marginBottom: 5,
                   marginLeft: 10,
-                }}>
+                }}
+              >
                 {data.albums.length > 0
                   ? `${title} (${
                       title === 'Albums'
@@ -186,7 +192,7 @@ export default function Search({navigation}: any) {
               <View />
             )
           }
-          renderItem={({section: {horizontal}}) =>
+          renderItem={({ section: { horizontal } }) =>
             horizontal ? (
               <>
                 {data.albums.length > 0 && (
@@ -195,7 +201,7 @@ export default function Search({navigation}: any) {
                     horizontal
                     keyExtractor={(_, index) => index.toString()}
                     estimatedItemSize={10}
-                    renderItem={({item}: {item: Omit<TrackProps, ''>}) => (
+                    renderItem={({ item }: { item: Omit<TrackProps, ''> }) => (
                       <Pressable
                         onPress={() =>
                           navigation.navigate('Album', {
@@ -203,9 +209,10 @@ export default function Search({navigation}: any) {
                             album: item.album,
                           })
                         }
-                        style={{margin: 10, width: 100}}>
+                        style={{ margin: 10, width: 100 }}
+                      >
                         <Image
-                          source={{uri: item.artwork}}
+                          source={{ uri: item.artwork }}
                           style={{
                             width: 100,
                             height: 100,
@@ -221,7 +228,8 @@ export default function Search({navigation}: any) {
                             marginTop: 5,
                             marginBottom: 1,
                             marginLeft: 3,
-                          }}>
+                          }}
+                        >
                           {item.album}
                         </Text>
                         <Text
@@ -231,7 +239,8 @@ export default function Search({navigation}: any) {
                             color: 'rgba(255, 255, 255, .5)',
                             marginBottom: 1,
                             marginLeft: 3,
-                          }}>
+                          }}
+                        >
                           {item.tracks} tracks
                         </Text>
                         <Text
@@ -244,7 +253,8 @@ export default function Search({navigation}: any) {
                             fontSize: 14,
                             marginTop: 1,
                             paddingHorizontal: 5,
-                          }}>
+                          }}
+                        >
                           {item.size}
                         </Text>
                       </Pressable>
@@ -259,8 +269,8 @@ export default function Search({navigation}: any) {
                     data={data.tracks}
                     keyExtractor={(_, index) => index.toString()}
                     estimatedItemSize={10}
-                    estimatedListSize={{height: HEIGHT / 2, width: WIDTH}}
-                    renderItem={({item}: {item: TrackProps}) => (
+                    estimatedListSize={{ height: HEIGHT / 2, width: WIDTH }}
+                    renderItem={({ item }: { item: TrackProps }) => (
                       <ListItem
                         data={data.tracks}
                         item={item}
@@ -272,12 +282,12 @@ export default function Search({navigation}: any) {
               </>
             )
           }
-          style={{marginTop: 60}}
+          style={{ marginTop: 60 }}
         />
       ) : (
         <SectionList
-          sections={[{title: 'Recent Searches', data: [1]}]}
-          renderSectionHeader={({section: {title}}) => (
+          sections={[{ title: 'Recent Searches', data: [1] }]}
+          renderSectionHeader={({ section: { title } }) => (
             <Text
               numberOfLines={1}
               style={{
@@ -286,7 +296,8 @@ export default function Search({navigation}: any) {
                 marginTop: 10,
                 marginBottom: 5,
                 marginLeft: 18,
-              }}>
+              }}
+            >
               {title}
             </Text>
           )}
@@ -297,8 +308,8 @@ export default function Search({navigation}: any) {
                   data={searchHistory}
                   keyExtractor={(_, index) => index.toString()}
                   estimatedItemSize={10}
-                  estimatedListSize={{height: HEIGHT / 2, width: WIDTH}}
-                  renderItem={({item}: {item: string}) => (
+                  estimatedListSize={{ height: HEIGHT / 2, width: WIDTH }}
+                  renderItem={({ item }: { item: string }) => (
                     <Pressable
                       onPress={() => setSearchWord(item)}
                       style={{
@@ -306,10 +317,11 @@ export default function Search({navigation}: any) {
                         flexDirection: 'row',
                         gap: 15,
                         padding: 20,
-                      }}>
-                      <MaterialIcons name="history" size={24} />
-                      <Text style={{marginTop: -2}}>{item}</Text>
-                      <View style={{flex: 1}} />
+                      }}
+                    >
+                      <MaterialIcons color="#fff" name="history" size={24} />
+                      <Text style={{ marginTop: -2 }}>{item}</Text>
+                      <View style={{ flex: 1 }} />
                       <Feather name="arrow-up-left" size={24} color="#fff7" />
                     </Pressable>
                   )}
@@ -317,7 +329,7 @@ export default function Search({navigation}: any) {
               )}
             </>
           )}
-          style={{marginTop: 60}}
+          style={{ marginTop: 60 }}
         />
       )}
 

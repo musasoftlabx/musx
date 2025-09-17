@@ -1,5 +1,6 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {Button, View, Text} from 'react-native';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
+import { Button, View } from 'react-native';
+
 import {
   DownloadDirectoryPath,
   DocumentDirectoryPath,
@@ -10,14 +11,15 @@ import {
   LibraryDirectoryPath,
   ReadDirResItemT,
 } from '@dr.pogodin/react-native-fs';
-import {AUDIO_URL, DOWNLOADS_PATH, usePlayerStore} from '../store';
+import { AUDIO_URL, DOWNLOADS_PATH, usePlayerStore } from '../store';
 import StatusBarX from '../components/StatusBarX';
 import LinearGradientX from '../components/LinearGradientX';
 import Footer from '../components/Footer';
-import {FlashList} from '@shopify/flash-list';
-import {queryClient} from '../../App';
+import { FlashList } from '@shopify/flash-list';
+import { queryClient } from '../../App';
 import ListItem from '../components/ListItem';
-import {TrackProps} from '../types';
+import { TrackProps } from '../types';
+import { Text } from 'react-native-paper';
 
 // type DownloadFileOptions = {
 //   fromUrl: string;
@@ -36,7 +38,7 @@ import {TrackProps} from '../types';
 //   backgroundTimeout?: number;
 // };
 
-export default function Downloads({navigation}: {navigation: any}) {
+export default function Downloads({ navigation }: { navigation: any }) {
   const palette = usePlayerStore(state => state.palette);
 
   const [files, setFiles] = useState<ReadDirResItemT[]>([]);
@@ -44,7 +46,7 @@ export default function Downloads({navigation}: {navigation: any}) {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerStyle: {backgroundColor: palette[1] ?? '#000'},
+      headerStyle: { backgroundColor: palette[1] ?? '#000' },
     });
   });
 
@@ -67,7 +69,7 @@ export default function Downloads({navigation}: {navigation: any}) {
           onRefresh={() => {
             setRefreshing(true);
           }}
-          renderItem={({item}) => (
+          renderItem={({ item }) => (
             <View>
               <Text>{item.name}</Text>
               <Text>{item.size}</Text>

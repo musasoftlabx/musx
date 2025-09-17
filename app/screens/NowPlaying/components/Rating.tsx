@@ -1,23 +1,23 @@
 // * React
-import React, {useCallback} from 'react';
+import React, { useCallback } from 'react';
 
 // * React Native
-import {Vibration} from 'react-native';
+import { Vibration } from 'react-native';
 
 // * Libraries
-import {useMutation} from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import StarRating from 'react-native-star-rating-widget';
 import TrackPlayer from 'react-native-track-player';
 
 // * Store
-import {usePlayerStore} from '../../../store';
-import {refreshScreens} from '../../../functions';
+import { usePlayerStore } from '../../../store';
+import { refreshScreens } from '../../../functions';
 
 export default function Rating() {
   // ? Mutations
-  const {mutate: saveRating} = useMutation({
-    mutationFn: (body: {id?: number; rating: number}) =>
+  const { mutate: saveRating } = useMutation({
+    mutationFn: (body: { id?: number; rating: number }) =>
       axios.patch('rateTrack', body),
   });
 
@@ -43,9 +43,9 @@ export default function Rating() {
           });
 
           saveRating(
-            {id: activeTrack?.id, rating},
+            { id: activeTrack?.id, rating },
             {
-              onSuccess: ({data}) => {
+              onSuccess: ({ data }) => {
                 // ? Refresh screens to apply changes of rated track
                 refreshScreens(activeTrack, selectedPlaylist);
               },

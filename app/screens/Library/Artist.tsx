@@ -1,5 +1,5 @@
 // * React
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 
 // * React Native
 import {
@@ -7,19 +7,19 @@ import {
   ImageBackground,
   Pressable,
   SectionList,
-  Text,
   View,
 } from 'react-native';
 
 // * Libraries
-import {FlashList} from '@shopify/flash-list';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {useBackHandler} from '@react-native-community/hooks';
-import {useQuery} from '@tanstack/react-query';
+import { FlashList } from '@shopify/flash-list';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useBackHandler } from '@react-native-community/hooks';
+import { useQuery } from '@tanstack/react-query';
+import { Text } from 'react-native-paper';
 import axios from 'axios';
 
 // * Components
-import {queryClient} from '../../../App';
+import { queryClient } from '../../../App';
 import HorizontalListItem from '../../components/Skeletons/HorizontalListItem';
 import LinearGradientX from '../../components/LinearGradientX';
 import ListItem from '../../components/ListItem';
@@ -30,10 +30,10 @@ import VerticalListItem from '../../components/Skeletons/VerticalListItem';
 import imageFiller from '../../assets/images/image-filler.png';
 
 // * Store
-import {API_URL, HEIGHT, WIDTH} from '../../store';
+import { API_URL, HEIGHT, WIDTH } from '../../store';
 
 // * Types
-import {RootStackParamList, TrackProps, TracksProps} from '../../types';
+import { RootStackParamList, TrackProps, TracksProps } from '../../types';
 
 export type ArtistProps = {
   albums: {
@@ -48,7 +48,7 @@ export type ArtistProps = {
 export default function Artist({
   navigation,
   route: {
-    params: {albumArtist, artworks, tracks, url},
+    params: { albumArtist, artworks, tracks, url },
   },
 }: NativeStackScreenProps<RootStackParamList, 'Artist', ''>) {
   // ? Hooks
@@ -67,8 +67,8 @@ export default function Artist({
   } = useQuery({
     enabled: albumArtist ? true : false,
     queryKey: ['artist', albumArtist],
-    queryFn: ({queryKey}) => axios(`${API_URL}${queryKey[0]}/${queryKey[1]}`),
-    select: ({data}) => data,
+    queryFn: ({ queryKey }) => axios(`${API_URL}${queryKey[0]}/${queryKey[1]}`),
+    select: ({ data }) => data,
   });
 
   // ? States
@@ -99,7 +99,8 @@ export default function Artist({
             paddingTop: 50,
             paddingBottom: 10,
             justifyContent: 'center',
-          }}>
+          }}
+        >
           {artworks?.length > 0 ? (
             <View
               style={{
@@ -110,12 +111,13 @@ export default function Artist({
                 width: 100,
                 height: 100,
                 overflow: 'hidden',
-              }}>
+              }}
+            >
               {artworks.map((artwork: string, i: number) => (
                 <Image
                   key={i}
-                  source={{uri: artwork}}
-                  style={{width: 50, height: 50}}
+                  source={{ uri: artwork }}
+                  style={{ width: 50, height: 50 }}
                   resizeMode="cover"
                 />
               ))}
@@ -126,23 +128,23 @@ export default function Artist({
                 uri: `${url.split('/').slice(0, -1).join('/')}/artist.jpg`,
               }}
               defaultSource={require('../../assets/images/musician.png')}
-              style={{width: 100, height: 100, borderRadius: 100}}
+              style={{ width: 100, height: 100, borderRadius: 100 }}
               resizeMode="cover"
             />
           )}
 
-          <Text style={{fontSize: 30}}>{albumArtist}</Text>
-          <Text style={{fontSize: 15}}>{tracks} tracks</Text>
+          <Text style={{ fontSize: 30 }}>{albumArtist}</Text>
+          <Text style={{ fontSize: 15 }}>{tracks} tracks</Text>
         </View>
       </ImageBackground>
 
       {isFetching && !artist && (
         <SectionList
           sections={[
-            {title: 'Albums', data: [1], horizontal: true},
-            {title: 'Singles', data: [1]},
+            { title: 'Albums', data: [1], horizontal: true },
+            { title: 'Singles', data: [1] },
           ]}
-          renderSectionHeader={({section: {title}}) => (
+          renderSectionHeader={({ section: { title } }) => (
             <Text
               numberOfLines={1}
               style={{
@@ -152,11 +154,12 @@ export default function Artist({
                 marginTop: 10,
                 marginBottom: 5,
                 marginLeft: 10,
-              }}>
+              }}
+            >
               {title}
             </Text>
           )}
-          renderItem={({section: {horizontal}}) =>
+          renderItem={({ section: { horizontal } }) =>
             horizontal ? <HorizontalListItem /> : <VerticalListItem />
           }
         />
@@ -164,24 +167,24 @@ export default function Artist({
 
       {isError && (
         <View>
-          <Text style={{fontFamily: 'Abel'}}>Empty</Text>
+          <Text style={{ fontFamily: 'Abel' }}>Empty</Text>
         </View>
       )}
 
       {isSuccess && (
         <SectionList
           sections={[
-            {title: 'Albums', data: [1], horizontal: true},
-            {title: 'Singles', data: [1]},
+            { title: 'Albums', data: [1], horizontal: true },
+            { title: 'Singles', data: [1] },
           ]}
           refreshing={refreshing}
           onRefresh={() => {
             setRefreshing(true);
             queryClient
-              .refetchQueries({queryKey: ['artist', albumArtist]})
+              .refetchQueries({ queryKey: ['artist', albumArtist] })
               .then(() => setRefreshing(false));
           }}
-          renderSectionHeader={({section: {title}}) =>
+          renderSectionHeader={({ section: { title } }) =>
             artist.albums.length > 0 ? (
               <Text
                 numberOfLines={1}
@@ -192,7 +195,8 @@ export default function Artist({
                   marginTop: 10,
                   marginBottom: 5,
                   marginLeft: 10,
-                }}>
+                }}
+              >
                 {artist.albums.length > 0
                   ? `${title} (${
                       title === 'Albums'
@@ -205,7 +209,7 @@ export default function Artist({
               <View />
             )
           }
-          renderItem={({section: {horizontal}}) =>
+          renderItem={({ section: { horizontal } }) =>
             horizontal ? (
               <>
                 {artist.albums.length > 0 && (
@@ -214,7 +218,7 @@ export default function Artist({
                     horizontal
                     keyExtractor={(_, index) => index.toString()}
                     estimatedItemSize={10}
-                    renderItem={({item}: {item: Omit<TrackProps, ''>}) => (
+                    renderItem={({ item }: { item: Omit<TrackProps, ''> }) => (
                       <Pressable
                         onPress={() =>
                           navigation.navigate('Album', {
@@ -222,9 +226,10 @@ export default function Artist({
                             album: item.album,
                           })
                         }
-                        style={{margin: 10, width: 100}}>
+                        style={{ margin: 10, width: 100 }}
+                      >
                         <Image
-                          source={{uri: item.artwork}}
+                          source={{ uri: item.artwork }}
                           style={{
                             borderRadius: 10,
                             width: 100,
@@ -240,7 +245,8 @@ export default function Artist({
                             marginTop: 5,
                             marginBottom: 1,
                             marginLeft: 3,
-                          }}>
+                          }}
+                        >
                           {item.album}
                         </Text>
                         <Text
@@ -250,7 +256,8 @@ export default function Artist({
                             color: 'rgba(255, 255, 255, .5)',
                             marginBottom: 1,
                             marginLeft: 3,
-                          }}>
+                          }}
+                        >
                           {item.tracks} tracks
                         </Text>
                         <Text
@@ -260,10 +267,12 @@ export default function Artist({
                             borderColor: '#ffffff4D',
                             borderWidth: 1,
                             borderRadius: 5,
+                            color: 'rgba(255, 255, 255, .8)',
                             fontSize: 14,
                             marginTop: 1,
                             paddingHorizontal: 5,
-                          }}>
+                          }}
+                        >
                           {item.size}
                         </Text>
                       </Pressable>
@@ -278,8 +287,8 @@ export default function Artist({
                     data={artist.singles}
                     keyExtractor={(_, index) => index.toString()}
                     estimatedItemSize={10}
-                    estimatedListSize={{height: HEIGHT / 2, width: WIDTH}}
-                    renderItem={({item}: {item: TrackProps}) => (
+                    estimatedListSize={{ height: HEIGHT / 2, width: WIDTH }}
+                    renderItem={({ item }: { item: TrackProps }) => (
                       <ListItem
                         data={artist.singles}
                         item={item}

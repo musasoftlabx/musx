@@ -1,9 +1,9 @@
 // * React
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 
 // * Libraries
-import {CastButton} from 'react-native-google-cast';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import { CastButton } from 'react-native-google-cast';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // * Components
@@ -29,7 +29,7 @@ const Stack = createNativeStackNavigator();
 
 export default function LibraryStackNavigator() {
   // ? States
-  const [initialRoute, setInitialRoute] = useState('');
+  const [initialRoute, setInitialRoute] = useState('Library');
 
   // ? Effects
   useEffect(() => {
@@ -45,7 +45,7 @@ export default function LibraryStackNavigator() {
         <Stack.Screen
           name="Library"
           component={Library}
-          options={{headerShown: false}}
+          options={{ headerShown: false }}
         />
 
         <Stack.Screen
@@ -58,9 +58,9 @@ export default function LibraryStackNavigator() {
               <>
                 <MaterialIcons
                   name="sort"
-                  style={{color: '#fff', fontSize: 24, marginRight: 50}}
+                  style={{ color: '#fff', fontSize: 24, marginRight: 50 }}
                 />
-                <CastButton style={{height: 24, width: 24, marginRight: 5}} />
+                <CastButton style={{ height: 24, width: 24, marginRight: 5 }} />
               </>
             ),
           }}
@@ -78,7 +78,7 @@ export default function LibraryStackNavigator() {
             headerBackVisible: true,
             headerTransparent: true,
             headerRight: () => (
-              <CastButton style={{height: 24, width: 24, marginRight: 5}} />
+              <CastButton style={{ height: 24, width: 24, marginRight: 5 }} />
             ),
           }}
         />
@@ -86,7 +86,7 @@ export default function LibraryStackNavigator() {
         <Stack.Screen
           name="Folders"
           component={Folders}
-          options={{title: '...'}}
+          options={{ title: '...' }}
         />
         <Stack.Screen name="History" component={History} />
         <Stack.Screen name="Playlists" component={Playlists} />
@@ -96,12 +96,12 @@ export default function LibraryStackNavigator() {
           <Stack.Screen
             name="AddToPlaylist"
             component={AddToPlaylist}
-            options={{title: 'Add to playlist', headerTransparent: true}}
+            options={{ title: 'Add to playlist', headerTransparent: true }}
           />
           <Stack.Screen
             name="TrackMetadata"
             component={TrackMetadata}
-            options={{title: 'Metadata'}}
+            options={{ title: 'Metadata' }}
           />
         </Stack.Group>
       </Stack.Navigator>
