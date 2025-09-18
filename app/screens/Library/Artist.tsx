@@ -133,7 +133,20 @@ export default function Artist({
             />
           )}
 
-          <Text style={{ fontSize: 30 }}>{albumArtist}</Text>
+          <Text
+            numberOfLines={1}
+            style={{
+              color: '#fff',
+              fontFamily: 'Pacifico',
+              fontSize: 30,
+              paddingHorizontal: 10,
+              textAlign: 'center',
+              textShadowColor: '#000',
+              textShadowRadius: 10,
+            }}
+          >
+            {albumArtist}
+          </Text>
           <Text style={{ fontSize: 15 }}>{tracks} tracks</Text>
         </View>
       </ImageBackground>

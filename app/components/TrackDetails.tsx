@@ -87,7 +87,7 @@ export default function TrackDetails({
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const queue = usePlayerStore(state => state.queue);
-  const selectedPlaylist = usePlayerStore(state => state.selectedPlaylist);
+  const activePlaylist = usePlayerStore(state => state.activePlaylist);
   const trackRating = usePlayerStore(state => state.trackRating);
 
   // ? Store Actions
@@ -595,8 +595,7 @@ export default function TrackDetails({
               saveRating(
                 { id: track?.id, rating },
                 {
-                  onSuccess: () =>
-                    refreshScreens(activeTrack, selectedPlaylist), // ? Refresh screens to apply changes of rated track
+                  onSuccess: () => refreshScreens(activeTrack, activePlaylist), // ? Refresh screens to apply changes of rated track
                   onError: error => console.log(error),
                 },
               );

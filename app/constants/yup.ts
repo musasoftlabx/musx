@@ -2,6 +2,8 @@ import * as Yup from 'yup';
 
 export const yupString = Yup.string().required('Required.');
 
+export const yupStringOptional = Yup.string();
+
 export const stringMax = (max: number) =>
   Yup.string().max(max, 'Max of ${max} chars.').required('Required.');
 

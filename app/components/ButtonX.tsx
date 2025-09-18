@@ -11,10 +11,12 @@ type TAttributes = {
   touched?: Object;
   values?: Object;
   borderRadius?: number;
+  isValid?: boolean;
 } & ButtonProps;
 
 const ButtonX = (props: TAttributes) => {
-  const { parent, errors, isSubmitting, loading, touched, values } = props;
+  const { parent, errors, isSubmitting, loading, touched, values, isValid } =
+    props;
 
   const theme = useTheme();
 
@@ -31,9 +33,12 @@ const ButtonX = (props: TAttributes) => {
     }
   };
 
-  const inactive = errors
-    ? JSON.stringify(errors) !== '{}' || validator() || isSubmitting
-    : false;
+  console.log(JSON.stringify(errors));
+
+  const inactive = JSON.stringify(errors) !== '{}' || !isValid ? true : false;
+  // const inactive = errors
+  //   ? JSON.stringify(errors) !== '{}' || validator() || isSubmitting
+  //   : false;
 
   return (
     <View
@@ -60,6 +65,7 @@ const ButtonX = (props: TAttributes) => {
         disabled={inactive}
         labelStyle={{
           color: inactive ? 'grey' : 'white',
+          fontFamily: 'Laila-Bold',
           fontSize: s(2),
         }}
         loading={isSubmitting || loading}

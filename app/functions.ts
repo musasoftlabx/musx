@@ -38,7 +38,7 @@ export const addPlaylistTrack = (
 
 export const refreshScreens = (
   activeTrack: TrackProps,
-  selectedPlaylist?: number | null,
+  activePlaylist?: number | null,
 ) => {
   queryClient.refetchQueries({ queryKey: ['dashboard'] });
   queryClient.refetchQueries({ queryKey: ['mostPlayed'] });
@@ -50,9 +50,9 @@ export const refreshScreens = (
   queryClient.refetchQueries({
     queryKey: ['album', activeTrack.albumArtist, activeTrack.album],
   });
-  selectedPlaylist &&
+  activePlaylist &&
     queryClient.refetchQueries({
-      queryKey: ['playlist', selectedPlaylist],
+      queryKey: ['playlist', activePlaylist],
     });
 };
 

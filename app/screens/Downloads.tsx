@@ -64,7 +64,6 @@ export default function Downloads({ navigation }: { navigation: any }) {
         <FlashList
           data={files}
           keyExtractor={(_, index) => index.toString()}
-          estimatedItemSize={10}
           refreshing={refreshing}
           onRefresh={() => {
             setRefreshing(true);

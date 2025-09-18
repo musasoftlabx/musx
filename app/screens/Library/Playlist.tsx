@@ -32,7 +32,7 @@ import SwipeableItem, {
 import { State } from 'react-native-track-player';
 import { CastButton } from 'react-native-google-cast';
 import { useNavigation } from '@react-navigation/native';
-import { Divider, Menu, Snackbar, Text, useTheme } from 'react-native-paper';
+import { Snackbar, Text, useTheme } from 'react-native-paper';
 import Animated from 'react-native-reanimated';
 import dayjs from 'dayjs';
 
@@ -54,6 +54,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import PlayIcon from 'react-native-vector-icons/Ionicons';
+import Feather from 'react-native-vector-icons/Feather';
 
 import useRotate360Animation from '../../shared/hooks/useRotate360Animation';
 
@@ -81,17 +82,15 @@ export default function Playlist({
 
   // ? Store States
   const { state } = usePlayerStore(state => state.playbackState);
+  const activePlaylist = usePlayerStore(state => state.activePlaylist);
   const activeTrack: TrackProps = usePlayerStore(state => state.activeTrack);
   const palette = usePlayerStore(state => state.palette);
   const play = usePlayerStore(state => state.play);
-  const setSelectedPlaylist = usePlayerStore(
-    state => state.setSelectedPlaylist,
-  );
+  const setActivePlaylist = usePlayerStore(state => state.setActivePlaylist);
 
   // ? States
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [playlistTracks, setPlaylistTracks] = useState<TracksProps>([]);
-  const [isSortMenuVisible, setIsSortMenuVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -107,10 +106,9 @@ export default function Playlist({
   const { data, isSuccess, isFetching } = useQuery({
     queryKey: ['playlist', id],
     queryFn: ({ queryKey }) => {
-      axios(`${API_URL}${queryKey[0]}/${queryKey[1]}`).then(({ data }) => {
-        setPlaylistTracks(data);
-        setSelectedPlaylist(id);
-      });
+      axios(`${API_URL}${queryKey[0]}/${queryKey[1]}`).then(({ data }) =>
+        setPlaylistTracks(data),
+      );
       return null;
     },
   });
@@ -153,7 +151,7 @@ export default function Playlist({
             </Text>
 
             <Text numberOfLines={1} style={{ fontSize: 12 }}>
-              {activeTrack.artists ?? `${tracks} tracks`}
+              {activeTrack?.artists ?? `${tracks} tracks`}
             </Text>
           </View>
 
@@ -226,28 +224,14 @@ export default function Playlist({
 
             <CastButton style={{ height: 24, width: 24, tintColor: '#fff' }} />
 
-            <Menu
-              mode="elevated"
-              visible={isSortMenuVisible}
-              onDismiss={() => setIsSortMenuVisible(false)}
-              anchor={
-                <Pressable
-                  onPress={() => (
-                    Vibration.vibrate(50), setIsSortMenuVisible(true)
-                  )}
-                >
-                  <MaterialCommunityIcons
-                    name="dots-vertical"
-                    size={22}
-                    color="white"
-                  />
-                </Pressable>
-              }
-            >
-              <Menu.Item onPress={() => {}} title="Edit playlist" />
-              <Divider />
-              <Menu.Item onPress={() => {}} title="Refresh" />
-            </Menu>
+            <MaterialCommunityIcons
+              color="#fff"
+              name="circle-edit-outline"
+              size={24}
+              onPress={() => {
+                Vibration.vibrate(50);
+              }}
+            />
           </View>
         </View>
       ),
@@ -256,7 +240,6 @@ export default function Playlist({
     activeTrack,
     navigation,
     palette,
-    isSortMenuVisible,
     downloadProgress,
     isDownloading,
     playlistTracks,
@@ -269,7 +252,12 @@ export default function Playlist({
     const isPlaying = state === State.Playing;
 
     return (
-      <Pressable onPress={() => play(playlistTracks, item)}>
+      <Pressable
+        onPress={() => {
+          setActivePlaylist(id);
+          play(playlistTracks, item);
+        }}
+      >
         <View
           style={[
             isActive
@@ -515,7 +503,7 @@ export default function Playlist({
         </OpacityDecorator>
       </ShadowDecorator>
     ),
-    [playlistTracks, activeTrack, isPlaying],
+    [playlistTracks, activeTrack, activePlaylist, isPlaying],
   );
 
   return (
@@ -527,7 +515,12 @@ export default function Playlist({
       {orientation === 'portrait' ? (
         <>
           <ImageBackground
-            source={{ uri: artworks?.[0] }}
+            source={{
+              uri:
+                activePlaylist === id && activeTrack
+                  ? activeTrack?.artwork
+                  : artworks?.[0],
+            }}
             resizeMode="cover"
             blurRadius={20}
           >
@@ -625,7 +618,7 @@ export default function Playlist({
                     fontFamily: 'Rubik',
                     fontSize: 20,
                     marginTop: 3,
-                    opacity: 0.6,
+                    opacity: 0.8,
                     textShadowColor: '#000',
                     textShadowRadius: 5,
                   }}
@@ -635,28 +628,44 @@ export default function Playlist({
               </View>
             </View>
 
-            <PlayIcon
-              color="#fff"
-              name="play-circle"
-              size={60}
-              style={{
-                position: 'absolute',
-                borderColor: '#fff',
-                borderRadius: 100,
-                borderWidth: 2,
-                borderStyle: 'dashed',
-                bottom: 10,
-                right: 10,
-                zIndex: 5,
-              }}
-              onPress={() => play(playlistTracks, playlistTracks[0])}
-            />
+            {!activePlaylist && (
+              <PlayIcon
+                color="#fff"
+                name="play-circle"
+                size={60}
+                style={{
+                  position: 'absolute',
+                  borderColor: '#fff',
+                  borderRadius: 100,
+                  borderWidth: 2,
+                  borderStyle: 'dashed',
+                  bottom: 10,
+                  right: 10,
+                  zIndex: 5,
+                }}
+                onPress={() => {
+                  setActivePlaylist(id);
+                  play(playlistTracks, playlistTracks[0]);
+                }}
+              />
+            )}
 
             <Ionicons
-              color="#ffffff91"
+              color="#fff"
               name="refresh-circle-outline"
               size={30}
               style={{ position: 'absolute', left: 10, bottom: 10 }}
+              onPress={() => {
+                Vibration.vibrate(50);
+                refetch();
+              }}
+            />
+
+            <Feather
+              color="#fff"
+              name="lock"
+              size={25}
+              style={{ position: 'absolute', right: 20, top: 10 }}
               onPress={() => {
                 Vibration.vibrate(50);
                 refetch();
@@ -790,7 +799,10 @@ export default function Playlist({
               }}
             >
               <Pressable
-                onPress={() => play(playlistTracks, playlistTracks[0])}
+                onPress={() => {
+                  setActivePlaylist(id);
+                  play(playlistTracks, playlistTracks[0]);
+                }}
               >
                 <PlayIcon color="#fff" name="play-circle" size={70} />
               </Pressable>

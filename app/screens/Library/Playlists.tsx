@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useLayoutEffect,
   useCallback,
+  useRef,
 } from 'react';
 
 // * React-Native
@@ -14,10 +15,20 @@ import {
   Pressable,
   TextInput,
   Vibration,
+  Platform,
+  Modal,
+  StyleSheet,
 } from 'react-native';
 
 // * Libraries
-import { Button, Divider, Menu } from 'react-native-paper';
+import {
+  Button,
+  Divider,
+  HelperText,
+  Menu,
+  useTheme,
+} from 'react-native-paper';
+import { MenuView, MenuComponentRef } from '@react-native-menu/menu';
 import { CastButton } from 'react-native-google-cast';
 import { FlashList } from '@shopify/flash-list';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -42,30 +53,56 @@ import { queryClient } from '../../../App';
 
 // * Types
 import { RootStackParamList } from '../../types';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { Controller, useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { yupString } from '../../constants/yup';
+import { InferType, object } from 'yup';
+import { styles } from '../../styles';
+import CreatePlaylist from '../../components/CreatePlaylist';
 
 type PlaylistProps = RootStackParamList['Playlists'];
+
+const schema = object({ name: yupString, description: yupString });
+
+type Form = InferType<typeof schema>;
 
 export default function Playlists({
   navigation,
 }: NativeStackScreenProps<RootStackParamList, 'Playlist', ''>) {
+  // ? Refs
+  const menuRef = useRef<MenuComponentRef>(null);
+
   // ? States
   const [filter, setFilter] = useState<PlaylistProps[]>([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [isSortMenuVisible, setIsSortMenuVisible] = useState(false);
   const [playlists, setPlaylists] = useState<PlaylistProps[]>([]);
   const [searchWord, setSearchWord] = useState('');
   const [showSearch, setShowSearch] = useState(false);
+  const [isAddPlaylistVisible, setIsAddPlaylistVisible] = useState(false);
 
-  // ? StoreStates
+  // ? Store States
   const palette = usePlayerStore(state => state.palette);
 
   // ? Hooks
+  const theme = useTheme();
   useBackHandler(() => {
     if (showSearch) setShowSearch(false);
     else navigation.goBack();
     return true;
   });
 
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting, dirtyFields: dirty },
+  } = useForm({
+    mode: 'onChange',
+    resolver: yupResolver(schema),
+  });
+
+  // ? Queries
   const { isPending, isSuccess } = useQuery({
     queryKey: ['playlists'],
     queryFn: () => {
@@ -93,6 +130,7 @@ export default function Playlists({
     [],
   );
 
+  // ? Effects
   useEffect(() => {
     if (searchWord?.length >= 2)
       setFilter(
@@ -103,18 +141,6 @@ export default function Playlists({
         ),
       );
   }, [filter?.length]);
-
-  // ? Functions
-  const sortPlaylists = (
-    by: 'name' | 'tracks' | 'duration' | 'modifiedOn',
-    direction?: string,
-  ) => {
-    const sorted = [...playlists];
-    direction
-      ? setFilter(sorted.sort((a, b) => (b[by] as number) - (a[by] as number)))
-      : setFilter(sorted.sort((a, b) => (a[by] as number) - (b[by] as number)));
-    setIsSortMenuVisible(false);
-  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -176,90 +202,123 @@ export default function Playlists({
               backgroundColor: palette?.[1] ?? '#000',
               flexDirection: 'row',
               gap: 40,
-              paddingHorizontal: 20,
+              paddingLeft: 10,
+              paddingRight: 10,
               paddingVertical: 10,
             }}
           >
-            <Pressable
-              onPress={() => navigation.goBack()}
-              style={{ opacity: 0.8 }}
+            <View
+              style={{
+                alignItems: 'center',
+                flex: 0.3,
+                flexDirection: 'row',
+                gap: 20,
+              }}
             >
-              <Ionicons name="arrow-back" size={22} color="white" />
-            </Pressable>
+              <Ionicons
+                color="#fff"
+                name="arrow-back"
+                size={22}
+                onPress={() => navigation.goBack()}
+              />
 
-            <View style={{ marginLeft: -10 }}>
-              <Text style={{ fontSize: 22 }}>{name}</Text>
-              <Text style={{ fontSize: 12 }}>
-                {playlists?.length} playlists
-              </Text>
+              <View>
+                <Text style={{ fontSize: 22 }}>{name}</Text>
+                <Text style={{ fontSize: 12, marginTop: -3 }}>
+                  {playlists?.length} items
+                </Text>
+              </View>
             </View>
 
-            <View style={{ flex: 1 }} />
-
-            <Pressable
-              onPress={() => (Vibration.vibrate(50), setShowSearch(true))}
-              style={{ marginRight: 10, opacity: 0.8 }}
+            <View
+              style={{
+                alignItems: 'center',
+                flex: 0.7,
+                flexDirection: 'row',
+                gap: 40,
+                justifyContent: 'flex-end',
+              }}
             >
-              <Ionicons name="search" size={22} color="white" />
-            </Pressable>
+              <MaterialIcons
+                color="#fff"
+                name="playlist-add"
+                size={22}
+                onPress={() => {
+                  setIsAddPlaylistVisible(true);
+                }}
+              />
 
-            <Menu
-              mode="elevated"
-              visible={isSortMenuVisible}
-              onDismiss={() => setIsSortMenuVisible(false)}
-              anchor={
-                <Pressable
+              <MenuView
+                ref={menuRef}
+                title="Sort"
+                onPressAction={e => {
+                  console.log(e);
+                }}
+                onOpenMenu={() => console.log('opened')}
+                onCloseMenu={() => console.log('closed')}
+                actions={[
+                  { id: 'sort_by_name', title: 'Sort by name' },
+                  { id: 'sort_by_tracks_asc', title: 'Sort by tracks (ASC)' },
+                  { id: 'sort_by_tracks_desc', title: 'Sort by tracks (DESC)' },
+                  {
+                    id: 'sort_by_duration_asc',
+                    title: 'Sort by duration (ASC)',
+                  },
+                  {
+                    id: 'sort_by_duration_desc',
+                    title: 'Sort by duration (DESC)',
+                  },
+                ]}
+                shouldOpenOnLongPress={false}
+              >
+                <MaterialCommunityIcons
+                  color="#fff"
+                  name="sort"
+                  size={22}
                   onPress={() => (
-                    Vibration.vibrate(50), setIsSortMenuVisible(true)
+                    Vibration.vibrate(50), menuRef.current?.show()
                   )}
-                  style={{ marginRight: 10, opacity: 0.8 }}
-                >
-                  <MaterialCommunityIcons name="sort" size={22} color="white" />
-                </Pressable>
-              }
-            >
-              <Menu.Item
-                onPress={() => sortPlaylists('name')}
-                title="Sort by name"
-              />
-              <Divider />
-              <Menu.Item
-                onPress={() => sortPlaylists('tracks')}
-                title="Sort by tracks (ASC)"
-              />
-              <Menu.Item
-                onPress={() => sortPlaylists('tracks', 'DESC')}
-                title="Sort by tracks (DESC)"
-              />
-              <Divider />
-              <Menu.Item
-                onPress={() => sortPlaylists('duration')}
-                title="Sort by duration (ASC)"
-              />
-              <Menu.Item
-                onPress={() => sortPlaylists('duration', 'DESC')}
-                title="Sort by duration (DESC)"
-              />
-            </Menu>
+                />
+              </MenuView>
 
-            <CastButton style={{ height: 24, width: 24, marginRight: 5 }} />
+              <Ionicons
+                color="#fff"
+                name="search"
+                size={22}
+                onPress={() => (Vibration.vibrate(50), setShowSearch(true))}
+              />
+
+              <CastButton
+                style={{ height: 24, width: 24, tintColor: '#fff' }}
+              />
+            </View>
           </View>
         ),
     });
-  }, [
-    navigation,
-    palette,
-    showSearch,
-    searchWord,
-    playlists,
-    isSortMenuVisible,
-  ]);
+  }, [navigation, menuRef, palette, showSearch, searchWord, playlists]);
+
+  // ? Functions
+  // const sortPlaylists = (
+  //   by: 'name' | 'tracks' | 'duration' | 'modifiedOn',
+  //   direction?: string,
+  // ) => {
+  //   const sorted = [...playlists];
+  //   direction
+  //     ? setFilter(sorted.sort((a, b) => (b[by] as number) - (a[by] as number)))
+  //     : setFilter(sorted.sort((a, b) => (a[by] as number) - (b[by] as number)));
+  //   setIsSortMenuVisible(false);
+  // };
 
   return (
     <>
       <StatusBarX />
 
       <LinearGradientX />
+
+      <CreatePlaylist
+        isAddPlaylistVisible={isAddPlaylistVisible}
+        setIsAddPlaylistVisible={setIsAddPlaylistVisible}
+      />
 
       {isPending && (
         <FlatList

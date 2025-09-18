@@ -25,7 +25,7 @@ export default function Rating() {
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const trackRating = usePlayerStore(state => state.trackRating);
-  const selectedPlaylist = usePlayerStore(state => state.selectedPlaylist);
+  const activePlaylist = usePlayerStore(state => state.activePlaylist);
 
   // ? StoreActions
   const setTrackRating = usePlayerStore(state => state.setTrackRating);
@@ -47,7 +47,7 @@ export default function Rating() {
             {
               onSuccess: ({ data }) => {
                 // ? Refresh screens to apply changes of rated track
-                refreshScreens(activeTrack, selectedPlaylist);
+                refreshScreens(activeTrack, activePlaylist);
               },
               onError: error => console.log(error),
             },

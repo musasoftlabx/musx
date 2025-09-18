@@ -7,6 +7,7 @@ import { Alert, Appearance, StatusBar } from 'react-native';
 // * Libraries
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
+import { setThemePreference } from '@vonovak/react-native-theme-control';
 import GoogleCast, {
   MediaInfo,
   MediaPlayerState,
@@ -69,7 +70,8 @@ axios.defaults.headers.post['Content-Type'] = 'application/json';
 axios.defaults.headers.post['Accept'] = 'application/json';
 
 // ? Always force dark mode
-Appearance.setColorScheme('dark');
+//Appearance.setColorScheme('dark');
+setThemePreference('dark'); // 'light', 'dark', or 'system'
 
 // ? Setup Track Player
 TrackPlayer.setupPlayer({ autoHandleInterruptions: true });
@@ -100,7 +102,7 @@ export default function App(): React.JSX.Element {
   const isCrossFading = usePlayerStore(state => state.isCrossFading);
   const playRegistered = usePlayerStore(state => state.playRegistered);
   const queue = usePlayerStore(state => state.queue);
-  const selectedPlaylist = usePlayerStore(state => state.selectedPlaylist);
+  const activePlaylist = usePlayerStore(state => state.activePlaylist);
   const streamViaHLS = usePlayerStore(state => state.streamViaHLS);
   const trackDetails = usePlayerStore(state => state.trackDetails);
 
@@ -335,8 +337,6 @@ export default function App(): React.JSX.Element {
     ],
     event => {
       if (!castSession) {
-        const x = event;
-
         if (event.type === Event.PlaybackActiveTrackChanged) {
           // ? Deconstruct (event) to get track object
           const { track } = event;
@@ -388,18 +388,18 @@ export default function App(): React.JSX.Element {
             setPlayRegistered(true);
 
             // ? Update the active track play count
-            axios
-              .patch('updatePlayCount', { id: activeTrack?.id })
-              .then(({ data: { plays } }) => {
-                setTrackPlayCount(plays);
-                TrackPlayer.updateMetadataForTrack(track, {
-                  ...activeTrack,
-                  plays,
-                } as Track);
+            // axios
+            //   .patch('updatePlayCount', { id: activeTrack?.id })
+            //   .then(({ data: { plays } }) => {
+            //     setTrackPlayCount(plays);
+            //     TrackPlayer.updateMetadataForTrack(track, {
+            //       ...activeTrack,
+            //       plays,
+            //     } as Track);
 
-                refreshScreens(activeTrack as TrackProps, selectedPlaylist);
-              })
-              .catch(error => console.log('Update Play Count Error:', error));
+            //     refreshScreens(activeTrack as TrackProps, activePlaylist);
+            //   })
+            //   .catch(error => console.log('Update Play Count Error:', error));
 
             // ? Transcode the next track if HLS is enabled
             if (streamViaHLS && queue.length > 1) {
@@ -485,40 +485,71 @@ export default function App(): React.JSX.Element {
     },
   );
 
-  const RenderApp = useCallback(
-    () => (
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <StatusBar
-          animated
-          backgroundColor="transparent"
-          barStyle="light-content"
-          translucent
-        />
+  // const RenderApp = useCallback(
+  //   () => (
+  //     <GestureHandlerRootView style={{ flex: 1 }}>
+  //       <StatusBar
+  //         animated
+  //         backgroundColor="transparent"
+  //         barStyle="light-content"
+  //         translucent
+  //       />
 
-        <QueryClientProvider client={queryClient}>
-          <PaperProvider theme={darkTheme}>
-            <SafeAreaProvider>
-              <NavigationContainer theme={ReactNavigationDarkTheme}>
-                <Stack.Navigator>
-                  <Stack.Screen
-                    name="TabNavigator"
-                    component={TabNavigator}
-                    options={{ headerShown: false }}
-                  />
-                </Stack.Navigator>
-                <TrackDetails
-                  trackDetailsRef={trackDetailsRef}
-                  track={trackDetails}
+  //       <QueryClientProvider client={queryClient}>
+  //         <PaperProvider theme={darkTheme}>
+  //           <SafeAreaProvider>
+  //             <NavigationContainer theme={ReactNavigationDarkTheme}>
+  //               <Stack.Navigator>
+  //                 <Stack.Screen
+  //                   name="TabNavigator"
+  //                   component={TabNavigator}
+  //                   options={{ headerShown: false }}
+  //                 />
+  //               </Stack.Navigator>
+  //               <TrackDetails
+  //                 trackDetailsRef={trackDetailsRef}
+  //                 track={trackDetails}
+  //               />
+  //               <NowPlaying />
+  //             </NavigationContainer>
+  //           </SafeAreaProvider>
+  //         </PaperProvider>
+  //       </QueryClientProvider>
+  //     </GestureHandlerRootView>
+  //   ),
+  //   [],
+  // );
+
+  // return RenderApp();
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <StatusBar
+        animated
+        backgroundColor="transparent"
+        barStyle="light-content"
+        translucent
+      />
+
+      <QueryClientProvider client={queryClient}>
+        <PaperProvider theme={darkTheme}>
+          <SafeAreaProvider>
+            <NavigationContainer theme={ReactNavigationDarkTheme}>
+              <Stack.Navigator>
+                <Stack.Screen
+                  name="TabNavigator"
+                  component={TabNavigator}
+                  options={{ headerShown: false }}
                 />
-                <NowPlaying />
-              </NavigationContainer>
-            </SafeAreaProvider>
-          </PaperProvider>
-        </QueryClientProvider>
-      </GestureHandlerRootView>
-    ),
-    [],
+              </Stack.Navigator>
+              <TrackDetails
+                trackDetailsRef={trackDetailsRef}
+                track={trackDetails}
+              />
+              <NowPlaying />
+            </NavigationContainer>
+          </SafeAreaProvider>
+        </PaperProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
-
-  return RenderApp();
 }

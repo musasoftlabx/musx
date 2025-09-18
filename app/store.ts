@@ -105,7 +105,7 @@ interface IPlayerStore {
   castClient: RemoteMediaClient | null;
   streamViaHLS: boolean;
   bitrate: string;
-  selectedPlaylist: number | null;
+  activePlaylist: number;
   setProgress: (queue: Progress) => void;
   setPlaybackState: (playbackState: any) => void;
   setQueue: (queue: Track[]) => void;
@@ -141,7 +141,7 @@ interface IPlayerStore {
   addTrackToEndOfQueue: (track: TrackProps) => void;
   setStreamViaHLS: (streamViaHLS: boolean) => void;
   setBitrate: (bitrate: string) => void;
-  setSelectedPlaylist: (id: number) => void;
+  setActivePlaylist: (id: number) => void;
 }
 
 export const usePlayerStore = create<IPlayerStore>((set, get) => ({
@@ -166,7 +166,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   castClient: null,
   streamViaHLS: false,
   bitrate: '',
-  selectedPlaylist: null,
+  activePlaylist: 0,
   setProgress: progress => set(state => ({ ...state, progress })),
   setPlaybackState: playbackState =>
     set(state => ({ ...state, playbackState })),
@@ -215,7 +215,10 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   setStreamViaHLS: (streamViaHLS: boolean) =>
     set(state => ({ ...state, streamViaHLS })),
   setBitrate: (bitrate: string) => set(state => ({ ...state, bitrate })),
-  setSelectedPlaylist: (id: number) => set(state => ({ ...state, id })),
+  setActivePlaylist: (activePlaylist: number) => {
+    set(state => ({ ...state, activePlaylist }));
+    AsyncStorage.setItem('activePlaylist', JSON.stringify(activePlaylist));
+  },
 
   // ? Player actions
   play: async (data: TracksProps, selected: TrackProps, position?: number) => {
