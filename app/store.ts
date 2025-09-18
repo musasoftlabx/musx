@@ -230,8 +230,8 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     // });
 
     // ? Remove undefined items (folders)
-    const _queue: any = data.filter((track: any) => track);
     //const _queue: any = tracks.filter((track: any) => track);
+    const _queue: any = data.filter((track: any) => track);
 
     let queue: any = [];
 
@@ -247,10 +247,10 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     const castClient = get().castClient;
     const setActiveTrack = get().setActiveTrack;
 
+    setActiveTrack(get().queue[selectedIndex]);
+
     if (castState === 'connected') {
       set({ queue });
-
-      setActiveTrack(get().queue[selectedIndex]);
 
       castClient
         ?.loadMedia({

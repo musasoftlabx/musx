@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 
 // * React Native
-import { Appearance, StatusBar } from 'react-native';
+import { Alert, Appearance, StatusBar } from 'react-native';
 
 // * Libraries
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -22,10 +22,10 @@ import TrackPlayer, {
   Capability,
   useTrackPlayerEvents,
   Event,
-  useActiveTrack,
   useProgress,
   Track,
   RatingType,
+  useActiveTrack,
 } from 'react-native-track-player';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
@@ -144,7 +144,9 @@ export default function App(): React.JSX.Element {
   const transcode = (path: string, duration: number) => {
     axios(
       `${API_URL}transcode?path=${path}&duration=${duration}&bitrate=${bitrate}`,
-    ).catch((error: AxiosError) => console.log(error.message));
+    ).catch((error: AxiosError) =>
+      console.log('Transcode Error:', error.message),
+    );
   };
 
   // ? Effects
@@ -326,7 +328,6 @@ export default function App(): React.JSX.Element {
   useTrackPlayerEvents(
     [
       Event.PlaybackActiveTrackChanged,
-      Event.PlaybackPlayWhenReadyChanged,
       Event.PlaybackProgressUpdated,
       Event.PlaybackState,
       Event.PlaybackQueueEnded,
@@ -334,75 +335,71 @@ export default function App(): React.JSX.Element {
     ],
     event => {
       if (!castSession) {
+        const x = event;
+
         if (event.type === Event.PlaybackActiveTrackChanged) {
+          // ? Deconstruct (event) to get track object
+          const { track } = event;
+
           // ? Invoke transcoder to transcode the file to HLS chunks
-          streamViaHLS && transcode(activeTrack!.path, activeTrack?.duration!);
+          streamViaHLS && transcode(track?.path, track?.duration!);
 
-          // ? Clear progress & rating
+          // ? Clear previous track rating & progress
           setTrackRating(0);
-
-          // ? Save variables to store to be accessed by components
-          setLyricsVisible(false);
-          setPlayRegistered(false);
-          setIsCrossFading(false);
-          setActiveTrack(activeTrack);
-          setTrackRating(activeTrack?.rating);
-          setTrackPlayCount(activeTrack?.plays);
           setProgress({
             position: 0,
             buffered: 0,
-            duration: activeTrack?.duration!,
+            duration: track?.duration!,
           });
 
+          // ? Set track info
+          setActiveTrack(track);
+          setTrackRating(track?.rating);
+          setTrackPlayCount(track?.plays);
+
+          // ? Set extra player details
+          setLyricsVisible(false);
+          setPlayRegistered(false);
+          setIsCrossFading(false);
+
           // ? Compute palette colors
-          if (activeTrack && JSON.stringify(activeTrack) !== '{}') {
-            const palette = JSON.parse(activeTrack?.palette).map(
-              (color: string) => {
-                const brightness = tinycolor(color).getBrightness();
-                if (brightness >= 150)
-                  return `#${tinycolor(color).darken(50).toHex()}`;
-                else return color;
-              },
-            );
-            setPalette(palette);
-          }
+          const palette = JSON.parse(track?.palette).map((color: string) => {
+            const brightness = tinycolor(color).getBrightness();
+            if (brightness >= 150)
+              return `#${tinycolor(color).darken(50).toHex()}`;
+            else return color;
+          });
+
+          // ? Set palette on UI
+          setPalette(palette);
 
           // ? Get active track lyrics. Display the lyrics if found else display artwork
-          fetchLyrics(
-            `${AUDIO_URL}${activeTrack!?.path.replace('.mp3', '.lrc')}`,
-          );
-
-          // TrackPlayer.getActiveTrackIndex().then(i => {
-          //   setActiveTrackIndex(i);
-          //   AsyncStorage.setItem('activeTrackIndex', i!.toString()); // ? Store the active track index to restore state incase the app crashes or is dismissed
-          // });
-
-          // TrackPlayer.getQueue().then(queue => {
-          //   setQueue(queue);
-          //   AsyncStorage.setItem('queue', JSON.stringify(queue)); // ? Store the queue to restore state incase the app crashes or is dismissed
-          // });
+          fetchLyrics(`${AUDIO_URL}${track?.path.replace('.mp3', '.lrc')}`);
         }
 
         if (event.type === Event.PlaybackProgressUpdated) {
-          setProgress(progress);
+          // ? Deconstruct (event) to get track object
+          const { position, buffered, duration, track } = event;
 
-          if (progress.position >= 10 && playRegistered === false) {
+          // ? Set progress to store
+          setProgress({ position, buffered, duration });
+
+          if (position >= 10 && playRegistered === false) {
             setPlayRegistered(true);
 
-            //return false;
             // ? Update the active track play count
             axios
               .patch('updatePlayCount', { id: activeTrack?.id })
               .then(({ data: { plays } }) => {
                 setTrackPlayCount(plays);
-                TrackPlayer.updateMetadataForTrack(activeTrackIndex!, {
+                TrackPlayer.updateMetadataForTrack(track, {
                   ...activeTrack,
                   plays,
                 } as Track);
 
-                refreshScreens(_activeTrack, selectedPlaylist);
+                refreshScreens(activeTrack as TrackProps, selectedPlaylist);
               })
-              .catch(error => console.log(error));
+              .catch(error => console.log('Update Play Count Error:', error));
 
             // ? Transcode the next track if HLS is enabled
             if (streamViaHLS && queue.length > 1) {
@@ -481,8 +478,9 @@ export default function App(): React.JSX.Element {
           AsyncStorage.removeItem('activeTrackIndex');
         }
 
-        // if (event.type === Event.PlaybackPlayWhenReadyChanged) console.log(event.playWhenReady);
-        // if (event.type === Event.PlayerError) console.log({ code: event.code, message: event.message });
+        if (event.type === Event.PlayerError) {
+          Alert.alert(`Playback error ${event.code}`, event.message);
+        }
       }
     },
   );

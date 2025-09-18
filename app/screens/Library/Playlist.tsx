@@ -33,9 +33,8 @@ import { State } from 'react-native-track-player';
 import { CastButton } from 'react-native-google-cast';
 import { useNavigation } from '@react-navigation/native';
 import { Divider, Menu, Snackbar, Text, useTheme } from 'react-native-paper';
-import dayjs from 'dayjs';
 import Animated from 'react-native-reanimated';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import dayjs from 'dayjs';
 
 import _ListItem from '../../components/ListItem';
 import LinearGradientX from '../../components/LinearGradientX';
@@ -52,6 +51,7 @@ import VerticalListItem from '../../components/Skeletons/VerticalListItem';
 
 // * Icons
 import Icon from 'react-native-vector-icons/FontAwesome';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import PlayIcon from 'react-native-vector-icons/Ionicons';
 
@@ -98,6 +98,7 @@ export default function Playlist({
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadSize, setDownloadSize] = useState(0);
   const [tracksDownloaded, setTracksDownloaded] = useState(0);
+  const [totalTracksProgressBar, setTotalTracksProgressBar] = useState(false);
 
   // ? Constants
   const isPlaying = state === State.Playing;
@@ -181,6 +182,7 @@ export default function Playlist({
                 name="progress-download"
                 size={24}
                 onPress={() => {
+                  setTotalTracksProgressBar(true);
                   Vibration.vibrate(100);
                   playlistTracks.map(({ url, path }: TrackProps) => {
                     try {
@@ -209,6 +211,8 @@ export default function Playlist({
                         })
                         .finally(() => {
                           setIsDownloading(false);
+                          if (tracksDownloaded === playlistTracks.length)
+                            setTotalTracksProgressBar(false);
                           //setTracksDownloaded(prev => prev++);
                         });
                     } catch (error) {
@@ -648,6 +652,17 @@ export default function Playlist({
               onPress={() => play(playlistTracks, playlistTracks[0])}
             />
 
+            <Ionicons
+              color="#ffffff91"
+              name="refresh-circle-outline"
+              size={30}
+              style={{ position: 'absolute', left: 10, bottom: 10 }}
+              onPress={() => {
+                Vibration.vibrate(50);
+                refetch();
+              }}
+            />
+
             <Text
               numberOfLines={1}
               style={{
@@ -676,16 +691,17 @@ export default function Playlist({
               .format('HH [hrs] mm [mins] ss [sec]')}
           </Text> */}
 
-          {tracksDownloaded === playlistTracks.length && (
-            <Progress.Bar
-              borderColor="#fff"
-              borderRadius={0}
-              color={theme.colors.primary}
-              height={3}
-              width={WIDTH}
-              progress={(tracksDownloaded / playlistTracks.length) * 100}
-            />
-          )}
+          {totalTracksProgressBar &&
+            tracksDownloaded === playlistTracks.length && (
+              <Progress.Bar
+                borderColor="#fff"
+                borderRadius={0}
+                color={theme.colors.primary}
+                height={3}
+                width={WIDTH}
+                progress={(tracksDownloaded / playlistTracks.length) * 100}
+              />
+            )}
 
           {isFetching && !data && <VerticalListItem />}
 
