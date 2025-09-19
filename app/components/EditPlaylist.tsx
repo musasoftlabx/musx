@@ -31,9 +31,11 @@ import { styles } from '../styles';
 
 // * Components
 import ButtonX from './ButtonX';
+import FileUploadX, { ImageUploaderProps } from './FileUploadX';
 
 // * Schema
 const schema = object({
+  artwork: yupString,
   name: yupString.max(20),
   description: yupStringOptional.max(500),
 });
@@ -42,15 +44,18 @@ const schema = object({
 type Form = InferType<typeof schema>;
 
 export default function EditPlaylist({
-  isAddPlaylistVisible,
-  setIsAddPlaylistVisible,
+  id,
+  name,
+  description,
+  isEditPlaylistVisible,
+  setIsEditPlaylistVisible,
 }: {
-  isAddPlaylistVisible: boolean;
-  setIsAddPlaylistVisible: React.Dispatch<SetStateAction<boolean>>;
+  id: number;
+  name: string;
+  description: string;
+  isEditPlaylistVisible: boolean;
+  setIsEditPlaylistVisible: React.Dispatch<SetStateAction<boolean>>;
 }) {
-  // ? States
-  const [isSubmitFormLoading, setIsSubmitFormLoading] = useState(false);
-
   // ? Store States
   const palette = usePlayerStore(state => state.palette);
 
@@ -67,15 +72,22 @@ export default function EditPlaylist({
     control,
     handleSubmit,
     reset,
+    setValue,
+    getValues,
+    resetField,
     formState: { errors, isValid, isSubmitting, dirtyFields: dirty },
   } = useForm({
     mode: 'onChange',
     resolver: yupResolver(schema),
+    defaultValues: { name, description },
   });
 
+  const values = getValues();
+
   // ? Mutations
-  const { mutate: createPlaylist } = useMutation({
-    mutationFn: (data: Form) => axios.post('createPlaylist', data),
+  const { mutate: editPlaylist } = useMutation({
+    mutationFn: (data: Form & { id: number }) =>
+      axios.put('editPlaylist', data),
   });
 
   // ? Functions
@@ -91,19 +103,19 @@ export default function EditPlaylist({
             text: 'YES',
             onPress: () => {
               reset();
-              setIsAddPlaylistVisible(false);
+              setIsEditPlaylistVisible(false);
             },
           },
         ],
       );
-    } else setIsAddPlaylistVisible(false);
+    } else setIsEditPlaylistVisible(false);
   };
 
   return (
     <Modal
       animationType="slide"
       backdropColor="#ad0cf32b"
-      visible={isAddPlaylistVisible}
+      visible={isEditPlaylistVisible}
       onRequestClose={onCancel}
     >
       <View
@@ -137,10 +149,33 @@ export default function EditPlaylist({
               marginBottom: 20,
             }}
           >
-            Create new playlist
+            Edit playlist
           </Text>
 
           <View style={{ gap: 5 }}>
+            <Controller
+              name="artwork"
+              control={control}
+              render={() => {
+                return (
+                  <FileUploadX
+                    addImage={(value: any) => {
+                      setValue('artwork', value.uri, {
+                        shouldDirty: true,
+                        shouldTouch: true,
+                        shouldValidate: true,
+                      });
+                    }}
+                    removeImage={() => {
+                      resetField('artwork');
+                    }}
+                    //value={playlistArtwork as string}
+                    value={values.artwork}
+                  />
+                );
+              }}
+            />
+
             {/* Name */}
             <Controller
               name="name"
@@ -227,29 +262,31 @@ export default function EditPlaylist({
               </Button>
 
               <ButtonX
-                disabled={true}
-                loading={isSubmitFormLoading}
+                loading={isSubmitting}
                 errors={errors}
-                isSubmitting={isSubmitting}
                 isValid={isValid}
-                touched={dirty}
                 borderRadius={10}
-                onPress={handleSubmit(formData => {
-                  setIsSubmitFormLoading(true);
-                  createPlaylist(formData, {
-                    onSuccess: () => reset(),
-                    onError: (error: any) => {
-                      Alert.alert(
-                        error.response.data.subject,
-                        error.response.data.body,
-                        [{ text: 'OK' }],
-                      );
+                onPress={handleSubmit(formData =>
+                  editPlaylist(
+                    { ...formData, id },
+                    {
+                      onSuccess: () => {
+                        reset();
+                        setIsEditPlaylistVisible(false);
+                      },
+                      onError: (error: any) => {
+                        Alert.alert(
+                          error.response.data.subject,
+                          error.response.data.body,
+                          [{ text: 'OK' }],
+                        );
+                      },
+                      onSettled: () => isSubmitting,
                     },
-                    onSettled: () => isSubmitting,
-                  });
-                })}
+                  ),
+                )}
               >
-                CREATE
+                EDIT
               </ButtonX>
             </View>
           </View>

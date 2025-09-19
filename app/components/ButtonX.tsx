@@ -15,8 +15,7 @@ type TAttributes = {
 } & ButtonProps;
 
 const ButtonX = (props: TAttributes) => {
-  const { parent, errors, isSubmitting, loading, touched, values, isValid } =
-    props;
+  const { parent, errors, loading, touched, values, isValid } = props;
 
   const theme = useTheme();
 
@@ -33,9 +32,9 @@ const ButtonX = (props: TAttributes) => {
     }
   };
 
-  console.log(JSON.stringify(errors));
+  const inactive =
+    JSON.stringify(errors) !== '{}' || !isValid || loading ? true : false;
 
-  const inactive = JSON.stringify(errors) !== '{}' || !isValid ? true : false;
   // const inactive = errors
   //   ? JSON.stringify(errors) !== '{}' || validator() || isSubmitting
   //   : false;
@@ -68,7 +67,7 @@ const ButtonX = (props: TAttributes) => {
           fontFamily: 'Laila-Bold',
           fontSize: s(2),
         }}
-        loading={isSubmitting || loading}
+        loading={loading}
         mode="contained"
         onPress={props.onPress}
         style={{ elevation: inactive ? 0 : 20 }}

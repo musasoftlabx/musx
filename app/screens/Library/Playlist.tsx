@@ -59,12 +59,22 @@ import Feather from 'react-native-vector-icons/Feather';
 import useRotate360Animation from '../../shared/hooks/useRotate360Animation';
 
 import duration from 'dayjs/plugin/duration';
+import EditPlaylist from '../../components/EditPlaylist';
 
 dayjs.extend(duration);
 
 export default function Playlist({
   route: {
-    params: { id, name, duration, tracks, artwork, artworks, size },
+    params: {
+      id,
+      name,
+      description,
+      duration,
+      tracks,
+      artwork,
+      artworks,
+      size,
+    },
   },
 }: any) {
   // ? Refs
@@ -94,6 +104,7 @@ export default function Playlist({
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isEditPlaylistVisible, setIsEditPlaylistVisible] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadSize, setDownloadSize] = useState(0);
   const [tracksDownloaded, setTracksDownloaded] = useState(0);
@@ -230,6 +241,7 @@ export default function Playlist({
               size={24}
               onPress={() => {
                 Vibration.vibrate(50);
+                setIsEditPlaylistVisible(true);
               }}
             />
           </View>
@@ -511,6 +523,14 @@ export default function Playlist({
       <StatusBarX />
 
       <LinearGradientX />
+
+      <EditPlaylist
+        id={id}
+        name={name}
+        description={description}
+        isEditPlaylistVisible={isEditPlaylistVisible}
+        setIsEditPlaylistVisible={setIsEditPlaylistVisible}
+      />
 
       {orientation === 'portrait' ? (
         <>
