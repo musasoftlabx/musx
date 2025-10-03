@@ -1,5 +1,5 @@
 // * React
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 // * React Native
 import {
@@ -13,10 +13,11 @@ import {
 
 // * Libraries
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useDeviceOrientation } from '@react-native-community/hooks';
 import { useQuery } from '@tanstack/react-query';
-import { Text } from 'react-native-paper';
+import { Divider, Text } from 'react-native-paper';
 import _ from 'lodash';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import EvilIcons from 'react-native-vector-icons/EvilIcons';
 
 // * Components
 import FavouriteArtists from './components/FavouriteArtists';
@@ -31,8 +32,9 @@ import { API_URL, WIDTH } from '../../store';
 
 // * Types
 import { RootStackParamList, TrackProps } from '../../types';
-import axios from 'axios';
+
 import { queryClient } from '../../../App';
+import { fontFamilyBold } from '../../utils';
 
 export type SectionProps = {
   data?: [number];
@@ -44,6 +46,9 @@ export type SectionProps = {
 export default function Home({
   navigation,
 }: NativeStackScreenProps<RootStackParamList, 'Home', ''>) {
+  // ? Hooks
+  const orientation = useDeviceOrientation();
+
   // ? States
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -150,29 +155,45 @@ export default function Home({
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        gap: 10,
         marginTop: 20,
-        marginBottom: 5,
-        marginHorizontal: 10,
+        marginBottom: 10,
+        marginLeft: 10,
+        marginRight: 3,
       }}
     >
       <Text
         style={{
           color: '#fff',
-          fontSize: 18,
-          fontWeight: '800',
+          fontFamily: fontFamilyBold,
+          fontSize: 16,
           textDecorationLine: 'underline',
         }}
       >
         {section.title}
       </Text>
 
-      <FontAwesome
-        color="#fff"
-        name="chevron-right"
-        size={12}
-        style={{ marginTop: 7 }}
-      />
+      <Divider style={{ backgroundColor: '#ffffff20', flex: 1 }} />
+
+      <View style={{ alignItems: 'center', flexDirection: 'row', gap: 5 }}>
+        <Text
+          numberOfLines={1}
+          style={{
+            backgroundColor: '#a7a7a745',
+            borderColor: '#ffffff4D',
+            borderWidth: 1,
+            borderRadius: 5,
+            fontSize: 10,
+            paddingHorizontal: 5,
+            paddingTop: 2,
+            paddingLeft: 7,
+          }}
+        >
+          MORE
+        </Text>
+
+        <EvilIcons color="#fff" name="chevron-right" size={20} />
+      </View>
     </Pressable>
   );
 
@@ -244,7 +265,12 @@ export default function Home({
             ) : (
               <>
                 {section.title === 'Libraries' && (
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      flexWrap: orientation === 'portrait' ? 'wrap' : 'nowrap',
+                    }}
+                  >
                     {section.dataset?.map((item, i) => (
                       <Pressable
                         key={i}
@@ -253,28 +279,37 @@ export default function Home({
                           flexGrow: 1,
                           borderRadius: 10,
                           backgroundColor: 'rgba(10, 10, 20, 0.5)',
-                          width: WIDTH / 2.5,
+                          width:
+                            orientation === 'portrait' ? WIDTH / 2.5 : 'auto',
                           margin: 5,
                         }}
                       >
                         <View
                           style={{
+                            alignItems: 'center',
                             flexDirection: 'row',
-                            paddingHorizontal: 6,
-                            paddingVertical: 12,
+                            gap: 10,
+                            paddingLeft: 15,
+                            paddingRight: 6,
+                            paddingBottom: 12,
+                            paddingTop: 12,
                             overflow: 'hidden',
                           }}
                         >
                           <Image
                             source={item.icon}
-                            style={{ height: 45, marginRight: 5, width: 45 }}
+                            style={{ height: 45, width: 45 }}
                           />
                           <View>
-                            <Text style={{ fontSize: 20, fontWeight: 'bold' }}>
-                              {item.name}
-                            </Text>
+                            <Text style={{ fontSize: 17 }}>{item.name}</Text>
 
-                            <Text style={{ fontSize: 16 }}>
+                            <Text
+                              style={{
+                                fontFamily: fontFamilyBold,
+                                fontSize: 16,
+                                marginTop: -3,
+                              }}
+                            >
                               {stats
                                 ? Object.keys(stats).map(stat => {
                                     if (stat === item.name?.toLowerCase())

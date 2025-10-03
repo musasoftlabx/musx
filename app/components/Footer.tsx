@@ -3,12 +3,11 @@ import React from 'react';
 
 // * React Native
 import {
+  ActivityIndicator,
   View,
-  StyleSheet,
   Image,
   Pressable,
   Vibration,
-  ActivityIndicator,
 } from 'react-native';
 
 // * Libraries
@@ -16,11 +15,15 @@ import * as Progress from 'react-native-progress';
 import { MediaPlayerState } from 'react-native-google-cast';
 import { State } from 'react-native-track-player';
 import { Text } from 'react-native-paper';
+import { useDeviceOrientation } from '@react-native-community/hooks';
 import Icon from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
 
 // * Store
-import { usePlayerStore } from '../store';
+import { usePlayerStore, WIDTH } from '../store';
+
+// * Utils
+import { fontFamilyBold } from '../utils';
 
 // * Functions
 import { formatTrackTime } from '../functions';
@@ -29,7 +32,10 @@ import { formatTrackTime } from '../functions';
 import imageFiller from '../assets/images/image-filler.png';
 
 export default function Footer() {
-  // ? StoreStates
+  // ? Hooks
+  const orientation = useDeviceOrientation();
+
+  // ? Store States
   const { position, duration } = usePlayerStore(state => state.progress);
   const { state } = usePlayerStore(state => state.playbackState);
   const activeTrack = usePlayerStore(state => state.activeTrack);
@@ -63,9 +69,10 @@ export default function Footer() {
     activeStates.includes(state) && (
       <View
         style={{
-          borderTopColor: palette?.[2],
+          borderTopColor: '#ffffff56',
           borderTopWidth: 0.5,
-          paddingVertical: 10,
+          paddingHorizontal: 20,
+          paddingVertical: 6,
         }}
       >
         <LinearGradient
@@ -76,18 +83,23 @@ export default function Footer() {
         />
 
         <View
-          style={{
-            alignItems: 'center',
-            flexDirection: 'row',
-            gap: 40,
-            paddingHorizontal: 20,
-          }}
+          style={
+            orientation === 'portrait'
+              ? {
+                  alignItems: 'center',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }
+              : { alignItems: 'center' }
+          }
         >
           <Pressable
             style={{
               alignItems: 'center',
               flexDirection: 'row',
-              flexShrink: 1,
+              gap: 5,
+              left: 0,
+              position: orientation === 'portrait' ? 'relative' : 'absolute',
             }}
             onPress={() => {
               Vibration.vibrate(50);
@@ -101,21 +113,43 @@ export default function Footer() {
                   : imageFiller
               }
               style={{
+                borderColor: '#fff',
                 borderRadius: 10,
+                borderWidth: 0.5,
                 height: 50,
                 marginRight: 8,
                 width: 50,
               }}
             />
 
-            <View style={{ flexBasis: '40%' }}>
-              <Text numberOfLines={1} style={styles.title}>
+            <View>
+              <Text
+                numberOfLines={1}
+                style={{
+                  fontFamily: fontFamilyBold,
+                  fontSize: orientation === 'portrait' ? 17 : 15,
+                  width: WIDTH * 0.35,
+                }}
+              >
                 {activeTrack?.title}
               </Text>
-              <Text numberOfLines={1} style={styles.artists}>
+              <Text
+                numberOfLines={1}
+                style={{
+                  fontSize: orientation === 'portrait' ? 14 : 13,
+                  marginTop: -2,
+                  opacity: 0.8,
+                  width: WIDTH * 0.35,
+                }}
+              >
                 {activeTrack?.albumArtist ?? 'Unknown Artist'}
               </Text>
-              <Text style={{ fontSize: 12, marginTop: 2 }}>
+              <Text
+                style={{
+                  display: orientation === 'portrait' ? 'flex' : 'none',
+                  fontSize: 12,
+                }}
+              >
                 {`${formatTrackTime(position)} / ${formatTrackTime(duration)}`}
               </Text>
             </View>
@@ -125,7 +159,6 @@ export default function Footer() {
             style={{
               alignItems: 'center',
               flexDirection: 'row',
-              justifyContent: 'flex-end',
               gap: 20,
             }}
           >
@@ -191,13 +224,21 @@ export default function Footer() {
               />
             </Pressable>
           </View>
+
+          <Text
+            style={{
+              display: orientation === 'portrait' ? 'none' : 'flex',
+              fontFamily: fontFamilyBold,
+              fontSize: 14,
+              position: orientation === 'portrait' ? 'relative' : 'absolute',
+              top: 15,
+              right: 0,
+            }}
+          >
+            {`${formatTrackTime(position)} / ${formatTrackTime(duration)}`}
+          </Text>
         </View>
       </View>
     )
   );
 }
-
-const styles = StyleSheet.create({
-  title: { fontSize: 17, fontWeight: '800' },
-  artists: { fontSize: 14, fontWeight: '500' },
-});

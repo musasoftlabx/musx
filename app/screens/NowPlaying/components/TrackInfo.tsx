@@ -9,10 +9,13 @@ import TextTicker from 'react-native-text-ticker';
 
 // * Store
 import { usePlayerStore } from '../../../store';
+import { fontFamily, fontFamilyBold } from '../../../utils';
+import { useDeviceOrientation } from '@react-native-community/hooks';
 
 export default function TrackInfo({ bottomSheetRef }: any) {
-  // ? StoreStates
+  // ? Store States
   const activeTrack = usePlayerStore(state => state.activeTrack);
+  const orientation = useDeviceOrientation();
 
   const extraInfo = ` (${
     activeTrack?.year ? activeTrack?.year.slice(0, 4) : activeTrack?.encoder
@@ -27,24 +30,11 @@ export default function TrackInfo({ bottomSheetRef }: any) {
       }}
     >
       <TextTicker
-        style={{ color: '#fff', fontSize: 18 }}
-        duration={15000}
-        loop
-        bounce
-        bounceSpeed={50}
-        repeatSpacer={30}
-        marqueeDelay={3000}
-      >
-        {activeTrack?.artists || 'No Artists'}
-      </TextTicker>
-
-      <TextTicker
         style={{
           color: '#fff',
-          fontSize: 24,
-          fontWeight: '800',
-          marginTop: 9,
-          marginBottom: 12,
+          fontSize: orientation === 'portrait' ? 24 : 30,
+          fontFamily: 'LilyScriptOne',
+          marginBottom: 10,
         }}
         duration={20000}
         loop
@@ -57,7 +47,24 @@ export default function TrackInfo({ bottomSheetRef }: any) {
       </TextTicker>
 
       <TextTicker
-        style={{ color: '#fff', fontSize: 18, fontWeight: '500' }}
+        style={{
+          color: '#ffffffa2',
+          fontFamily: fontFamily,
+          fontSize: 16,
+          marginBottom: 10,
+        }}
+        duration={15000}
+        loop
+        bounce
+        bounceSpeed={50}
+        repeatSpacer={30}
+        marqueeDelay={3000}
+      >
+        {activeTrack?.artists || 'No Artists'}
+      </TextTicker>
+
+      <TextTicker
+        style={{ color: '#fff', fontFamily: fontFamilyBold, fontSize: 18 }}
         duration={25000}
         loop
         bounce

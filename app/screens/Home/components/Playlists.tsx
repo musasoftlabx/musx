@@ -6,19 +6,16 @@ import { FlatList, Image, Pressable, View } from 'react-native';
 
 // * Libraries
 import { FlashList } from '@shopify/flash-list';
-import { useNavigation } from '@react-navigation/native';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
-import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { Text } from 'react-native-paper';
+import { useDeviceOrientation } from '@react-native-community/hooks';
+import { useNavigation } from '@react-navigation/native';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 
 // * Store
 import { WIDTH } from '../../../store';
 
 // * Types
 import { RootStackParamList } from '../../../types';
-
-dayjs.extend(relativeTime);
 
 export default function Playlist({
   loading,
@@ -28,6 +25,7 @@ export default function Playlist({
   dataset: RootStackParamList['Playlists'];
 }) {
   // ? Hooks
+  const orientation = useDeviceOrientation();
   const navigation = useNavigation();
 
   return (
@@ -56,11 +54,15 @@ export default function Playlist({
                   <View
                     style={{ alignItems: 'center', borderRadius: 5, gap: 8 }}
                   >
-                    <Text
-                      style={{ fontSize: 14, lineHeight: 16, width: 100 }}
-                    />
-                    <Text style={{ fontSize: 14, lineHeight: 10, width: 80 }} />
-                    <Text style={{ fontSize: 14, lineHeight: 8, width: 50 }} />
+                    <Text style={{ fontSize: 14, lineHeight: 16, width: 100 }}>
+                      {''}
+                    </Text>
+                    <Text style={{ fontSize: 14, lineHeight: 10, width: 80 }}>
+                      {''}
+                    </Text>
+                    <Text style={{ fontSize: 14, lineHeight: 8, width: 50 }}>
+                      {''}
+                    </Text>
                   </View>
                 </View>
               </SkeletonPlaceholder>
@@ -85,12 +87,13 @@ export default function Playlist({
                   {item.tracks >= 4 ? (
                     <View
                       style={{
+                        borderColor: '#f0ecd9ff',
                         borderRadius: 10,
+                        borderWidth: 2,
                         flexDirection: 'row',
                         flexWrap: 'wrap',
-                        marginTop: 0.5,
-                        width: 150,
-                        height: 150,
+                        width: 154,
+                        height: 154,
                         overflow: 'hidden',
                       }}
                     >
@@ -115,40 +118,53 @@ export default function Playlist({
 
                   <Text
                     numberOfLines={1}
-                    style={{ color: '#fff', fontSize: 16, marginTop: 5 }}
+                    style={{
+                      color: '#fff',
+                      fontFamily: 'Pacifico',
+                      fontSize: orientation === 'portrait' ? 17 : 13,
+                      marginTop: 2,
+                    }}
                   >
                     {item.name}
                   </Text>
 
-                  <View
-                    style={{
-                      alignItems: 'center',
-                      flexDirection: 'row',
-                      gap: 3,
-                    }}
-                  >
+                  <View style={{ alignItems: 'center', flexDirection: 'row' }}>
                     <Text
                       numberOfLines={1}
                       style={{
-                        alignSelf: 'flex-start',
+                        backgroundColor: '#a7a7a745',
                         borderColor: '#ffffff4D',
                         borderWidth: 1,
-                        borderRadius: 5,
-                        fontSize: 14,
-                        marginTop: 1,
-                        paddingLeft: 5,
-                        paddingRight: 3,
+                        borderTopLeftRadius: 5,
+                        borderBottomLeftRadius: 5,
+                        fontSize: 13,
+                        paddingLeft: 7,
+                        paddingHorizontal: 5,
+                        paddingTop: 2,
                       }}
                     >
                       {item.size}
                     </Text>
 
-                    <Text style={{ fontSize: 14, opacity: 0.5 }}>
+                    <Text
+                      numberOfLines={1}
+                      style={{
+                        backgroundColor: 'transparent',
+                        borderColor: '#ffffff4D',
+                        borderWidth: 1,
+                        borderTopRightRadius: 5,
+                        borderBottomRightRadius: 5,
+                        fontSize: 13,
+                        paddingLeft: 7,
+                        paddingHorizontal: 5,
+                        paddingTop: 2,
+                      }}
+                    >
                       {item.tracks} tracks
                     </Text>
                   </View>
 
-                  <Text style={{ fontSize: 14, opacity: 0.5 }}>
+                  <Text style={{ fontSize: 14, marginTop: 2, opacity: 0.5 }}>
                     {item.duration} mins
                   </Text>
                 </View>

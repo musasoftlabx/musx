@@ -5,9 +5,9 @@ import React from 'react';
 import { View } from 'react-native';
 
 // * Libraries
-import { Text } from 'react-native-paper';
 import { CastButton } from 'react-native-google-cast';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useDeviceOrientation } from '@react-native-community/hooks';
 
 // * Components
 import { GradientText } from '../components/TextX';
@@ -35,7 +35,10 @@ import { RootStackParamList } from '../types';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function HomeStackNavigator() {
-  // ? StoreStates
+  // ? Hooks
+  const orientation = useDeviceOrientation();
+
+  // ? Store States
   const palette = usePlayerStore(state => state.palette);
 
   return (
@@ -49,26 +52,22 @@ export default function HomeStackNavigator() {
               <View
                 style={{
                   alignItems: 'center',
-                  backgroundColor: palette?.[1] ?? '#000',
+                  backgroundColor: palette?.[1] ?? '#00000031',
                   flexDirection: 'row',
                   justifyContent: 'space-between',
-                  paddingLeft: 10,
-                  paddingRight: 20,
-                  //paddingTop: 30,
+                  paddingHorizontal: 20,
                 }}
               >
-                <View style={{ paddingTop: 20, paddingBottom: 15 }}>
+                <View style={{ paddingTop: 10 }}>
                   <GradientText
                     font="Montez"
                     gradient={['#b038e8', '#fff59d']}
-                    numberOfLines={1}
-                    scale={6}
+                    scale={orientation === 'portrait' ? 6 : 2.5}
                   >
                     MusX Player
                   </GradientText>
-                  <Text style={{ marginLeft: 5 }}>Consists of 0 tracks</Text>
                 </View>
-                <CastButton style={{ height: 24, width: 24, marginTop: -30 }} />
+                <CastButton style={{ height: 24, width: 24 }} />
               </View>
             ),
           }}

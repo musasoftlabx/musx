@@ -15,23 +15,15 @@ import {
   Pressable,
   TextInput,
   Vibration,
-  Platform,
-  Modal,
-  StyleSheet,
 } from 'react-native';
 
 // * Libraries
-import {
-  Button,
-  Divider,
-  HelperText,
-  Menu,
-  useTheme,
-} from 'react-native-paper';
+import { useTheme } from 'react-native-paper';
 import { MenuView, MenuComponentRef } from '@react-native-menu/menu';
 import { CastButton } from 'react-native-google-cast';
 import { FlashList } from '@shopify/flash-list';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useDeviceOrientation } from '@react-native-community/hooks';
 import { useBackHandler } from '@react-native-community/hooks';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Text } from 'react-native-paper';
@@ -52,20 +44,18 @@ import { API_URL, HEIGHT, WIDTH, usePlayerStore } from '../../store';
 import { queryClient } from '../../../App';
 
 // * Types
-import { RootStackParamList } from '../../types';
+import { Playlist, RootStackParamList } from '../../types';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { yupString } from '../../constants/yup';
 import { InferType, object } from 'yup';
-import { styles } from '../../styles';
 import CreatePlaylist from '../../components/CreatePlaylist';
+import { fontFamilyBold } from '../../utils';
 
 type PlaylistProps = RootStackParamList['Playlists'];
 
 const schema = object({ name: yupString, description: yupString });
-
-type Form = InferType<typeof schema>;
 
 export default function Playlists({
   navigation,
@@ -74,7 +64,7 @@ export default function Playlists({
   const menuRef = useRef<MenuComponentRef>(null);
 
   // ? States
-  const [filter, setFilter] = useState<PlaylistProps[]>([]);
+  const [filter, setFilter] = useState<Playlist[]>([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [playlists, setPlaylists] = useState<PlaylistProps[]>([]);
   const [searchWord, setSearchWord] = useState('');
@@ -85,21 +75,11 @@ export default function Playlists({
   const palette = usePlayerStore(state => state.palette);
 
   // ? Hooks
-  const theme = useTheme();
+  const orientation = useDeviceOrientation();
   useBackHandler(() => {
     if (showSearch) setShowSearch(false);
     else navigation.goBack();
     return true;
-  });
-
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting, dirtyFields: dirty },
-  } = useForm({
-    mode: 'onChange',
-    resolver: yupResolver(schema),
   });
 
   // ? Queries
@@ -135,7 +115,7 @@ export default function Playlists({
     if (searchWord?.length >= 2)
       setFilter(
         playlists?.filter(
-          (playlist: PlaylistProps) =>
+          (playlist: Playlist) =>
             playlist.name?.toLowerCase().includes(searchWord?.toLowerCase()) &&
             playlist.name,
         ),
@@ -202,8 +182,7 @@ export default function Playlists({
               backgroundColor: palette?.[1] ?? '#000',
               flexDirection: 'row',
               gap: 40,
-              paddingLeft: 10,
-              paddingRight: 10,
+              paddingHorizontal: 20,
               paddingVertical: 10,
             }}
           >
@@ -308,6 +287,7 @@ export default function Playlists({
   //     : setFilter(sorted.sort((a, b) => (a[by] as number) - (b[by] as number)));
   //   setIsSortMenuVisible(false);
   // };
+  const columns = orientation === 'portrait' ? 150 : 200;
 
   return (
     <>
@@ -347,11 +327,15 @@ export default function Playlists({
                   <View
                     style={{ alignItems: 'center', borderRadius: 5, gap: 8 }}
                   >
-                    <Text
-                      style={{ fontSize: 14, lineHeight: 16, width: 100 }}
-                    />
-                    <Text style={{ fontSize: 14, lineHeight: 10, width: 80 }} />
-                    <Text style={{ fontSize: 14, lineHeight: 8, width: 50 }} />
+                    <Text style={{ fontSize: 14, lineHeight: 16, width: 100 }}>
+                      {''}
+                    </Text>
+                    <Text style={{ fontSize: 14, lineHeight: 10, width: 80 }}>
+                      {''}
+                    </Text>
+                    <Text style={{ fontSize: 14, lineHeight: 8, width: 50 }}>
+                      {''}
+                    </Text>
                   </View>
                 </View>
               </SkeletonPlaceholder>
@@ -363,9 +347,8 @@ export default function Playlists({
       {isSuccess && (
         <FlashList
           data={filter}
-          numColumns={Number((WIDTH / 150).toFixed(0))}
+          numColumns={Number((WIDTH / columns).toFixed(0))}
           keyExtractor={(_, index) => index.toString()}
-          estimatedItemSize={300}
           refreshing={refreshing}
           onRefresh={() => {
             setRefreshing(true);
@@ -373,7 +356,7 @@ export default function Playlists({
               .refetchQueries({ queryKey: ['playlists'] })
               .then(() => setRefreshing(false));
           }}
-          renderItem={({ item }: { item: PlaylistProps }) => (
+          renderItem={({ item }: { item: Playlist }) => (
             <Pressable
               onPress={() => navigation.navigate('Playlist', item)}
               style={{ flex: 1 }}
@@ -384,12 +367,13 @@ export default function Playlists({
                 {item.tracks >= 4 ? (
                   <View
                     style={{
+                      borderColor: '#f0ecd9ff',
                       borderRadius: 10,
+                      borderWidth: 2,
                       flexDirection: 'row',
                       flexWrap: 'wrap',
-                      marginTop: 0.5,
-                      width: 100,
-                      height: 100,
+                      width: 104,
+                      height: 104,
                       overflow: 'hidden',
                     }}
                   >
@@ -414,36 +398,53 @@ export default function Playlists({
 
                 <Text
                   numberOfLines={1}
-                  style={{ color: '#fff', fontSize: 16, marginTop: 5 }}
+                  style={{
+                    color: '#fff',
+                    fontFamily: fontFamilyBold,
+                    fontSize: orientation === 'portrait' ? 17 : 13,
+                    marginTop: 2,
+                  }}
                 >
                   {item.name}
                 </Text>
 
-                <View
-                  style={{ alignItems: 'center', flexDirection: 'row', gap: 3 }}
-                >
+                <View style={{ alignItems: 'center', flexDirection: 'row' }}>
                   <Text
                     numberOfLines={1}
                     style={{
-                      alignSelf: 'flex-start',
+                      backgroundColor: '#a7a7a745',
                       borderColor: '#ffffff4D',
                       borderWidth: 1,
-                      borderRadius: 5,
-                      fontSize: 14,
-                      marginTop: 1,
-                      paddingLeft: 5,
-                      paddingRight: 3,
+                      borderTopLeftRadius: 5,
+                      borderBottomLeftRadius: 5,
+                      fontSize: 13,
+                      paddingLeft: 7,
+                      paddingHorizontal: 5,
+                      paddingTop: 2,
                     }}
                   >
                     {item.size}
                   </Text>
 
-                  <Text style={{ fontSize: 14, opacity: 0.5 }}>
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      backgroundColor: 'transparent',
+                      borderColor: '#ffffff4D',
+                      borderWidth: 1,
+                      borderTopRightRadius: 5,
+                      borderBottomRightRadius: 5,
+                      fontSize: 13,
+                      paddingLeft: 7,
+                      paddingHorizontal: 5,
+                      paddingTop: 2,
+                    }}
+                  >
                     {item.tracks} tracks
                   </Text>
                 </View>
 
-                <Text style={{ fontSize: 14, opacity: 0.5 }}>
+                <Text style={{ fontSize: 14, marginTop: 2, opacity: 0.5 }}>
                   {item.duration} mins
                 </Text>
               </View>

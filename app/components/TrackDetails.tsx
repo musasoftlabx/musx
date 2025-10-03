@@ -50,10 +50,8 @@ type PlaylistProps = RootStackParamList['Playlist'];
 
 export default function TrackDetails({
   trackDetailsRef,
-  track,
 }: {
   trackDetailsRef: React.Ref<BottomSheetMethods>;
-  track: TrackProps;
 }) {
   // ? Hooks
   const navigation =
@@ -89,6 +87,7 @@ export default function TrackDetails({
   const queue = usePlayerStore(state => state.queue);
   const activePlaylist = usePlayerStore(state => state.activePlaylist);
   const trackRating = usePlayerStore(state => state.trackRating);
+  const trackDetails = usePlayerStore(state => state.trackDetails);
 
   // ? Store Actions
   const addAsNextTrack = usePlayerStore(state => state.addAsNextTrack);
@@ -148,7 +147,7 @@ export default function TrackDetails({
                     icon: 'play-arrow',
                     action: () => {
                       closeTrackDetails();
-                      play([track], track);
+                      play([trackDetails], trackDetails!);
                     },
                   },
                   {
@@ -156,7 +155,7 @@ export default function TrackDetails({
                     icon: 'queue-play-next',
                     action: () => {
                       closeTrackDetails();
-                      addAsNextTrack(track, activeTrackIndex + 1);
+                      addAsNextTrack(trackDetails!, activeTrackIndex + 1);
                     },
                   },
                   {
@@ -165,7 +164,7 @@ export default function TrackDetails({
                     iconSource: 'material-community-icons',
                     action: () => {
                       closeTrackDetails();
-                      addAsNextTrack(track, activeTrackIndex + 2);
+                      addAsNextTrack(trackDetails!, activeTrackIndex + 2);
                     },
                   },
                   {
@@ -173,7 +172,7 @@ export default function TrackDetails({
                     icon: 'add-to-queue',
                     action: () => {
                       closeTrackDetails();
-                      addTrackToEndOfQueue(track);
+                      addTrackToEndOfQueue(trackDetails!);
                     },
                   },
                   {
@@ -181,7 +180,9 @@ export default function TrackDetails({
                     icon: 'playlist-add',
                     action: () => {
                       closeTrackDetails();
-                      navigation.navigate('AddToPlaylist', { id: track.id });
+                      navigation.navigate('AddToPlaylist', {
+                        id: trackDetails?.id,
+                      });
                     },
                   },
                 ].map((item, key) =>
@@ -246,7 +247,7 @@ export default function TrackDetails({
                     icon: 'render-image',
                     action: () => {
                       closeTrackDetails();
-                      addPlaylistTrack(lastPlaylist, track.id);
+                      addPlaylistTrack(lastPlaylist, trackDetails?.id!);
                       setSnackbarMessage('Track added to playlist!');
                       setSnackbarVisible(true);
                     },
@@ -365,7 +366,7 @@ export default function TrackDetails({
                 </Text>
 
                 <FlatList
-                  data={track?.artists.split('/')}
+                  data={trackDetails?.artists.split('/')}
                   horizontal
                   scrollEnabled
                   showsHorizontalScrollIndicator={false}
@@ -376,6 +377,7 @@ export default function TrackDetails({
                         borderColor: '#fff',
                         borderRadius: 5,
                         borderWidth: 1,
+                        height: 33,
                         margin: 5,
                       }}
                       textStyle={{ color: '#fff' }}
@@ -383,11 +385,11 @@ export default function TrackDetails({
                         closeTrackDetails();
                         Vibration.vibrate(100);
                         navigation.navigate('Artist', {
-                          albumArtist: track.albumArtist,
-                          artworks: track.artworks,
-                          path: track.path,
-                          tracks: track.tracks,
-                          url: track.url,
+                          albumArtist: trackDetails?.albumArtist!,
+                          artworks: trackDetails?.artworks,
+                          path: trackDetails?.path!,
+                          tracks: trackDetails?.tracks,
+                          url: trackDetails?.url!,
                         });
                       }}
                     >
@@ -419,8 +421,8 @@ export default function TrackDetails({
                     icon: 'progress-download',
                     action: () => {
                       downloadFile({
-                        fromUrl: track.url,
-                        toFile: `${DOWNLOADS_PATH}/${track.path.replaceAll(
+                        fromUrl: trackDetails?.url!,
+                        toFile: `${DOWNLOADS_PATH}/${trackDetails?.path.replaceAll(
                           '/',
                           '_',
                         )}`,
@@ -433,7 +435,9 @@ export default function TrackDetails({
                       })
                         .promise.then(() => {
                           setIsDownloading(false);
-                          setSnackbarMessage(`${track.title} downloaded!`);
+                          setSnackbarMessage(
+                            `${trackDetails?.title} downloaded!`,
+                          );
                           setSnackbarVisible(!snackbarVisible);
                         })
                         .catch(error => {
@@ -449,7 +453,8 @@ export default function TrackDetails({
                     text: 'View Metadata',
                     icon: 'database-refresh-outline',
                     iconSource: 'material-community-icons',
-                    action: () => navigation.navigate('TrackMetadata', track),
+                    action: () =>
+                      navigation.navigate('TrackMetadata', trackDetails),
                   },
                   {
                     text: 'Delete from library',
@@ -459,7 +464,7 @@ export default function TrackDetails({
                       closeTrackDetails();
                       Alert.alert(
                         'Confirm deletion',
-                        `This will delete ${track.title} permanently. `,
+                        `This will delete ${trackDetails?.title} permanently. `,
                         [
                           {
                             text: 'Cancel',
@@ -471,15 +476,19 @@ export default function TrackDetails({
                             onPress: () => {
                               TrackPlayer.skipToNext();
                               axios
-                                .delete(`deleteTrack/${track.id}`)
+                                .delete(`deleteTrack/${trackDetails?.id}`)
                                 .then(() => {
                                   // ? Show the snackbar to indicate that the operation was successful
-                                  setSnackbarMessage(`${track.title} deleted!`);
+                                  setSnackbarMessage(
+                                    `${trackDetails?.title} deleted!`,
+                                  );
                                   setSnackbarVisible(!snackbarVisible);
                                   // ? Remove the deleted track from the queue and reset the queue
                                   setQueue(
                                     queue.filter(
-                                      _track => _track.id !== track.id && track,
+                                      _track =>
+                                        _track.id !== trackDetails?.id &&
+                                        trackDetails,
                                     ),
                                   );
                                   // ? Refresh screens to remove occurences of deleted track
@@ -562,9 +571,9 @@ export default function TrackDetails({
               marginHorizontal: 20,
             }}
           >
-            {track && (
+            {trackDetails && (
               <Image
-                source={{ uri: track?.artwork }}
+                source={{ uri: trackDetails?.artwork }}
                 style={{
                   borderRadius: 10,
                   marginRight: 10,
@@ -575,9 +584,9 @@ export default function TrackDetails({
             )}
             <View style={{ justifyContent: 'center', marginLeft: 5 }}>
               <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
-                {track?.title}
+                {trackDetails?.title}
               </Text>
-              <Text>{track?.artists}</Text>
+              <Text>{trackDetails?.artists}</Text>
             </View>
           </View>
         }
@@ -593,7 +602,7 @@ export default function TrackDetails({
                 rating,
               });
               saveRating(
-                { id: track?.id, rating },
+                { id: trackDetails?.id, rating },
                 {
                   onSuccess: () => refreshScreens(activeTrack, activePlaylist), // ? Refresh screens to apply changes of rated track
                   onError: error => console.log(error),
@@ -619,7 +628,7 @@ export default function TrackDetails({
           ) : (
             <Pressable
               onPress={() => {
-                item.action && item.action(track);
+                item.action && item.action(trackDetails!);
               }}
             >
               <View
@@ -646,7 +655,7 @@ export default function TrackDetails({
         }
       />
     ),
-    [track, trackRating, downloadProgress],
+    [trackDetails, trackRating, downloadProgress],
   );
 
   return (

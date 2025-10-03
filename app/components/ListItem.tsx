@@ -5,9 +5,6 @@ import React from 'react';
 import { View, Image, Pressable, Vibration } from 'react-native';
 
 // * Libraries
-import { StarRatingDisplay } from 'react-native-star-rating-widget';
-import { State } from 'react-native-track-player';
-import { Text } from 'react-native-paper';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -15,6 +12,10 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
+import { StarRatingDisplay } from 'react-native-star-rating-widget';
+import { State } from 'react-native-track-player';
+import { useDeviceOrientation } from '@react-native-community/hooks';
+import { Text } from 'react-native-paper';
 
 // * Store
 import { usePlayerStore, WIDTH } from '../store';
@@ -53,20 +54,21 @@ export default function ListItem({
   const isPlaying = state === State.Playing;
 
   // ? Hooks
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      {
-        rotateZ: withRepeat(
-          withSequence(
-            withTiming(0 + 'deg', { duration: 0, easing: Easing.linear }),
-            withTiming(360 + 'deg', { duration: 3000, easing: Easing.linear }),
-          ),
-          -1,
-          false,
-        ),
-      },
-    ],
-  }));
+  const orientation = useDeviceOrientation();
+  // const animatedStyle = useAnimatedStyle(() => ({
+  //   transform: [
+  //     {
+  //       rotateZ: withRepeat(
+  //         withSequence(
+  //           withTiming(0 + 'deg', { duration: 0, easing: Easing.linear }),
+  //           withTiming(360 + 'deg', { duration: 3000, easing: Easing.linear }),
+  //         ),
+  //         -1,
+  //         false,
+  //       ),
+  //     },
+  //   ],
+  // }));
 
   return (
     <Pressable
@@ -96,12 +98,16 @@ export default function ListItem({
           <>
             {isPlaying ? (
               <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                <Animated.Image
+                {/* <Animated.Image
                   source={{ uri: item.artwork }}
                   style={[
                     { borderRadius: 100, height: 45, width: 45 },
                     animatedStyle,
                   ]}
+                /> */}
+                <Image
+                  source={{ uri: item.artwork }}
+                  style={[{ borderRadius: 100, height: 45, width: 45 }]}
                 />
                 <Icon
                   name="circle-thin"
@@ -132,18 +138,24 @@ export default function ListItem({
             style={[{ borderRadius: 10, height: 45, width: 45 }]}
           />
         )}
-        <View style={{ flexBasis: `${WIDTH * 0.12}%`, gap: 2 }}>
+        <View
+          style={{
+            flexBasis: orientation === 'portrait' ? `${WIDTH * 0.12}%` : 'auto',
+            gap: 2,
+          }}
+        >
           <View style={{ alignItems: 'center', flexDirection: 'row', gap: 6 }}>
             <Text
               numberOfLines={1}
               style={{
-                alignSelf: 'flex-start',
                 backgroundColor: '#ffffff4D',
+                borderColor: '#fff',
                 borderRadius: 5,
-                marginTop: 1,
-                maxWidth: 'auto',
-                paddingVertical: 1,
+                borderWidth: 1,
+                fontSize: 12,
                 paddingHorizontal: 5,
+                paddingTop: 2,
+                paddingLeft: 7,
               }}
             >
               {display === 'size'

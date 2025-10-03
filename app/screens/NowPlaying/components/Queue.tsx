@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 
 // * React Native
-import { FlatList, Image, View, Vibration } from 'react-native';
+import { FlatList, Image, View, Vibration, Pressable } from 'react-native';
 
 // * Libraries
 import {
@@ -13,12 +13,12 @@ import {
 } from 'react-native-draggable-flatlist';
 import { SegmentedButtons, Text } from 'react-native-paper';
 import { StarRatingDisplay } from 'react-native-star-rating-widget';
-import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Track } from 'react-native-track-player';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import SwipeableItem, {
   SwipeableItemImperativeRef,
 } from 'react-native-swipeable-item';
+import { useDeviceOrientation } from '@react-native-community/hooks';
 
 // * Store
 import {
@@ -37,6 +37,9 @@ import { TrackProps, TracksProps } from '../../../types';
 export default function Queue() {
   // ? Refs
   const swipeableItemRef = useRef<SwipeableItemImperativeRef>(null);
+
+  // ? Hooks
+  const orientation = useDeviceOrientation();
 
   // ? StoreStates
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
@@ -69,7 +72,7 @@ export default function Queue() {
 
   // ? Functions
   const ListItem = ({ item }: { item: TrackProps }) => (
-    <TouchableOpacity activeOpacity={1} onPress={() => skipTo(item)}>
+    <Pressable onPress={() => skipTo(item)}>
       <View
         style={{
           flex: 1,
@@ -86,7 +89,7 @@ export default function Queue() {
             source={{ uri: item.artwork }}
             style={[{ borderRadius: 10, height: 45, width: 45 }]}
           />
-          <View style={{ flexBasis: `${WIDTH * 0.12}%`, gap: 2 }}>
+          <View style={{ width: WIDTH * 0.12, gap: 2 }}>
             <Text
               numberOfLines={1}
               style={{ fontSize: 16, fontWeight: '600', width: '97%' }}
@@ -102,38 +105,40 @@ export default function Queue() {
           </View>
         </View>
         {/* Rating, Plays & Duration */}
-        <View
-          style={{
-            flex: 1,
-            alignItems: 'flex-end',
-            justifyContent: 'center',
-            gap: 3,
-          }}
-        >
-          <StarRatingDisplay
-            rating={item.rating}
-            starSize={16}
-            starStyle={{ marginHorizontal: 0 }}
-          />
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text numberOfLines={1} style={{ fontWeight: 'bold' }}>
-              {item.plays || 0} play
-              {`${item.plays === 1 ? '' : 's'}`}
-            </Text>
-            <Text>{'  ◎  '}</Text>
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: 'bold',
-                marginRight: 3,
-              }}
-            >
-              {formatTrackTime(item.duration)} mins
-            </Text>
+        {orientation === 'portrait' && (
+          <View
+            style={{
+              flex: 1,
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+              gap: 3,
+            }}
+          >
+            <StarRatingDisplay
+              rating={item.rating}
+              starSize={16}
+              starStyle={{ marginHorizontal: 0 }}
+            />
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text numberOfLines={1} style={{ fontWeight: 'bold' }}>
+                {item.plays || 0} play
+                {`${item.plays === 1 ? '' : 's'}`}
+              </Text>
+              <Text>{'  ◎  '}</Text>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: 'bold',
+                  marginRight: 3,
+                }}
+              >
+                {formatTrackTime(item.duration)} mins
+              </Text>
+            </View>
           </View>
-        </View>
+        )}
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 
   // ? Callbacks
@@ -142,8 +147,7 @@ export default function Queue() {
       <ShadowDecorator>
         <ScaleDecorator>
           <OpacityDecorator>
-            <TouchableOpacity
-              activeOpacity={1}
+            <Pressable
               onPress={() => skipTo(item)}
               onLongPress={drag}
               disabled={isActive}
@@ -164,7 +168,7 @@ export default function Queue() {
                       paddingVertical: 10,
                     }}
                   >
-                    <TouchableOpacity
+                    <Pressable
                       onPress={() => {
                         swipeableItemRef.current?.close({ animated: true });
                         remove(item);
@@ -188,7 +192,7 @@ export default function Queue() {
                       >
                         DELETE
                       </Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 )}
                 activationThreshold={0}
@@ -196,7 +200,7 @@ export default function Queue() {
               >
                 <ListItem item={item} />
               </SwipeableItem>
-            </TouchableOpacity>
+            </Pressable>
           </OpacityDecorator>
         </ScaleDecorator>
       </ShadowDecorator>

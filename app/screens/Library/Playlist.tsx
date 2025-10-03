@@ -56,8 +56,6 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import PlayIcon from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 
-import useRotate360Animation from '../../shared/hooks/useRotate360Animation';
-
 import duration from 'dayjs/plugin/duration';
 import EditPlaylist from '../../components/EditPlaylist';
 
@@ -78,12 +76,12 @@ export default function Playlist({
   },
 }: any) {
   // ? Refs
+  const flashListRef = useRef<any>(null);
   const swipeableItemRef = useRef<SwipeableItemImperativeRef>(null);
 
   // ? Hooks
   const navigation = useNavigation();
   const orientation = useDeviceOrientation();
-  const rotate = useRotate360Animation();
   const theme = useTheme();
   useBackHandler(() => {
     navigation.goBack();
@@ -94,6 +92,7 @@ export default function Playlist({
   const { state } = usePlayerStore(state => state.playbackState);
   const activePlaylist = usePlayerStore(state => state.activePlaylist);
   const activeTrack: TrackProps = usePlayerStore(state => state.activeTrack);
+  const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const palette = usePlayerStore(state => state.palette);
   const play = usePlayerStore(state => state.play);
   const setActivePlaylist = usePlayerStore(state => state.setActivePlaylist);
@@ -112,6 +111,16 @@ export default function Playlist({
 
   // ? Constants
   const isPlaying = state === State.Playing;
+
+  useEffect(() => {
+    if (flashListRef.current) {
+      flashListRef.current.scrollToIndex({
+        index: activeTrackIndex,
+        animated: true,
+        viewPosition: 0,
+      });
+    }
+  }, [activeTrackIndex]);
 
   // ? Queries
   const { data, isSuccess, isFetching } = useQuery({
@@ -147,8 +156,7 @@ export default function Playlist({
             backgroundColor: palette?.[1] ?? '#000',
             flexDirection: 'row',
             gap: 20,
-            paddingLeft: 20,
-            paddingRight: 10,
+            paddingHorizontal: 20,
             paddingVertical: 10,
           }}
         >
@@ -302,10 +310,7 @@ export default function Playlist({
                   >
                     <Animated.Image
                       source={{ uri: item.artwork }}
-                      style={[
-                        { borderRadius: 100, height: 45, width: 45 },
-                        rotate,
-                      ]}
+                      style={[{ borderRadius: 100, height: 45, width: 45 }]}
                     />
                     <Icon
                       name="circle-thin"
@@ -762,82 +767,143 @@ export default function Playlist({
           style={{
             flex: 1,
             flexDirection: 'row',
-            gap: 100,
-            paddingHorizontal: 50,
-            paddingTop: 30,
+            gap: 30,
+            paddingHorizontal: 20,
+            paddingTop: 10,
           }}
         >
-          <View style={{ flex: 0.2 }}>
-            {!artwork ? (
-              <>
-                {playlistTracks.length >= 4 ? (
-                  <View
-                    style={{
-                      borderRadius: 10,
-                      flexDirection: 'row',
-                      flexWrap: 'wrap',
-                      marginTop: 0.5,
-                      width: 400,
-                      height: 400,
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {artworks.map(
-                      (artwork: string, i: number) =>
-                        i <= 4 && (
-                          <Image
-                            key={i}
-                            source={{ uri: artwork }}
-                            style={{ width: 200, height: 200 }}
-                            resizeMode="cover"
-                          />
-                        ),
-                    )}
-                  </View>
-                ) : (
-                  <Image
-                    source={{ uri: artworks[0] }}
-                    style={{ width: 400, height: 400, borderRadius: 10 }}
-                  />
-                )}
-              </>
-            ) : (
-              <Image
-                source={{ uri: artwork }}
-                defaultSource={require('../../assets/images/musician.png')}
-                style={{ width: 400, height: 400, borderRadius: 100 }}
-                resizeMode="cover"
-              />
-            )}
-
+          <View style={{ flex: 0.3 }}>
             <View
               style={{
                 alignItems: 'center',
+                backgroundColor: '#ffffff1e',
+                borderRadius: 10,
                 flexDirection: 'row',
-                gap: 20,
-                marginTop: 10,
+                gap: 15,
+                paddingHorizontal: 20,
               }}
             >
-              <Pressable
-                onPress={() => {
-                  setActivePlaylist(id);
-                  play(playlistTracks, playlistTracks[0]);
-                }}
-              >
-                <PlayIcon color="#fff" name="play-circle" size={70} />
-              </Pressable>
-              <View>
-                <Text style={{ fontSize: 24 }}>{tracks} tracks</Text>
-                <Text style={{ fontSize: 20, opacity: 0.5 }}>
+              {!artwork ? (
+                <>
+                  {playlistTracks.length >= 4 ? (
+                    <View
+                      style={{
+                        borderRadius: 10,
+                        flexDirection: 'row',
+                        flexWrap: 'wrap',
+                        marginTop: 0.5,
+                        width: 150,
+                        height: 150,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {artworks.map(
+                        (artwork: string, i: number) =>
+                          i <= 4 && (
+                            <Image
+                              key={i}
+                              source={{ uri: artwork }}
+                              style={{ width: 75, height: 75 }}
+                              resizeMode="cover"
+                            />
+                          ),
+                      )}
+                    </View>
+                  ) : (
+                    <Image
+                      source={{ uri: artworks[0] }}
+                      style={{ width: 150, height: 150, borderRadius: 10 }}
+                    />
+                  )}
+                </>
+              ) : (
+                <Image
+                  source={{ uri: artwork }}
+                  defaultSource={require('../../assets/images/musician.png')}
+                  style={{ width: 150, height: 150, borderRadius: 100 }}
+                  resizeMode="cover"
+                />
+              )}
+
+              <View style={{ height: 200, gap: 10, width: 200 }}>
+                <Text
+                  style={{
+                    color: '#fff',
+                    fontFamily: 'LilyScriptOne',
+                    fontSize: 20,
+                    marginTop: 25,
+                  }}
+                >
+                  {name}
+                </Text>
+
+                <View style={{ alignItems: 'center', flexDirection: 'row' }}>
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      backgroundColor: '#a7a7a745',
+                      borderColor: '#ffffff4D',
+                      borderWidth: 1,
+                      borderTopLeftRadius: 5,
+                      borderBottomLeftRadius: 5,
+                      fontSize: 13,
+                      paddingLeft: 7,
+                      paddingHorizontal: 5,
+                      paddingTop: 2,
+                    }}
+                  >
+                    {size}
+                  </Text>
+
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      backgroundColor: 'transparent',
+                      borderColor: '#ffffff4D',
+                      borderWidth: 1,
+                      borderTopRightRadius: 5,
+                      borderBottomRightRadius: 5,
+                      fontSize: 13,
+                      paddingLeft: 7,
+                      paddingHorizontal: 5,
+                      paddingTop: 2,
+                    }}
+                  >
+                    {tracks} tracks
+                  </Text>
+                </View>
+
+                <Text style={{ fontSize: 14, marginTop: 2, opacity: 0.5 }}>
                   {duration} mins
                 </Text>
+
+                <PlayIcon
+                  color="#fff"
+                  name="play-circle"
+                  size={60}
+                  style={{
+                    position: 'absolute',
+                    borderColor: '#fff',
+                    borderRadius: 100,
+                    borderWidth: 2,
+                    borderStyle: 'dashed',
+                    bottom: 5,
+                    right: 15,
+                    zIndex: 5,
+                  }}
+                  onPress={() => {
+                    setActivePlaylist(id);
+                    play(playlistTracks, playlistTracks[0]);
+                  }}
+                />
               </View>
             </View>
           </View>
 
-          <View style={{ flex: 0.8 }}>
+          <View style={{ flex: 0.7 }}>
             {isSuccess && (
               <FlashList
+                ref={flashListRef}
                 data={playlistTracks ?? []}
                 keyExtractor={(_, index) => index.toString()}
                 refreshing={refreshing}

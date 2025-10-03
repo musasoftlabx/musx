@@ -8,6 +8,7 @@ import { Image, Pressable, Vibration, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { StarRatingDisplay } from 'react-native-star-rating-widget';
 import { Text } from 'react-native-paper';
+import { useDeviceOrientation } from '@react-native-community/hooks';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -30,7 +31,10 @@ export default function RecentlyAddedAndPlayed({
   loading: boolean;
   section: SectionProps;
 }) {
-  // ? StoreActions
+  // ? Hooks
+  const orientation = useDeviceOrientation();
+
+  // ? Store States
   const play = usePlayerStore(state => state.play);
   const openTrackDetails = usePlayerStore(state => state.openTrackDetails);
   const setTrackDetails = usePlayerStore(state => state.setTrackDetails);
@@ -55,7 +59,10 @@ export default function RecentlyAddedAndPlayed({
                   setTrackRating(item.rating);
                   openTrackDetails();
                 }}
-                style={{ margin: 10, width: 100 }}
+                style={{
+                  margin: 10,
+                  width: orientation === 'portrait' ? 100 : 150,
+                }}
               >
                 <Image
                   source={{ uri: item.artwork }}
@@ -73,10 +80,9 @@ export default function RecentlyAddedAndPlayed({
                 <Text
                   numberOfLines={1}
                   style={{
-                    color: 'white',
-                    fontSize: 16,
+                    color: '#fff',
+                    fontSize: orientation === 'portrait' ? 16 : 14,
                     marginTop: 5,
-                    marginBottom: 2,
                   }}
                 >
                   {item.title}

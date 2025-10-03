@@ -5,11 +5,11 @@ import React from 'react';
 import { Image, Pressable, View } from 'react-native';
 
 // * Libraries
-import { Avatar } from 'react-native-paper';
+import { Avatar, Text } from 'react-native-paper';
 import { FlashList } from '@shopify/flash-list';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useDeviceOrientation } from '@react-native-community/hooks';
 import { useNavigation } from '@react-navigation/native';
-import { Text } from 'react-native-paper';
 
 // * Components
 import HorizontalListItem from '../../../components/Skeletons/HorizontalListItem';
@@ -25,6 +25,8 @@ export default function FavouriteArtists({
   loading: boolean;
   dataset: SectionProps['dataset'];
 }) {
+  // ? Hooks
+  const orientation = useDeviceOrientation();
   const navigation =
     useNavigation<
       NativeStackNavigationProp<RootStackParamList, 'Artist', ''>
@@ -40,7 +42,6 @@ export default function FavouriteArtists({
             data={dataset as TracksProps}
             horizontal
             keyExtractor={(_, index) => index.toString()}
-            estimatedItemSize={20}
             renderItem={({ item }: { item: TrackProps }) => (
               <Pressable
                 onPress={() =>
@@ -52,7 +53,11 @@ export default function FavouriteArtists({
                     url: item.url,
                   })
                 }
-                style={{ alignItems: 'center', margin: 10, width: 100 }}
+                style={{
+                  alignItems: 'center',
+                  margin: 10,
+                  width: orientation === 'portrait' ? 100 : 150,
+                }}
               >
                 {item.hasOwnProperty('artworks') ? (
                   <View
@@ -94,10 +99,9 @@ export default function FavouriteArtists({
                 <Text
                   numberOfLines={1}
                   style={{
-                    color: 'white',
-                    fontSize: 16,
-                    marginTop: 5,
-                    marginBottom: 1,
+                    color: '#fff',
+                    fontSize: orientation === 'portrait' ? 16 : 14,
+                    marginTop: 10,
                   }}
                 >
                   {item.albumArtist.includes('Various Artists')
@@ -105,7 +109,7 @@ export default function FavouriteArtists({
                     : item.albumArtist}
                 </Text>
 
-                <Text style={{ fontSize: 14, opacity: 0.5 }}>
+                <Text style={{ fontSize: 14, opacity: 0.7 }}>
                   {item.rating.toFixed(2)} rating
                 </Text>
 
@@ -115,7 +119,7 @@ export default function FavouriteArtists({
                     borderColor: '#ffffff4D',
                     borderWidth: 1,
                     borderRadius: 5,
-                    fontSize: 14,
+                    fontSize: 12,
                     marginTop: 1,
                     paddingHorizontal: 5,
                   }}

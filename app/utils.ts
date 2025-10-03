@@ -22,6 +22,7 @@ import merge from 'deepmerge';
 export const deviceHeight = Dimensions.get('window').height;
 export const deviceWidth = Dimensions.get('window').width;
 export const fontFamily = 'Laila';
+export const fontFamilyBold = 'Laila-Bold';
 export const fontSize = s(1.7);
 export const bottomSheetProps = {
   timing: { duration: 600 },

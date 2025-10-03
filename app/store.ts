@@ -100,7 +100,7 @@ interface IPlayerStore {
   palette: string[];
   nowPlayingRef: BottomSheet | null;
   trackDetailsRef: BottomSheet | null;
-  trackDetails: any;
+  trackDetails: TrackProps | null;
   castState: any;
   castClient: RemoteMediaClient | null;
   streamViaHLS: boolean;
@@ -286,9 +286,6 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     // ? Show now playing screen
     const nowPlayingRef = get().nowPlayingRef!;
     get().openNowPlaying(nowPlayingRef);
-
-    // ? Store the active track index to restore state incase the app crashes or is dismissed
-    AsyncStorage.setItem('activeTrackIndex', selectedIndex.toString());
 
     // ? Store the queue to restore state incase the app crashes or is dismissed
     AsyncStorage.setItem('queue', JSON.stringify(queue));

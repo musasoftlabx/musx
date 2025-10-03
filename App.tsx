@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 
 // * React Native
-import { Alert, Appearance, StatusBar } from 'react-native';
+import { Alert, StatusBar } from 'react-native';
 
 // * Libraries
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -70,15 +70,14 @@ axios.defaults.headers.post['Content-Type'] = 'application/json';
 axios.defaults.headers.post['Accept'] = 'application/json';
 
 // ? Always force dark mode
-//Appearance.setColorScheme('dark');
 setThemePreference('dark'); // 'light', 'dark', or 'system'
 
 // ? Setup Track Player
 TrackPlayer.setupPlayer({ autoHandleInterruptions: true });
 
 // ? Remove track items in storage
-AsyncStorage.removeItem('queue');
-AsyncStorage.removeItem('activeTrackIndex');
+//AsyncStorage.removeItem('queue');
+//AsyncStorage.removeItem('activeTrackIndex');
 
 export default function App(): React.JSX.Element {
   // ? Refs
@@ -222,6 +221,11 @@ export default function App(): React.JSX.Element {
         setActiveTrackIndex(Number(savedActiveTrackIndex));
         openNowPlaying(nowPlayingRef);
       }
+
+      // ? Retrieve active track
+      const storedActiveTrack = await AsyncStorage.getItem('activeTrack');
+      if (storedActiveTrack)
+        setPalette(JSON.parse(JSON.parse(storedActiveTrack).palette));
     })();
   }, []);
 
@@ -354,6 +358,7 @@ export default function App(): React.JSX.Element {
 
           // ? Set track info
           setActiveTrack(track);
+          //setActiveTrackIndex(track?.position);
           setTrackRating(track?.rating);
           setTrackPlayCount(track?.plays);
 
@@ -375,6 +380,14 @@ export default function App(): React.JSX.Element {
 
           // ? Get active track lyrics. Display the lyrics if found else display artwork
           fetchLyrics(`${AUDIO_URL}${track?.path.replace('.mp3', '.lrc')}`);
+
+          // ? Store active track on storage to retrieve when app closes
+          AsyncStorage.setItem('activeTrack', JSON.stringify(track));
+
+          TrackPlayer.getActiveTrackIndex().then(i => {
+            setActiveTrackIndex(i);
+            AsyncStorage.setItem('activeTrackIndex', i!.toString()); // ? Store the active track index to restore state incase the app crashes or is dismissed
+          });
         }
 
         if (event.type === Event.PlaybackProgressUpdated) {
@@ -485,71 +498,37 @@ export default function App(): React.JSX.Element {
     },
   );
 
-  // const RenderApp = useCallback(
-  //   () => (
-  //     <GestureHandlerRootView style={{ flex: 1 }}>
-  //       <StatusBar
-  //         animated
-  //         backgroundColor="transparent"
-  //         barStyle="light-content"
-  //         translucent
-  //       />
+  const RenderApp = useCallback(
+    () => (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <StatusBar
+          animated
+          backgroundColor="transparent"
+          barStyle="light-content"
+          translucent
+        />
 
-  //       <QueryClientProvider client={queryClient}>
-  //         <PaperProvider theme={darkTheme}>
-  //           <SafeAreaProvider>
-  //             <NavigationContainer theme={ReactNavigationDarkTheme}>
-  //               <Stack.Navigator>
-  //                 <Stack.Screen
-  //                   name="TabNavigator"
-  //                   component={TabNavigator}
-  //                   options={{ headerShown: false }}
-  //                 />
-  //               </Stack.Navigator>
-  //               <TrackDetails
-  //                 trackDetailsRef={trackDetailsRef}
-  //                 track={trackDetails}
-  //               />
-  //               <NowPlaying />
-  //             </NavigationContainer>
-  //           </SafeAreaProvider>
-  //         </PaperProvider>
-  //       </QueryClientProvider>
-  //     </GestureHandlerRootView>
-  //   ),
-  //   [],
-  // );
-
-  // return RenderApp();
-  return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <StatusBar
-        animated
-        backgroundColor="transparent"
-        barStyle="light-content"
-        translucent
-      />
-
-      <QueryClientProvider client={queryClient}>
-        <PaperProvider theme={darkTheme}>
-          <SafeAreaProvider>
-            <NavigationContainer theme={ReactNavigationDarkTheme}>
-              <Stack.Navigator>
-                <Stack.Screen
-                  name="TabNavigator"
-                  component={TabNavigator}
-                  options={{ headerShown: false }}
-                />
-              </Stack.Navigator>
-              <TrackDetails
-                trackDetailsRef={trackDetailsRef}
-                track={trackDetails}
-              />
-              <NowPlaying />
-            </NavigationContainer>
-          </SafeAreaProvider>
-        </PaperProvider>
-      </QueryClientProvider>
-    </GestureHandlerRootView>
+        <QueryClientProvider client={queryClient}>
+          <PaperProvider theme={darkTheme}>
+            <SafeAreaProvider>
+              <NavigationContainer theme={ReactNavigationDarkTheme}>
+                <Stack.Navigator>
+                  <Stack.Screen
+                    name="TabNavigator"
+                    component={TabNavigator}
+                    options={{ headerShown: false }}
+                  />
+                </Stack.Navigator>
+                <TrackDetails trackDetailsRef={trackDetailsRef} />
+                <NowPlaying />
+              </NavigationContainer>
+            </SafeAreaProvider>
+          </PaperProvider>
+        </QueryClientProvider>
+      </GestureHandlerRootView>
+    ),
+    [],
   );
+
+  return RenderApp();
 }
