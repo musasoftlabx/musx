@@ -6,58 +6,62 @@ import {
   Image,
   ImageBackground,
   Pressable,
+  TouchableOpacity,
   Vibration,
   View,
 } from 'react-native';
 
 // * Libraries
 import * as Progress from 'react-native-progress';
-import { downloadFile } from '@dr.pogodin/react-native-fs';
-import { FlashList } from '@shopify/flash-list';
-import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   useBackHandler,
   useDeviceOrientation,
 } from '@react-native-community/hooks';
-import axios from 'axios';
 import DraggableFlatList, {
-  OpacityDecorator,
   RenderItemParams,
-  ShadowDecorator,
+  ScaleDecorator,
 } from 'react-native-draggable-flatlist';
-import { StarRatingDisplay } from 'react-native-star-rating-widget';
 import SwipeableItem, {
   SwipeableItemImperativeRef,
 } from 'react-native-swipeable-item';
-import { State } from 'react-native-track-player';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { downloadFile } from '@dr.pogodin/react-native-fs';
 import { CastButton } from 'react-native-google-cast';
-import { useNavigation } from '@react-navigation/native';
+import { FlashList } from '@shopify/flash-list';
 import { Snackbar, Text, useTheme } from 'react-native-paper';
-import Animated from 'react-native-reanimated';
+import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
 import dayjs from 'dayjs';
+import duration from 'dayjs/plugin/duration';
 
-import _ListItem from '../../components/ListItem';
-import LinearGradientX from '../../components/LinearGradientX';
-
-// * Store
-import { API_URL, DOWNLOADS_PATH, usePlayerStore, WIDTH } from '../../store';
-
-import { formatTrackTime } from '../../functions';
-
-import { TrackProps, TracksProps } from '../../types';
-import StatusBarX from '../../components/StatusBarX';
+// * Components
 import { queryClient } from '../../../App';
+import EditPlaylist from '../../components/EditPlaylist';
+import LinearGradientX from '../../components/LinearGradientX';
+import ListItem from '../../components/ListItem';
+import StatusBarX from '../../components/StatusBarX';
 import VerticalListItem from '../../components/Skeletons/VerticalListItem';
 
+// * Store
+import {
+  API_URL,
+  DOWNLOADS_PATH,
+  LIST_ITEM_HEIGHT,
+  usePlayerStore,
+  WIDTH,
+} from '../../store';
+
 // * Icons
-import Icon from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import PlayIcon from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 
-import duration from 'dayjs/plugin/duration';
-import EditPlaylist from '../../components/EditPlaylist';
+// * Utils
+import { fontFamilyBold } from '../../utils';
+
+// * Types
+import { TrackProps, TracksProps } from '../../types';
 
 dayjs.extend(duration);
 
@@ -89,13 +93,17 @@ export default function Playlist({
   });
 
   // ? Store States
-  const { state } = usePlayerStore(state => state.playbackState);
   const activePlaylist = usePlayerStore(state => state.activePlaylist);
   const activeTrack: TrackProps = usePlayerStore(state => state.activeTrack);
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const palette = usePlayerStore(state => state.palette);
-  const play = usePlayerStore(state => state.play);
   const setActivePlaylist = usePlayerStore(state => state.setActivePlaylist);
+
+  // ? Store Actions
+  const play = usePlayerStore(state => state.play);
+  const openTrackDetails = usePlayerStore(state => state.openTrackDetails);
+  const setTrackDetails = usePlayerStore(state => state.setTrackDetails);
+  const setTrackRating = usePlayerStore(state => state.setTrackRating);
 
   // ? States
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -109,21 +117,18 @@ export default function Playlist({
   const [tracksDownloaded, setTracksDownloaded] = useState(0);
   const [totalTracksProgressBar, setTotalTracksProgressBar] = useState(false);
 
-  // ? Constants
-  const isPlaying = state === State.Playing;
-
   useEffect(() => {
     if (flashListRef.current) {
       flashListRef.current.scrollToIndex({
         index: activeTrackIndex,
         animated: true,
-        viewPosition: 0,
+        viewPosition: 0.5,
       });
     }
   }, [activeTrackIndex]);
 
   // ? Queries
-  const { data, isSuccess, isFetching } = useQuery({
+  const { isSuccess } = useQuery({
     queryKey: ['playlist', id],
     queryFn: ({ queryKey }) => {
       axios(`${API_URL}${queryKey[0]}/${queryKey[1]}`).then(({ data }) =>
@@ -140,9 +145,9 @@ export default function Playlist({
   });
 
   const { mutate: deletePlaylistTrack } = useMutation({
-    mutationFn: (body: { playlistId: number; trackId: number }) =>
+    mutationFn: (body: { playlistId: number; position: number }) =>
       axios.delete(
-        `deletePlaylistTrack?playlistId=${body.playlistId}&trackId=${body.trackId}`,
+        `deletePlaylistTrack?playlistId=${body.playlistId}&position=${body.position}`,
       ),
   });
 
@@ -266,261 +271,137 @@ export default function Playlist({
     tracksDownloaded,
   ]);
 
-  // ? Functions
-  const ListItem = ({ item }: { item: TrackProps }) => {
-    const isActive = activeTrack?.id === item.id;
-    const isPlaying = state === State.Playing;
-
-    return (
-      <Pressable
-        onPress={() => {
-          setActivePlaylist(id);
-          play(playlistTracks, item);
-        }}
-      >
-        <View
-          style={[
-            isActive
-              ? {
-                  backgroundColor: '#ffffff4d',
-                  borderRadius: 10,
-                  marginVertical: 3,
-                  marginHorizontal: 6,
-                  paddingHorizontal: 5,
-                }
-              : { marginHorizontal: 10 },
-            { alignItems: 'center', flexDirection: 'row', paddingVertical: 7 },
-          ]}
-          // style={{
-          //   flex: 1,
-          //   flexWrap: 'nowrap',
-          //   flexDirection: 'row',
-          //   alignItems: 'center',
-          //   height: LIST_ITEM_HEIGHT,
-          //   marginHorizontal: 10,
-          // }}
-        >
-          {/* Track details */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            {isActive ? (
-              <>
-                {isPlaying ? (
-                  <View
-                    style={{ justifyContent: 'center', alignItems: 'center' }}
-                  >
-                    <Animated.Image
-                      source={{ uri: item.artwork }}
-                      style={[{ borderRadius: 100, height: 45, width: 45 }]}
-                    />
-                    <Icon
-                      name="circle-thin"
-                      size={26}
-                      style={{
-                        color: '#fff',
-                        opacity: 0.7,
-                        position: 'absolute',
-                      }}
-                    />
-                    <Icon
-                      name="circle"
-                      size={18}
-                      style={{
-                        color: '#fff',
-                        opacity: 0.5,
-                        position: 'absolute',
-                      }}
-                    />
-                    <Icon
-                      name="circle"
-                      size={10}
-                      style={{
-                        color: '#000',
-                        opacity: 1,
-                        position: 'absolute',
-                      }}
-                    />
-                  </View>
-                ) : (
-                  <Image
-                    source={{ uri: item.artwork }}
-                    style={[{ borderRadius: 100, height: 45, width: 45 }]}
-                  />
-                )}
-              </>
-            ) : (
-              <Image
-                source={{ uri: item.artwork }}
-                style={[{ borderRadius: 10, height: 45, width: 45 }]}
-              />
-            )}
-            <View style={{ flexBasis: '60%', gap: 2 }}>
-              <Text
-                numberOfLines={1}
-                style={{ fontSize: 16, fontWeight: '600', width: '70%' }}
-              >
-                {item.position}. {item.title}
-              </Text>
-              <Text
-                numberOfLines={1}
-                style={{ fontSize: 14, color: '#ffffff80' }}
-              >
-                {item.artists ?? 'Unknown Artist'}
-              </Text>
-            </View>
-          </View>
-
-          {/* Rating, Plays & Duration */}
-          <View
-            style={{
-              flex: 1,
-              alignItems: 'flex-end',
-              justifyContent: 'center',
-              gap: 3,
-            }}
-          >
-            <StarRatingDisplay
-              rating={item.rating}
-              starSize={16}
-              starStyle={{ marginHorizontal: 0 }}
-            />
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text numberOfLines={1} style={{ fontWeight: 'bold' }}>
-                {item.plays || 0} play
-                {`${item.plays === 1 ? '' : 's'}`}
-              </Text>
-              <Text>{'  ◎  '}</Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: 'bold',
-                  marginRight: 3,
-                }}
-              >
-                {formatTrackTime(item.duration)} mins
-              </Text>
-            </View>
-          </View>
-        </View>
-      </Pressable>
-    );
-  };
-
-  const refetch = () =>
+  const refetch = () => {
     queryClient
       .refetchQueries({ queryKey: ['playlist', id] })
       .then(() => setRefreshing(false));
+  };
 
   // ? Callbacks
-  const RenderQueueListItem = useCallback(
-    ({ item, drag, isActive }: RenderItemParams<any>) => (
-      <ShadowDecorator>
-        <OpacityDecorator>
-          <Pressable
-            //activeOpacity={1}
-            onLongPress={drag}
-            disabled={isActive}
-          >
-            <SwipeableItem
-              ref={swipeableItemRef}
-              item={item}
-              onChange={({ openDirection }) =>
-                openDirection === 'none' ? {} : {}
-              }
-              renderUnderlayRight={() => (
-                <View
-                  style={{
-                    backgroundColor: 'rgba(255, 87, 51, .3)',
-                    flexDirection: 'row',
-                    paddingHorizontal: 15,
-                    paddingVertical: 10,
-                  }}
-                >
-                  <Pressable
+  const RenderQueue = useCallback(
+    () => (
+      <DraggableFlatList
+        ref={flashListRef}
+        data={playlistTracks}
+        onDragBegin={() => Vibration.vibrate(50)}
+        onDragEnd={({ data }) => {
+          setPlaylistTracks([]);
+          setTimeout(() => setPlaylistTracks(data), 1);
+          rearrangePlaylist(
+            { playlistId: id, trackIds: data.map(({ id }) => id) },
+            {
+              onSuccess: refetch,
+              onError: error => console.log(error.message),
+            },
+          );
+        }}
+        keyExtractor={(_, index) => index.toString()}
+        renderItem={({
+          item,
+          drag,
+          isActive,
+        }: RenderItemParams<TrackProps>) => (
+          <ScaleDecorator>
+            <TouchableOpacity
+              onPress={() => {
+                setActivePlaylist(id);
+                play(playlistTracks, item);
+              }}
+              onLongPress={drag}
+              disabled={isActive}
+              style={{
+                backgroundColor: isActive ? '#ffffff1a' : item.backgroundColor,
+                height: LIST_ITEM_HEIGHT,
+                width: WIDTH,
+              }}
+            >
+              <SwipeableItem
+                ref={swipeableItemRef}
+                item={item}
+                onChange={({ openDirection }) =>
+                  openDirection === 'none' ? {} : {}
+                }
+                activationThreshold={50}
+                snapPointsRight={[95]}
+                snapPointsLeft={[100]}
+                renderUnderlayRight={() => (
+                  <TouchableOpacity
                     onPress={() => {
                       swipeableItemRef.current?.close({ animated: true });
+                      Vibration.vibrate(100);
+                      setTrackDetails(item);
+                      openTrackDetails();
+                      setTrackRating(item.rating);
+                    }}
+                    style={{
+                      backgroundColor: '#8442f5',
+                      height: LIST_ITEM_HEIGHT,
+                      justifyContent: 'center',
+                      paddingHorizontal: 25,
                     }}
                   >
                     <Text
                       style={{
-                        backgroundColor: '#0005',
-                        borderWidth: 1,
-                        borderColor: '#fff',
-                        borderRadius: 5,
-                        fontWeight: 'bold',
-                        color: 'white',
-                        fontSize: 15,
-                        paddingTop: 9,
-                        paddingRight: 13,
-                        paddingBottom: 8,
-                        paddingLeft: 15,
+                        color: '#fff',
+                        fontFamily: fontFamilyBold,
+                        fontSize: 16,
                         zIndex: 2,
                       }}
                     >
-                      EDIT
+                      OPTIONS
                     </Text>
-                  </Pressable>
-                </View>
-              )}
-              renderUnderlayLeft={() => (
-                <View
-                  style={{
-                    backgroundColor: 'rgba(255, 87, 51, .3)',
-                    justifyContent: 'flex-end',
-                    flexDirection: 'row',
-                    paddingHorizontal: 15,
-                    paddingVertical: 10,
-                  }}
-                >
-                  <Pressable
+                  </TouchableOpacity>
+                )}
+                renderUnderlayLeft={() => (
+                  <TouchableOpacity
                     onPress={() => {
                       // ? Close the item
                       swipeableItemRef.current?.close({ animated: true });
                       // ? Remove the track from list
-                      playlistTracks.filter(
-                        _track => _track.id !== item.id && _track,
+                      setPlaylistTracks(prev =>
+                        prev.filter(_track => _track.id !== item.id && _track),
                       );
                       // ? Delete track from playlist table
                       deletePlaylistTrack(
-                        { playlistId: id, trackId: item.id },
+                        { playlistId: id, position: item.position },
                         {
                           onSuccess: refetch,
                           onError: error => console.log(error.message),
                         },
                       );
                     }}
+                    style={{
+                      alignItems: 'flex-end',
+                      backgroundColor: '#f0433099',
+                      height: LIST_ITEM_HEIGHT,
+                      justifyContent: 'center',
+                      paddingHorizontal: 25,
+                    }}
                   >
                     <Text
                       style={{
-                        backgroundColor: 'red',
-                        borderWidth: 1,
-                        borderColor: '#fff',
-                        borderRadius: 5,
-                        fontWeight: 'bold',
-                        color: 'white',
-                        fontSize: 15,
-                        paddingTop: 9,
-                        paddingRight: 13,
-                        paddingBottom: 8,
-                        paddingLeft: 15,
+                        color: '#fff',
+                        fontFamily: fontFamilyBold,
+                        fontSize: 16,
                         zIndex: 2,
                       }}
                     >
                       DELETE
                     </Text>
-                  </Pressable>
-                </View>
-              )}
-              activationThreshold={50}
-              snapPointsRight={[80]}
-              snapPointsLeft={[100]}
-            >
-              <ListItem item={item} />
-            </SwipeableItem>
-          </Pressable>
-        </OpacityDecorator>
-      </ShadowDecorator>
+                  </TouchableOpacity>
+                )}
+              >
+                <ListItem item={item} display="position" />
+              </SwipeableItem>
+            </TouchableOpacity>
+          </ScaleDecorator>
+        )}
+        activationDistance={10}
+        enableLayoutAnimationExperimental={false}
+        containerStyle={{ flex: 1 }}
+      />
     ),
-    [playlistTracks, activeTrack, activePlaylist, isPlaying],
+    [playlistTracks],
   );
 
   return (
@@ -536,6 +417,17 @@ export default function Playlist({
         isEditPlaylistVisible={isEditPlaylistVisible}
         setIsEditPlaylistVisible={setIsEditPlaylistVisible}
       />
+
+      {totalTracksProgressBar && tracksDownloaded === playlistTracks.length && (
+        <Progress.Bar
+          borderColor="#fff"
+          borderRadius={0}
+          color={theme.colors.primary}
+          height={3}
+          width={WIDTH}
+          progress={(tracksDownloaded / playlistTracks.length) * 100}
+        />
+      )}
 
       {orientation === 'portrait' ? (
         <>
@@ -650,6 +542,13 @@ export default function Playlist({
                 >
                   {duration} mins
                 </Text>
+                <Text
+                  style={{ display: 'none', fontSize: 13, textAlign: 'right' }}
+                >
+                  {dayjs
+                    .duration(554, 'seconds')
+                    .format('HH [hrs] mm [mins] ss [sec]')}
+                </Text>
               </View>
             </View>
 
@@ -679,7 +578,7 @@ export default function Playlist({
               color="#fff"
               name="refresh-circle-outline"
               size={30}
-              style={{ position: 'absolute', left: 10, bottom: 10 }}
+              style={{ position: 'absolute', left: 10, bottom: 10, zIndex: 10 }}
               onPress={() => {
                 Vibration.vibrate(50);
                 refetch();
@@ -719,48 +618,9 @@ export default function Playlist({
             </Text>
           </ImageBackground>
 
-          {/* <Text style={{ fontSize: 13, textAlign: 'right' }}>
-            {dayjs
-              .duration(554, 'seconds')
-              .format('HH [hrs] mm [mins] ss [sec]')}
-          </Text> */}
+          {playlistTracks.length === 0 && <VerticalListItem />}
 
-          {totalTracksProgressBar &&
-            tracksDownloaded === playlistTracks.length && (
-              <Progress.Bar
-                borderColor="#fff"
-                borderRadius={0}
-                color={theme.colors.primary}
-                height={3}
-                width={WIDTH}
-                progress={(tracksDownloaded / playlistTracks.length) * 100}
-              />
-            )}
-
-          {isFetching && !data && <VerticalListItem />}
-
-          {isSuccess && (
-            <DraggableFlatList
-              data={playlistTracks ?? []}
-              onDragBegin={() => Vibration.vibrate(50)}
-              onDragEnd={({ data }) => {
-                // ? Set the data with the new movements
-                setPlaylistTracks(data);
-                // ? Store rearranged tracks on DB
-                rearrangePlaylist(
-                  { playlistId: id, trackIds: data.map(({ id }) => id) },
-                  {
-                    onSuccess: refetch,
-                    onError: error => console.log(error.message),
-                  },
-                );
-              }}
-              keyExtractor={(_, index) => index.toString()}
-              renderItem={RenderQueueListItem}
-              activationDistance={10}
-              containerStyle={{ flex: 1, marginVertical: 10 }}
-            />
-          )}
+          {isSuccess && RenderQueue()}
         </>
       ) : (
         <View
@@ -907,22 +767,20 @@ export default function Playlist({
                 data={playlistTracks ?? []}
                 keyExtractor={(_, index) => index.toString()}
                 refreshing={refreshing}
-                onRefresh={() => {
-                  setRefreshing(true);
-                  queryClient
-                    .refetchQueries({ queryKey: ['playlist', id] })
-                    .then(() => setRefreshing(false));
-                }}
+                onRefresh={() => (setRefreshing(true), refetch())}
                 renderItem={({ item }: { item: TrackProps }) => (
-                  <ListItem item={item} />
+                  <Pressable
+                    onPress={() => play(playlistTracks, item)}
+                    onLongPress={() => {
+                      Vibration.vibrate(100);
+                      setTrackDetails(item);
+                      openTrackDetails();
+                      setTrackRating(item.rating);
+                    }}
+                  >
+                    <ListItem item={item} display="position" />
+                  </Pressable>
                 )}
-                // renderItem={({ item }: { item: TrackProps }) => (
-                //   <_ListItem
-                //     data={playlistTracks}
-                //     item={item}
-                //     display="bitrate"
-                //   />
-                // )}
               />
             )}
           </View>

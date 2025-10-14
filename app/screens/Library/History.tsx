@@ -2,7 +2,13 @@
 import React, { useState, useRef, useLayoutEffect } from 'react';
 
 // * React Native
-import { ActivityIndicator, View, Text } from 'react-native';
+import {
+  ActivityIndicator,
+  View,
+  Text,
+  Pressable,
+  Vibration,
+} from 'react-native';
 
 // * Libraries
 import { FlashList } from '@shopify/flash-list';
@@ -18,7 +24,7 @@ import StatusBarX from '../../components/StatusBarX';
 import TrackDetails from '../../components/TrackDetails';
 
 // * Store
-import { API_URL, HEIGHT, LIST_ITEM_HEIGHT } from '../../store';
+import { API_URL, HEIGHT, LIST_ITEM_HEIGHT, usePlayerStore } from '../../store';
 
 // * Constants
 import { queryClient } from '../../../App';
@@ -66,6 +72,12 @@ export default function RecentlyPlayed({
     },
   });
 
+  // ? Store Actions
+  const play = usePlayerStore(state => state.play);
+  const openTrackDetails = usePlayerStore(state => state.openTrackDetails);
+  const setTrackDetails = usePlayerStore(state => state.setTrackDetails);
+  const setTrackRating = usePlayerStore(state => state.setTrackRating);
+
   // ? States
   const [bottomSheetVisible, setBottomSheetVisible] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -80,7 +92,7 @@ export default function RecentlyPlayed({
       <FlashList
         data={data?.pages.map(page => page.data.plays).flat()}
         keyExtractor={(_, index) => index.toString()}
-        estimatedItemSize={limit}
+        //estimatedItemSize={limit}
         refreshing={refreshing}
         onRefresh={() => {
           setRefreshing(true);
@@ -103,16 +115,25 @@ export default function RecentlyPlayed({
         }
         ListFooterComponentStyle={{ height: isFetchingNextPage ? 80 : 0 }}
         renderItem={({ item }: { item: TrackProps }) => (
-          <ListItem
-            data={
-              data?.pages.map(page => page.data.plays).flat() as TracksProps
+          <Pressable
+            onPress={() =>
+              play(data?.pages.map(page => page.data.plays).flat(), item)
             }
-            item={item}
-            display="bitrate"
-            bottomSheetRef={bottomSheetRef}
-            setTrack={setTrack}
-            setBottomSheetVisible={setBottomSheetVisible}
-          />
+            onLongPress={() => {
+              Vibration.vibrate(100);
+              setTrackDetails(item);
+              openTrackDetails();
+              setTrackRating(item.rating);
+            }}
+          >
+            <ListItem
+              item={item}
+              display="bitrate"
+              // bottomSheetRef={bottomSheetRef}
+              // setTrack={setTrack}
+              // setBottomSheetVisible={setBottomSheetVisible}
+            />
+          </Pressable>
         )}
         ListEmptyComponent={() =>
           isFetching ? (
@@ -130,15 +151,6 @@ export default function RecentlyPlayed({
           )
         }
       />
-
-      {track && (
-        <TrackDetails
-          track={track}
-          navigation={navigation}
-          bottomSheetRef={bottomSheetRef}
-          queriesToRefetch={queryKey}
-        />
-      )}
     </>
   );
 }

@@ -31,6 +31,7 @@ import { styles } from '../styles';
 
 // * Components
 import ButtonX from './ButtonX';
+import { queryClient } from '../../App';
 
 // * Schema
 const schema = object({
@@ -228,8 +229,8 @@ export default function CreatePlaylist({
 
               <ButtonX
                 disabled={true}
-                loading={isSubmitFormLoading}
                 errors={errors}
+                loading={isSubmitting}
                 isSubmitting={isSubmitting}
                 isValid={isValid}
                 touched={dirty}
@@ -237,7 +238,11 @@ export default function CreatePlaylist({
                 onPress={handleSubmit(formData => {
                   setIsSubmitFormLoading(true);
                   createPlaylist(formData, {
-                    onSuccess: () => reset(),
+                    onSuccess: () => {
+                      reset();
+                      setIsAddPlaylistVisible(false);
+                      queryClient.refetchQueries({ queryKey: ['playlists'] });
+                    },
                     onError: (error: any) => {
                       Alert.alert(
                         error.response.data.subject,
@@ -245,7 +250,6 @@ export default function CreatePlaylist({
                         [{ text: 'OK' }],
                       );
                     },
-                    onSettled: () => isSubmitting,
                   });
                 })}
               >

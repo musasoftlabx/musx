@@ -55,8 +55,14 @@ export default function Search({ navigation }: any) {
   const [data, setData] = useState<SearchProps>();
   const [showSearch, setShowSearch] = useState(false);
 
-  // ? StoreStates
+  // ? Store States
   const palette = usePlayerStore(state => state.palette);
+
+  // ? Store Actions
+  const play = usePlayerStore(state => state.play);
+  const openTrackDetails = usePlayerStore(state => state.openTrackDetails);
+  const setTrackDetails = usePlayerStore(state => state.setTrackDetails);
+  const setTrackRating = usePlayerStore(state => state.setTrackRating);
 
   // ? Hooks
   const { data: searchHistory } = useQuery({
@@ -200,7 +206,7 @@ export default function Search({ navigation }: any) {
                     data={data.albums}
                     horizontal
                     keyExtractor={(_, index) => index.toString()}
-                    estimatedItemSize={10}
+                    //estimatedItemSize={10}
                     renderItem={({ item }: { item: Omit<TrackProps, ''> }) => (
                       <Pressable
                         onPress={() =>
@@ -268,14 +274,20 @@ export default function Search({ navigation }: any) {
                   <FlashList
                     data={data.tracks}
                     keyExtractor={(_, index) => index.toString()}
-                    estimatedItemSize={10}
-                    estimatedListSize={{ height: HEIGHT / 2, width: WIDTH }}
+                    //estimatedItemSize={10}
+                    //estimatedListSize={{ height: HEIGHT / 2, width: WIDTH }}
                     renderItem={({ item }: { item: TrackProps }) => (
-                      <ListItem
-                        data={data.tracks}
-                        item={item}
-                        display="bitrate"
-                      />
+                      <Pressable
+                        onPress={() => play(data.tracks, item)}
+                        onLongPress={() => {
+                          Vibration.vibrate(100);
+                          setTrackDetails(item);
+                          openTrackDetails();
+                          setTrackRating(item.rating);
+                        }}
+                      >
+                        <ListItem item={item} display="bitrate" />
+                      </Pressable>
                     )}
                   />
                 )}
@@ -307,8 +319,8 @@ export default function Search({ navigation }: any) {
                 <FlashList
                   data={searchHistory}
                   keyExtractor={(_, index) => index.toString()}
-                  estimatedItemSize={10}
-                  estimatedListSize={{ height: HEIGHT / 2, width: WIDTH }}
+                  //estimatedItemSize={10}
+                  //estimatedListSize={{ height: HEIGHT / 2, width: WIDTH }}
                   renderItem={({ item }: { item: string }) => (
                     <Pressable
                       onPress={() => setSearchWord(item)}

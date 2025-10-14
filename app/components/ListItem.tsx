@@ -2,52 +2,38 @@
 import React from 'react';
 
 // * React Native
-import { View, Image, Pressable, Vibration } from 'react-native';
+import { Image, View } from 'react-native';
 
 // * Libraries
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { StarRatingDisplay } from 'react-native-star-rating-widget';
 import { State } from 'react-native-track-player';
-import { useDeviceOrientation } from '@react-native-community/hooks';
 import { Text } from 'react-native-paper';
+import { useDeviceOrientation } from '@react-native-community/hooks';
 
 // * Store
 import { usePlayerStore, WIDTH } from '../store';
 
 // * Types
-import { ArtistProps } from '../screens/Library/Artist';
-import { TrackProps, TracksProps } from '../types';
+import { TrackProps } from '../types';
 
 // * Functions
 import { formatTrackTime } from '../functions';
 
 // * Icons
 import Icon from 'react-native-vector-icons/FontAwesome';
+import useRotate360Animation from '../shared/hooks/useRotate360Animation';
 
 export default function ListItem({
-  data,
-  item,
   display,
+  item,
 }: {
-  data: TracksProps | ArtistProps['albums'];
+  display?: 'size' | 'bitrate' | 'duration' | 'position';
   item: TrackProps;
-  display?: 'size' | 'bitrate' | 'duration';
 }) {
-  // ? StoreStates
+  // ? Store States
   const { state } = usePlayerStore(state => state.playbackState);
   const activeTrack = usePlayerStore(state => state.activeTrack);
-
-  // ? StoreActions
-  const play = usePlayerStore(state => state.play);
-  const openTrackDetails = usePlayerStore(state => state.openTrackDetails);
-  const setTrackDetails = usePlayerStore(state => state.setTrackDetails);
-  const setTrackRating = usePlayerStore(state => state.setTrackRating);
 
   // ? Constants
   const isActive = activeTrack?.id === item.id;
@@ -55,36 +41,15 @@ export default function ListItem({
 
   // ? Hooks
   const orientation = useDeviceOrientation();
-  // const animatedStyle = useAnimatedStyle(() => ({
-  //   transform: [
-  //     {
-  //       rotateZ: withRepeat(
-  //         withSequence(
-  //           withTiming(0 + 'deg', { duration: 0, easing: Easing.linear }),
-  //           withTiming(360 + 'deg', { duration: 3000, easing: Easing.linear }),
-  //         ),
-  //         -1,
-  //         false,
-  //       ),
-  //     },
-  //   ],
-  // }));
+  const rotate = useRotate360Animation();
 
   return (
-    <Pressable
-      onPress={() => play(data, item)}
-      onLongPress={() => {
-        Vibration.vibrate(100);
-        setTrackDetails(item);
-        openTrackDetails();
-        setTrackRating(item.rating);
-      }}
+    <View
       style={[
         isActive
           ? {
               backgroundColor: '#ffffff4d',
               borderRadius: 10,
-              marginVertical: 3,
               marginHorizontal: 6,
               paddingHorizontal: 5,
             }
@@ -98,17 +63,23 @@ export default function ListItem({
           <>
             {isPlaying ? (
               <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                {/* <Animated.Image
+                <Animated.Image
                   source={{ uri: item.artwork }}
                   style={[
-                    { borderRadius: 100, height: 45, width: 45 },
-                    animatedStyle,
+                    {
+                      borderColor: '#ffffff80',
+                      borderRadius: 100,
+                      borderWidth: 1,
+                      height: 45,
+                      width: 45,
+                    },
+                    rotate,
                   ]}
-                /> */}
-                <Image
+                />
+                {/* <Image
                   source={{ uri: item.artwork }}
                   style={[{ borderRadius: 100, height: 45, width: 45 }]}
-                />
+                /> */}
                 <Icon
                   name="circle-thin"
                   size={26}
@@ -140,23 +111,29 @@ export default function ListItem({
         )}
         <View
           style={{
-            flexBasis: orientation === 'portrait' ? `${WIDTH * 0.12}%` : 'auto',
+            flexBasis: orientation === 'portrait' ? `${WIDTH * 0.13}%` : 'auto',
             gap: 2,
           }}
         >
-          <View style={{ alignItems: 'center', flexDirection: 'row', gap: 6 }}>
+          <View style={{ alignItems: 'center', flexDirection: 'row', gap: 8 }}>
             <Text
               numberOfLines={1}
-              style={{
-                backgroundColor: '#ffffff4D',
-                borderColor: '#fff',
-                borderRadius: 5,
-                borderWidth: 1,
-                fontSize: 12,
-                paddingHorizontal: 5,
-                paddingTop: 2,
-                paddingLeft: 7,
-              }}
+              style={
+                !display
+                  ? {}
+                  : display === 'position'
+                  ? { fontSize: 16, marginLeft: 3, marginRight: -4 }
+                  : {
+                      backgroundColor: '#ffffff4D',
+                      borderColor: '#fff',
+                      borderRadius: 8,
+                      borderWidth: 0.5,
+                      fontSize: 12,
+                      paddingHorizontal: 5,
+                      paddingTop: 2,
+                      paddingLeft: 7,
+                    }
+              }
             >
               {display === 'size'
                 ? `${(item.size / 1000000).toFixed(2)} MB`
@@ -164,30 +141,36 @@ export default function ListItem({
                 ? `${(item.bitrate! / 1000).toFixed(0)} Kbps`
                 : display === 'duration'
                 ? item.duration
+                : display === 'position'
+                ? `${item.position}.`
                 : ''}
             </Text>
-            <Text
-              numberOfLines={1}
-              style={{ fontSize: 16, fontWeight: '600', width: '70%' }}
-            >
+            <Text numberOfLines={1} style={{ fontSize: 16, width: '70%' }}>
               {item.title}
             </Text>
           </View>
+
           <Text
             numberOfLines={1}
-            style={{ fontSize: 14, color: '#ffffff80', marginLeft: 3 }}
+            style={{
+              fontSize: 14,
+              color: '#ffffff80',
+              marginLeft: 3,
+              maxWidth: orientation === 'portrait' ? '95%' : '85%',
+            }}
           >
             {item.artists ?? 'Unknown Artist'}
           </Text>
         </View>
       </View>
+
       {/* Rating & Plays */}
       <View
         style={{
-          flex: 1,
           alignItems: 'flex-end',
-          justifyContent: 'center',
+          flex: 1,
           gap: 3,
+          justifyContent: 'center',
         }}
       >
         <StarRatingDisplay
@@ -212,6 +195,6 @@ export default function ListItem({
           </Text>
         </View>
       </View>
-    </Pressable>
+    </View>
   );
 }

@@ -35,20 +35,16 @@ export default function Rating() {
       <StarRating
         rating={trackRating ?? 0}
         onChange={rating => {
-          Vibration.vibrate(50);
+          Vibration.vibrate(100);
           setTrackRating(rating);
           TrackPlayer.updateMetadataForTrack(activeTrackIndex!, {
             ...activeTrack,
             rating,
           });
-
           saveRating(
             { id: activeTrack?.id, rating },
             {
-              onSuccess: ({ data }) => {
-                // ? Refresh screens to apply changes of rated track
-                refreshScreens(activeTrack, activePlaylist);
-              },
+              onSuccess: () => refreshScreens(activeTrack, activePlaylist), // ? Refresh screens to apply changes of rated track
               onError: error => console.log(error),
             },
           );

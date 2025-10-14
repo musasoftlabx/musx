@@ -1,11 +1,5 @@
 // * React
-import React, {
-  useState,
-  useEffect,
-  useLayoutEffect,
-  useCallback,
-  useRef,
-} from 'react';
+import React, { useState, useEffect, useCallback, Key } from 'react';
 
 // * React-Native
 import {
@@ -15,25 +9,26 @@ import {
   Pressable,
   TextInput,
   Vibration,
+  StyleSheet,
 } from 'react-native';
 
 // * Libraries
-import { useTheme } from 'react-native-paper';
-import { MenuView, MenuComponentRef } from '@react-native-menu/menu';
 import { CastButton } from 'react-native-google-cast';
 import { FlashList } from '@shopify/flash-list';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useDeviceOrientation } from '@react-native-community/hooks';
 import { useBackHandler } from '@react-native-community/hooks';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { Text } from 'react-native-paper';
+import { useQuery } from '@tanstack/react-query';
+import { Divider, Menu, Text } from 'react-native-paper';
 import axios from 'axios';
 import debounce from 'lodash/debounce';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 
 // * Components
+import CreatePlaylist from '../../components/CreatePlaylist';
 import LinearGradientX from '../../components/LinearGradientX';
 import StatusBarX from '../../components/StatusBarX';
 
@@ -45,34 +40,28 @@ import { queryClient } from '../../../App';
 
 // * Types
 import { Playlist, RootStackParamList } from '../../types';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { yupString } from '../../constants/yup';
-import { InferType, object } from 'yup';
-import CreatePlaylist from '../../components/CreatePlaylist';
-import { fontFamilyBold } from '../../utils';
-
-type PlaylistProps = RootStackParamList['Playlists'];
-
-const schema = object({ name: yupString, description: yupString });
 
 export default function Playlists({
   navigation,
 }: NativeStackScreenProps<RootStackParamList, 'Playlist', ''>) {
-  // ? Refs
-  const menuRef = useRef<MenuComponentRef>(null);
-
   // ? States
+  const [isAddPlaylistVisible, setIsAddPlaylistVisible] =
+    useState<boolean>(false);
+  const [isSortMenuVisible, setIsSortMenuVisible] = useState(false);
   const [filter, setFilter] = useState<Playlist[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [playlists, setPlaylists] = useState<PlaylistProps[]>([]);
   const [searchWord, setSearchWord] = useState('');
   const [showSearch, setShowSearch] = useState(false);
-  const [isAddPlaylistVisible, setIsAddPlaylistVisible] = useState(false);
 
   // ? Store States
   const palette = usePlayerStore(state => state.palette);
+
+  // ? Store Actions
+  const openPlaylistDetails = usePlayerStore(
+    state => state.openPlaylistDetails,
+  );
+  const setPlaylistDetails = usePlayerStore(state => state.setPlaylistDetails);
 
   // ? Hooks
   const orientation = useDeviceOrientation();
@@ -83,10 +72,10 @@ export default function Playlists({
   });
 
   // ? Queries
-  const { isPending, isSuccess } = useQuery({
+  const { isFetching, isSuccess } = useQuery({
     queryKey: ['playlists'],
     queryFn: () => {
-      axios<PlaylistProps[]>(`${API_URL}playlists`).then(({ data }) => {
+      axios<Playlist[]>(`${API_URL}playlists`).then(({ data }) => {
         setFilter(data);
         setPlaylists(data);
       });
@@ -100,7 +89,7 @@ export default function Playlists({
       if (text?.length >= 2)
         setFilter(
           playlists?.filter(
-            (playlist: PlaylistProps) =>
+            (playlist: Playlist) =>
               playlist.name?.toLowerCase().includes(text?.toLowerCase()) &&
               playlist.name,
           ),
@@ -122,31 +111,25 @@ export default function Playlists({
       );
   }, [filter?.length]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       header: ({ route: { name } }) =>
         showSearch ? (
           <View
-            style={{
-              alignItems: 'center',
-              backgroundColor: palette?.[1] ?? '#000',
-              flexDirection: 'row',
-              gap: 10,
-              paddingHorizontal: 20,
-              paddingVertical: 5,
-            }}
+            style={[styles.header, { backgroundColor: palette?.[1] ?? '#000' }]}
           >
-            <Pressable
+            <Ionicons
+              color="#fff"
+              name="arrow-back"
+              size={22}
+              style={{ marginRight: 10 }}
               onPress={() => {
                 Vibration.vibrate(50);
                 setShowSearch(false);
                 setSearchWord('');
                 setFilter(playlists);
               }}
-              style={{ marginRight: 10, opacity: 0.8 }}
-            >
-              <Ionicons name="arrow-back" size={22} color="white" />
-            </Pressable>
+            />
 
             <TextInput
               autoFocus
@@ -159,32 +142,27 @@ export default function Playlists({
               style={{
                 borderBottomColor: '#fff5',
                 borderBottomWidth: 0.5,
+                color: '#fff',
                 flexGrow: 1,
                 fontSize: 18,
               }}
             />
 
-            <Pressable
+            <Ionicons
+              color="#fff"
+              name="close"
+              size={22}
               onPress={() => {
                 Vibration.vibrate(50);
                 setSearchWord('');
                 setFilter(playlists);
+                if (searchWord.length === 0) setShowSearch(false);
               }}
-              style={{ opacity: 0.8 }}
-            >
-              <Ionicons name="close" size={22} color="white" />
-            </Pressable>
+            />
           </View>
         ) : (
           <View
-            style={{
-              alignItems: 'center',
-              backgroundColor: palette?.[1] ?? '#000',
-              flexDirection: 'row',
-              gap: 40,
-              paddingHorizontal: 20,
-              paddingVertical: 10,
-            }}
+            style={[styles.header, { backgroundColor: palette?.[1] ?? '#000' }]}
           >
             <View
               style={{
@@ -227,38 +205,53 @@ export default function Playlists({
                 }}
               />
 
-              <MenuView
-                ref={menuRef}
-                title="Sort"
-                onPressAction={e => {
-                  console.log(e);
-                }}
-                onOpenMenu={() => console.log('opened')}
-                onCloseMenu={() => console.log('closed')}
-                actions={[
-                  { id: 'sort_by_name', title: 'Sort by name' },
-                  { id: 'sort_by_tracks_asc', title: 'Sort by tracks (ASC)' },
-                  { id: 'sort_by_tracks_desc', title: 'Sort by tracks (DESC)' },
-                  {
-                    id: 'sort_by_duration_asc',
-                    title: 'Sort by duration (ASC)',
-                  },
-                  {
-                    id: 'sort_by_duration_desc',
-                    title: 'Sort by duration (DESC)',
-                  },
-                ]}
-                shouldOpenOnLongPress={false}
+              <Menu
+                key={Boolean(isSortMenuVisible) as unknown as Key}
+                visible={isSortMenuVisible}
+                onDismiss={() => setIsSortMenuVisible(false)}
+                anchor={
+                  <MaterialCommunityIcons
+                    color="#fff"
+                    name="sort"
+                    size={22}
+                    onPress={() => (
+                      Vibration.vibrate(50), setIsSortMenuVisible(true)
+                    )}
+                  />
+                }
               >
-                <MaterialCommunityIcons
-                  color="#fff"
-                  name="sort"
-                  size={22}
-                  onPress={() => (
-                    Vibration.vibrate(50), menuRef.current?.show()
-                  )}
+                <Menu.Item
+                  onPress={() => sortPlaylists('name')}
+                  title="Sort by name"
                 />
-              </MenuView>
+                <Divider />
+                <Menu.Item
+                  onPress={() => sortPlaylists('tracks')}
+                  title="Sort by tracks (ASC)"
+                />
+                <Menu.Item
+                  onPress={() => sortPlaylists('tracks', 'DESC')}
+                  title="Sort by tracks (DESC)"
+                />
+                <Divider />
+                <Menu.Item
+                  onPress={() => sortPlaylists('duration')}
+                  title="Sort by duration (ASC)"
+                />
+                <Menu.Item
+                  onPress={() => sortPlaylists('duration', 'DESC')}
+                  title="Sort by duration (DESC)"
+                />
+                <Divider />
+                <Menu.Item
+                  onPress={() => sortPlaylists('modifiedOn')}
+                  title="Sort by date created (ASC)"
+                />
+                <Menu.Item
+                  onPress={() => sortPlaylists('modifiedOn', 'DESC')}
+                  title="Sort by date created (DESC)"
+                />
+              </Menu>
 
               <Ionicons
                 color="#fff"
@@ -274,19 +267,27 @@ export default function Playlists({
           </View>
         ),
     });
-  }, [navigation, menuRef, palette, showSearch, searchWord, playlists]);
+  }, [
+    navigation,
+    isSortMenuVisible,
+    palette,
+    showSearch,
+    searchWord,
+    playlists,
+  ]);
 
   // ? Functions
-  // const sortPlaylists = (
-  //   by: 'name' | 'tracks' | 'duration' | 'modifiedOn',
-  //   direction?: string,
-  // ) => {
-  //   const sorted = [...playlists];
-  //   direction
-  //     ? setFilter(sorted.sort((a, b) => (b[by] as number) - (a[by] as number)))
-  //     : setFilter(sorted.sort((a, b) => (a[by] as number) - (b[by] as number)));
-  //   setIsSortMenuVisible(false);
-  // };
+  const sortPlaylists = (
+    by: 'name' | 'tracks' | 'duration' | 'modifiedOn',
+    direction?: string,
+  ) => {
+    const sorted = [...playlists];
+    direction
+      ? setFilter(sorted.sort((a, b) => (b[by] as number) - (a[by] as number)))
+      : setFilter(sorted.sort((a, b) => (a[by] as number) - (b[by] as number)));
+    setIsSortMenuVisible(false);
+  };
+
   const columns = orientation === 'portrait' ? 150 : 200;
 
   return (
@@ -300,7 +301,7 @@ export default function Playlists({
         setIsAddPlaylistVisible={setIsAddPlaylistVisible}
       />
 
-      {isPending && (
+      {isFetching && (
         <FlatList
           data={new Array(
             Number((HEIGHT / 150).toFixed(0)) *
@@ -344,7 +345,7 @@ export default function Playlists({
         />
       )}
 
-      {isSuccess && (
+      {(isSuccess || playlists.length === 0) && (
         <FlashList
           data={filter}
           numColumns={Number((WIDTH / columns).toFixed(0))}
@@ -359,7 +360,11 @@ export default function Playlists({
           renderItem={({ item }: { item: Playlist }) => (
             <Pressable
               onPress={() => navigation.navigate('Playlist', item)}
-              style={{ flex: 1 }}
+              onLongPress={() => {
+                Vibration.vibrate(50);
+                setPlaylistDetails(item);
+                openPlaylistDetails();
+              }}
             >
               <View
                 style={{ paddingVertical: 12, alignItems: 'center', gap: 3 }}
@@ -400,9 +405,10 @@ export default function Playlists({
                   numberOfLines={1}
                   style={{
                     color: '#fff',
-                    fontFamily: fontFamilyBold,
-                    fontSize: orientation === 'portrait' ? 17 : 13,
-                    marginTop: 2,
+                    fontSize: orientation === 'portrait' ? 16 : 13,
+                    marginTop: 5,
+                    textAlign: 'center',
+                    width: '90%',
                   }}
                 >
                   {item.name}
@@ -455,8 +461,19 @@ export default function Playlists({
               <Text>Empty</Text>
             </View>
           }
+          contentContainerStyle={{ paddingHorizontal: 5 }}
         />
       )}
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+});

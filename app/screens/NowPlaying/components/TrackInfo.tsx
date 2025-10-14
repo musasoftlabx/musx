@@ -2,7 +2,7 @@
 import React from 'react';
 
 // * React Native
-import { Pressable, Vibration } from 'react-native';
+import { Pressable, Vibration, View } from 'react-native';
 
 // * Libraries
 import TextTicker from 'react-native-text-ticker';
@@ -23,45 +23,51 @@ export default function TrackInfo({ bottomSheetRef }: any) {
 
   return (
     <Pressable
-      style={{ marginHorizontal: 10, marginBottom: 5, alignItems: 'center' }}
+      style={{ alignItems: 'center', marginBottom: 5, marginHorizontal: 10 }}
       onPress={() => {
         Vibration.vibrate(100);
         bottomSheetRef.current?.snapToIndex(0);
       }}
     >
-      <TextTicker
-        style={{
-          color: '#fff',
-          fontSize: orientation === 'portrait' ? 24 : 30,
-          fontFamily: 'LilyScriptOne',
-          marginBottom: 10,
-        }}
-        duration={20000}
-        loop
-        bounce
-        bounceSpeed={10}
-        repeatSpacer={30}
-        marqueeDelay={3000}
-      >
-        {activeTrack?.title}
-      </TextTicker>
+      <View style={{ maxWidth: '50%' }}>
+        <TextTicker
+          style={{
+            color: '#fff',
+            fontFamily: 'LilyScriptOne',
+            fontSize: orientation === 'portrait' ? 24 : 30,
+            marginBottom: 10,
+          }}
+          duration={20000}
+          loop
+          bounce
+          bounceSpeed={10}
+          repeatSpacer={30}
+          marqueeDelay={3000}
+        >
+          {activeTrack?.title}
+        </TextTicker>
+      </View>
 
-      <TextTicker
-        style={{
-          color: '#ffffffa2',
-          fontFamily: fontFamily,
-          fontSize: 16,
-          marginBottom: 10,
-        }}
-        duration={15000}
-        loop
-        bounce
-        bounceSpeed={50}
-        repeatSpacer={30}
-        marqueeDelay={3000}
-      >
-        {activeTrack?.artists || 'No Artists'}
-      </TextTicker>
+      <View style={{ maxWidth: '50%' }}>
+        <TextTicker
+          style={{
+            color: '#ffffffa2',
+            fontFamily: fontFamily,
+            fontSize: 16,
+            marginBottom: 10,
+            // maxWidth: '50%',
+            // textAlign: 'center',
+          }}
+          duration={15000}
+          loop
+          bounce
+          bounceSpeed={50}
+          repeatSpacer={30}
+          marqueeDelay={3000}
+        >
+          {activeTrack?.artists || 'No Artists'}
+        </TextTicker>
+      </View>
 
       <TextTicker
         style={{ color: '#fff', fontFamily: fontFamilyBold, fontSize: 18 }}

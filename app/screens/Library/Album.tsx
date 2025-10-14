@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 
 // * React Native
-import { View } from 'react-native';
+import { Pressable, Vibration, View } from 'react-native';
 
 // * Libraries
 import { FlashList } from '@shopify/flash-list';
@@ -38,6 +38,12 @@ export default function Album({
   //   navigation.goBack();
   //   return true;
   // });
+
+  // ? Store Actions
+  const play = usePlayerStore(state => state.play);
+  const openTrackDetails = usePlayerStore(state => state.openTrackDetails);
+  const setTrackDetails = usePlayerStore(state => state.setTrackDetails);
+  const setTrackRating = usePlayerStore(state => state.setTrackRating);
 
   const {
     data: tracks,
@@ -83,7 +89,6 @@ export default function Album({
         <FlashList
           data={tracks}
           keyExtractor={(_, index) => index.toString()}
-          estimatedItemSize={10}
           refreshing={refreshing}
           onRefresh={() => {
             setRefreshing(true);
@@ -92,7 +97,17 @@ export default function Album({
               .then(() => setRefreshing(false));
           }}
           renderItem={({ item }: { item: TrackProps }) => (
-            <ListItem data={tracks} item={item} display="bitrate" />
+            <Pressable
+              onPress={() => play(tracks, item)}
+              onLongPress={() => {
+                Vibration.vibrate(100);
+                setTrackDetails(item);
+                openTrackDetails();
+                setTrackRating(item.rating);
+              }}
+            >
+              <ListItem item={item} display="bitrate" />
+            </Pressable>
           )}
         />
       )}

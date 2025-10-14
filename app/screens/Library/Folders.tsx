@@ -1,17 +1,17 @@
 // * React
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 // * React Native
-import {BackHandler, Image, Pressable, Vibration, View} from 'react-native';
+import { BackHandler, Image, Pressable, Vibration, View } from 'react-native';
 
 // * Libraries
-import {useMutation} from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import {
   useBackHandler,
   useDeviceOrientation,
 } from '@react-native-community/hooks';
-import {FlashList} from '@shopify/flash-list';
-import {Text} from 'react-native-paper';
+import { FlashList } from '@shopify/flash-list';
+import { Text } from 'react-native-paper';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomSheet from '@gorhom/bottom-sheet';
@@ -24,12 +24,12 @@ import StatusBarX from '../../components/StatusBarX';
 import VerticalListItem from '../../components/Skeletons/VerticalListItem';
 
 // * Store
-import {API_URL, usePlayerStore} from '../../store';
+import { API_URL, usePlayerStore } from '../../store';
 
 // * Types
-import {TrackProps, TracksProps} from '../../types';
+import { TrackProps, TracksProps } from '../../types';
 
-export default function Folders({navigation}: any) {
+export default function Folders({ navigation }: any) {
   // ? Refs
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -45,10 +45,11 @@ export default function Folders({navigation}: any) {
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const palette = usePlayerStore(state => state.palette);
 
-  // ? StoreActions
+  // ? Store Actions
+  const play = usePlayerStore(state => state.play);
   const openTrackDetails = usePlayerStore(state => state.openTrackDetails);
-  const closeTrackDetails = usePlayerStore(state => state.closeTrackDetails);
   const setTrackDetails = usePlayerStore(state => state.setTrackDetails);
+  const setTrackRating = usePlayerStore(state => state.setTrackRating);
 
   // useBackHandler(() => {
   //   if (bottomSheetRef.current) {
@@ -72,20 +73,20 @@ export default function Folders({navigation}: any) {
       savePath(path);
       return axios(`${API_URL}${path}`);
     },
-    onSuccess: ({data}) => setData(data),
+    onSuccess: ({ data }) => setData(data),
   });
 
   // ? Effects
   useEffect(() => {
     navigation.setOptions({
-      headerStyle: {backgroundColor: palette?.[0] ?? '#000'},
+      headerStyle: { backgroundColor: palette?.[0] ?? '#000' },
       headerRight: () =>
         path && path !== '/' ? (
           <MaterialCommunityIcons
             name="folder-home"
             size={24}
             color="white"
-            style={{marginRight: 10}}
+            style={{ marginRight: 10 }}
             onPress={() => (savePath('/'), list('/'))}
           />
         ) : (
@@ -127,7 +128,7 @@ export default function Folders({navigation}: any) {
 
   useEffect(() => {
     const heading = path.split('/').slice(-2, -1)[0];
-    navigation.setOptions({title: heading === '' ? 'Folders' : heading});
+    navigation.setOptions({ title: heading === '' ? 'Folders' : heading });
 
     const backHandler = BackHandler.addEventListener(
       'hardwareBackPress',
@@ -159,7 +160,7 @@ export default function Folders({navigation}: any) {
 
       {isError && (
         <View>
-          <Text style={{fontFamily: 'Abel'}}>Empty</Text>
+          <Text style={{ fontFamily: 'Abel' }}>Empty</Text>
         </View>
       )}
 
@@ -167,13 +168,12 @@ export default function Folders({navigation}: any) {
         <FlashList
           data={data}
           keyExtractor={(_, index) => index.toString()}
-          estimatedItemSize={10}
           refreshing={refreshing}
           onRefresh={() => {
             setRefreshing(true);
             setTimeout(() => setRefreshing(false), 1000);
           }}
-          renderItem={({item}: {item: TrackProps}) => (
+          renderItem={({ item }: { item: TrackProps }) => (
             <>
               {item.hasOwnProperty('name') ? (
                 <Pressable
@@ -181,22 +181,24 @@ export default function Folders({navigation}: any) {
                     Vibration.vibrate(50);
                     const stripedSlash = item.path === '/' ? '' : item.path;
                     savePath(`${stripedSlash}${item.name}/`);
-                    navigation.setOptions({title: item.name});
+                    navigation.setOptions({ title: item.name });
                     navigation.push('Folders');
-                  }}>
+                  }}
+                >
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
                       paddingVertical: 5,
                       paddingHorizontal: 10,
-                    }}>
+                    }}
+                  >
                     <Image
                       source={require('../../assets/images/folder.png')}
-                      style={{marginRight: 20, height: 45, width: 45}}
+                      style={{ marginRight: 20, height: 45, width: 45 }}
                     />
 
-                    <View style={{marginTop: 5}}>
+                    <View style={{ marginTop: 5 }}>
                       <Text variant="bodyMedium">
                         {item.name} ({item.details.totalFiles})
                       </Text>
@@ -205,7 +207,17 @@ export default function Folders({navigation}: any) {
                   </View>
                 </Pressable>
               ) : (
-                <ListItem data={data!} item={item} display="size" />
+                <Pressable
+                  onPress={() => play(data, item)}
+                  onLongPress={() => {
+                    Vibration.vibrate(100);
+                    setTrackDetails(item);
+                    openTrackDetails();
+                    setTrackRating(item.rating);
+                  }}
+                >
+                  <ListItem item={item} display="size" />
+                </Pressable>
               )}
             </>
           )}

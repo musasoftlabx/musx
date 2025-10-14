@@ -33,6 +33,7 @@ import { formatTrackTime } from '../../../functions';
 
 // * Types
 import { TrackProps, TracksProps } from '../../../types';
+import ListItem from '../../../components/ListItem';
 
 export default function Queue() {
   // ? Refs
@@ -71,75 +72,75 @@ export default function Queue() {
   }, [queue, activeTrackIndex]);
 
   // ? Functions
-  const ListItem = ({ item }: { item: TrackProps }) => (
-    <Pressable onPress={() => skipTo(item)}>
-      <View
-        style={{
-          flex: 1,
-          flexWrap: 'nowrap',
-          flexDirection: 'row',
-          alignItems: 'center',
-          height: LIST_ITEM_HEIGHT,
-          marginHorizontal: 10,
-        }}
-      >
-        {/* Track details */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Image
-            source={{ uri: item.artwork }}
-            style={[{ borderRadius: 10, height: 45, width: 45 }]}
-          />
-          <View style={{ width: WIDTH * 0.12, gap: 2 }}>
-            <Text
-              numberOfLines={1}
-              style={{ fontSize: 16, fontWeight: '600', width: '97%' }}
-            >
-              {item.title}
-            </Text>
-            <Text
-              numberOfLines={1}
-              style={{ fontSize: 14, color: '#ffffff80' }}
-            >
-              {item.artists ?? 'Unknown Artist'}
-            </Text>
-          </View>
-        </View>
-        {/* Rating, Plays & Duration */}
-        {orientation === 'portrait' && (
-          <View
-            style={{
-              flex: 1,
-              alignItems: 'flex-end',
-              justifyContent: 'center',
-              gap: 3,
-            }}
-          >
-            <StarRatingDisplay
-              rating={item.rating}
-              starSize={16}
-              starStyle={{ marginHorizontal: 0 }}
-            />
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text numberOfLines={1} style={{ fontWeight: 'bold' }}>
-                {item.plays || 0} play
-                {`${item.plays === 1 ? '' : 's'}`}
-              </Text>
-              <Text>{'  ◎  '}</Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: 'bold',
-                  marginRight: 3,
-                }}
-              >
-                {formatTrackTime(item.duration)} mins
-              </Text>
-            </View>
-          </View>
-        )}
-      </View>
-    </Pressable>
-  );
+  // const ListItem = ({ item }: { item: TrackProps }) => (
+  //   <Pressable onPress={() => skipTo(item)}>
+  //     <View
+  //       style={{
+  //         flex: 1,
+  //         flexWrap: 'nowrap',
+  //         flexDirection: 'row',
+  //         alignItems: 'center',
+  //         height: LIST_ITEM_HEIGHT,
+  //         marginHorizontal: 10,
+  //       }}
+  //     >
+  //       {/* Track details */}
+  //       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+  //         <Image
+  //           source={{ uri: item.artwork }}
+  //           style={[{ borderRadius: 10, height: 45, width: 45 }]}
+  //         />
+  //         <View style={{ width: WIDTH * 0.12, gap: 2 }}>
+  //           <Text
+  //             numberOfLines={1}
+  //             style={{ fontSize: 16, fontWeight: '600', width: '97%' }}
+  //           >
+  //             {item.title}
+  //           </Text>
+  //           <Text
+  //             numberOfLines={1}
+  //             style={{ fontSize: 14, color: '#ffffff80' }}
+  //           >
+  //             {item.artists ?? 'Unknown Artist'}
+  //           </Text>
+  //         </View>
+  //       </View>
+  //       {/* Rating, Plays & Duration */}
+  //       {orientation === 'portrait' && (
+  //         <View
+  //           style={{
+  //             flex: 1,
+  //             alignItems: 'flex-end',
+  //             justifyContent: 'center',
+  //             gap: 3,
+  //           }}
+  //         >
+  //           <StarRatingDisplay
+  //             rating={item.rating}
+  //             starSize={16}
+  //             starStyle={{ marginHorizontal: 0 }}
+  //           />
+  //           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+  //             <Text numberOfLines={1} style={{ fontWeight: 'bold' }}>
+  //               {item.plays || 0} play
+  //               {`${item.plays === 1 ? '' : 's'}`}
+  //             </Text>
+  //             <Text>{'  ◎  '}</Text>
+  //             <Text
+  //               style={{
+  //                 fontSize: 14,
+  //                 fontWeight: 'bold',
+  //                 marginRight: 3,
+  //               }}
+  //             >
+  //               {formatTrackTime(item.duration)} mins
+  //             </Text>
+  //           </View>
+  //         </View>
+  //       )}
+  //     </View>
+  //   </Pressable>
+  // );
 
   // ? Callbacks
   const RenderQueueListItem = useCallback(

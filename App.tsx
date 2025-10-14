@@ -58,6 +58,7 @@ import TrackDetails from './app/components/TrackDetails';
 // * Screens
 import NowPlaying from './app/screens/NowPlaying';
 import tinycolor from 'tinycolor2';
+import PlaylistDetails from './app/components/PlaylistDetails';
 
 // * Constants
 export const queryClient = new QueryClient();
@@ -83,6 +84,7 @@ export default function App(): React.JSX.Element {
   // ? Refs
   const nowPlayingRef = useRef<BottomSheet>(null);
   const trackDetailsRef = useRef<BottomSheet>(null);
+  const playlistDetailsRef = useRef<BottomSheet>(null);
 
   // ? Hooks
   const activeTrack = useActiveTrack();
@@ -123,6 +125,9 @@ export default function App(): React.JSX.Element {
   const setLyrics = usePlayerStore(state => state.setLyrics);
   const setLyricsVisible = usePlayerStore(state => state.setLyricsVisible);
   const setTrackDetailsRef = usePlayerStore(state => state.setTrackDetailsRef);
+  const setPlaylistDetailsRef = usePlayerStore(
+    state => state.setPlaylistDetailsRef,
+  );
   const setNowPlayingRef = usePlayerStore(state => state.setNowPlayingRef);
   const setCastState = usePlayerStore(state => state.setCastState);
   const setCastClient = usePlayerStore(state => state.setCastClient);
@@ -154,6 +159,7 @@ export default function App(): React.JSX.Element {
   useEffect(() => {
     setNowPlayingRef(nowPlayingRef); // ? Set Now Playing Ref
     setTrackDetailsRef(trackDetailsRef); // ? Set Track Details Ref
+    setPlaylistDetailsRef(playlistDetailsRef); // ? Set Playlist Details Ref
 
     (async () => {
       // ? Update Track Player options
@@ -401,18 +407,18 @@ export default function App(): React.JSX.Element {
             setPlayRegistered(true);
 
             // ? Update the active track play count
-            // axios
-            //   .patch('updatePlayCount', { id: activeTrack?.id })
-            //   .then(({ data: { plays } }) => {
-            //     setTrackPlayCount(plays);
-            //     TrackPlayer.updateMetadataForTrack(track, {
-            //       ...activeTrack,
-            //       plays,
-            //     } as Track);
+            axios
+              .patch('updatePlayCount', { id: activeTrack?.id })
+              .then(({ data: { plays } }) => {
+                setTrackPlayCount(plays);
+                TrackPlayer.updateMetadataForTrack(track, {
+                  ...activeTrack,
+                  plays,
+                } as Track);
 
-            //     refreshScreens(activeTrack as TrackProps, activePlaylist);
-            //   })
-            //   .catch(error => console.log('Update Play Count Error:', error));
+                refreshScreens(activeTrack as TrackProps, activePlaylist);
+              })
+              .catch(error => console.log('Update Play Count Error:', error));
 
             // ? Transcode the next track if HLS is enabled
             if (streamViaHLS && queue.length > 1) {
@@ -519,6 +525,7 @@ export default function App(): React.JSX.Element {
                     options={{ headerShown: false }}
                   />
                 </Stack.Navigator>
+                <PlaylistDetails playlistDetailsRef={playlistDetailsRef} />
                 <TrackDetails trackDetailsRef={trackDetailsRef} />
                 <NowPlaying />
               </NavigationContainer>

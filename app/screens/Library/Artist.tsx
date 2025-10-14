@@ -7,6 +7,7 @@ import {
   ImageBackground,
   Pressable,
   SectionList,
+  Vibration,
   View,
 } from 'react-native';
 
@@ -30,7 +31,7 @@ import VerticalListItem from '../../components/Skeletons/VerticalListItem';
 import imageFiller from '../../assets/images/image-filler.png';
 
 // * Store
-import { API_URL, HEIGHT, WIDTH } from '../../store';
+import { API_URL, HEIGHT, usePlayerStore, WIDTH } from '../../store';
 
 // * Types
 import { RootStackParamList, TrackProps, TracksProps } from '../../types';
@@ -73,6 +74,12 @@ export default function Artist({
 
   // ? States
   const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  // ? Store Actions
+  const play = usePlayerStore(state => state.play);
+  const openTrackDetails = usePlayerStore(state => state.openTrackDetails);
+  const setTrackDetails = usePlayerStore(state => state.setTrackDetails);
+  const setTrackRating = usePlayerStore(state => state.setTrackRating);
 
   return (
     <>
@@ -230,7 +237,6 @@ export default function Artist({
                     data={artist.albums}
                     horizontal
                     keyExtractor={(_, index) => index.toString()}
-                    estimatedItemSize={10}
                     renderItem={({ item }: { item: Omit<TrackProps, ''> }) => (
                       <Pressable
                         onPress={() =>
@@ -299,14 +305,18 @@ export default function Artist({
                   <FlashList
                     data={artist.singles}
                     keyExtractor={(_, index) => index.toString()}
-                    estimatedItemSize={10}
-                    estimatedListSize={{ height: HEIGHT / 2, width: WIDTH }}
                     renderItem={({ item }: { item: TrackProps }) => (
-                      <ListItem
-                        data={artist.singles}
-                        item={item}
-                        display="bitrate"
-                      />
+                      <Pressable
+                        onPress={() => play(artist.singles, item)}
+                        onLongPress={() => {
+                          Vibration.vibrate(100);
+                          setTrackDetails(item);
+                          openTrackDetails();
+                          setTrackRating(item.rating);
+                        }}
+                      >
+                        <ListItem item={item} display="bitrate" />
+                      </Pressable>
                     )}
                   />
                 )}

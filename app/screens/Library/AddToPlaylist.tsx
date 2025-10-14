@@ -2,10 +2,10 @@
 import React, { useState } from 'react';
 
 // * React Native
-import { Image, FlatList, Pressable, Text, View } from 'react-native';
+import { Image, FlatList, Pressable, View } from 'react-native';
 
 // * Libraries
-import { Button, Snackbar, TextInput } from 'react-native-paper';
+import { Button, Snackbar, Text, TextInput } from 'react-native-paper';
 import { useBackHandler } from '@react-native-community/hooks';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
@@ -28,7 +28,6 @@ export default function AddToPlaylist({
     params: { id },
   },
 }: any) {
-  console.log({ id });
   // ? States
   const [name, setName] = useState('');
   const [snackbar, setSnackbar] = useState(false);

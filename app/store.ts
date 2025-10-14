@@ -10,7 +10,7 @@ import TrackPlayer, { Progress, State, Track } from 'react-native-track-player';
 import tinycolor from 'tinycolor2';
 
 // * Types
-import { TrackProps, TracksProps } from './types';
+import { Playlist, RootStackParamList, TrackProps, TracksProps } from './types';
 import {
   MediaHlsSegmentFormat,
   MediaInfo,
@@ -101,6 +101,8 @@ interface IPlayerStore {
   nowPlayingRef: BottomSheet | null;
   trackDetailsRef: BottomSheet | null;
   trackDetails: TrackProps | null;
+  playlistDetailsRef: BottomSheet | null;
+  playlistDetails: Playlist | null;
   castState: any;
   castClient: RemoteMediaClient | null;
   streamViaHLS: boolean;
@@ -125,8 +127,12 @@ interface IPlayerStore {
   closeNowPlaying: (nowPlayingRef: BottomSheet | {}) => void;
   setTrackDetailsRef: (trackDetailsRef: BottomSheet | {}) => void;
   setTrackDetails: (trackDetails: TrackProps) => void;
+  setPlaylistDetailsRef: (playlistDetailsRef: BottomSheet | {}) => void;
+  setPlaylistDetails: (playlistDetails: Playlist) => void;
   openTrackDetails: () => void;
   closeTrackDetails: () => void;
+  openPlaylistDetails: () => void;
+  closePlaylistDetails: () => void;
   setCastState: (castState: any) => void;
   setCastClient: (castClient: any) => void;
   play: (params: any, selected: TrackProps, position?: number) => void;
@@ -162,6 +168,8 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   nowPlayingRef: null,
   trackDetailsRef: null,
   trackDetails: null,
+  playlistDetailsRef: null,
+  playlistDetails: null,
   castState: {},
   castClient: null,
   streamViaHLS: false,
@@ -206,10 +214,22 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
     const trackDetailsRef: any = get().trackDetailsRef;
     trackDetailsRef.current?.close();
   },
+  openPlaylistDetails: () => {
+    const playlistDetailsRef: any = get().playlistDetailsRef;
+    playlistDetailsRef.current?.snapToIndex(0);
+  },
+  closePlaylistDetails: () => {
+    const playlistDetailsRef: any = get().playlistDetailsRef;
+    playlistDetailsRef.current?.close();
+  },
   setTrackDetailsRef: (trackDetailsRef: any) =>
     set(state => ({ ...state, trackDetailsRef })),
   setTrackDetails: (trackDetails: TrackProps) =>
     set(state => ({ ...state, trackDetails })),
+  setPlaylistDetailsRef: (playlistDetailsRef: any) =>
+    set(state => ({ ...state, playlistDetailsRef })),
+  setPlaylistDetails: (playlistDetails: Playlist) =>
+    set(state => ({ ...state, playlistDetails })),
   setCastState: (castState: any) => set(state => ({ ...state, castState })),
   setCastClient: (castClient: any) => set(state => ({ ...state, castClient })),
   setStreamViaHLS: (streamViaHLS: boolean) =>

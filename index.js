@@ -9,3 +9,7 @@ import TrackPlayer from 'react-native-track-player';
 
 AppRegistry.registerComponent(appName, () => App);
 TrackPlayer.registerPlaybackService(() => require('./service'));
+
+if (__DEV__) {
+  require('./ReactotronConfig');
+}
