@@ -327,7 +327,6 @@ export default function Playlist({
                   <TouchableOpacity
                     onPress={() => {
                       swipeableItemRef.current?.close({ animated: true });
-
                       Vibration.vibrate(100);
                       openTrackDetails();
                       setTrackRating(item.rating);

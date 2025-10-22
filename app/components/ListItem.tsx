@@ -234,10 +234,6 @@ export default function ListItem({
   );
 
   return isPressable ? (
-    <View style={itemStyle}>
-      <Item />
-    </View>
-  ) : (
     <Pressable
       onPress={() => play(tracks, item)}
       onLongPress={() => {
@@ -257,5 +253,9 @@ export default function ListItem({
     >
       <Item />
     </Pressable>
+  ) : (
+    <View style={itemStyle}>
+      <Item />
+    </View>
   );
 }
