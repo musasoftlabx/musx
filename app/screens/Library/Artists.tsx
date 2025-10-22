@@ -148,6 +148,7 @@ export default function Artists({
               style={{
                 borderBottomColor: '#fff5',
                 borderBottomWidth: 0.5,
+                color: '#fff',
                 flexGrow: 1,
                 fontSize: 18,
               }}
@@ -280,7 +281,6 @@ export default function Artists({
           data={filter}
           numColumns={Number((WIDTH / 150).toFixed(0))}
           keyExtractor={(_, index) => index.toString()}
-          estimatedItemSize={300}
           refreshing={refreshing}
           onRefresh={() => {
             setRefreshing(true);

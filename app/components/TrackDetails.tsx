@@ -4,49 +4,50 @@ import React, { useCallback, useState } from 'react';
 // * React Native
 import {
   Alert,
-  FlatList,
   Image,
   Pressable,
+  ToastAndroid,
   Vibration,
   View,
 } from 'react-native';
 
-// * Libraries
+// * NPM
 import * as Progress from 'react-native-progress';
-import { Chip, Snackbar, Text } from 'react-native-paper';
-import { downloadFile } from '@dr.pogodin/react-native-fs';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useNavigation } from '@react-navigation/native';
-import axios, { AxiosError } from 'axios';
 import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetFlatList,
 } from '@gorhom/bottom-sheet';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { Chip, Text } from 'react-native-paper';
+import { downloadFile } from '@dr.pogodin/react-native-fs';
+import { FlashList } from '@shopify/flash-list';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useMutation } from '@tanstack/react-query';
+import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
 import StarRating from 'react-native-star-rating-widget';
 import TrackPlayer from 'react-native-track-player';
 
-// * Store
-import { API_URL, DOWNLOADS_PATH, usePlayerStore, WIDTH } from '../store';
+// * Icons
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
-// * Assets
-import imageFiller from '../assets/images/image-filler.png';
+// * Store
+import { API_URL, DOWNLOADS_PATH, usePlayerStore } from '../store';
 
 // * Types
 import { BottomSheetDefaultBackdropProps } from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
-import { RootStackParamList, TrackProps } from '../types';
+import { AddToPlaylistProps, RootStackParamList, TrackProps } from '../types';
 
 // * Utils
-import { lightTheme } from '../utils';
+import { fontFamilyBold, lightTheme } from '../utils';
 
 // * Functions
-import { addPlaylistTrack, refreshScreens } from '../functions';
+import { handleAxiosError, refreshScreens } from '../functions';
 
-type PlaylistProps = RootStackParamList['Playlist'];
+// * Constants
+import { queryClient } from '../../App';
 
 export default function TrackDetails({
   trackDetailsRef,
@@ -59,24 +60,18 @@ export default function TrackDetails({
       NativeStackNavigationProp<RootStackParamList, 'Artist', ''>
     >();
 
-  // ? Queries
-  const { data: lastPlaylist } = useQuery({
-    queryKey: ['lastPlaylist'],
-    queryFn: () => axios<PlaylistProps>(`${API_URL}lastPlaylist`),
-    select: ({ data }) => data,
-  });
-
   // ? Mutations
   const { mutate: saveRating } = useMutation({
     mutationFn: (body: { id?: number; rating: number }) =>
       axios.patch('rateTrack', body),
   });
-  //const {mutate: deleteTrack} = useMutation(() => axios.delete(`deleteTrack`));
+
+  const { mutate: deleteTrack } = useMutation({
+    mutationFn: (body: unknown) =>
+      axios.delete(`deleteTrack/${trackDetails?.id}`),
+  });
 
   // ? States
-  const [_, setLastPlaylistImageError] = useState<boolean>(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadSize, setDownloadSize] = useState(0);
@@ -84,8 +79,8 @@ export default function TrackDetails({
   // ? Store States
   const activeTrackIndex = usePlayerStore(state => state.activeTrackIndex);
   const activeTrack = usePlayerStore(state => state.activeTrack);
-  const queue = usePlayerStore(state => state.queue);
   const activePlaylist = usePlayerStore(state => state.activePlaylist);
+  const queue = usePlayerStore(state => state.queue);
   const trackRating = usePlayerStore(state => state.trackRating);
   const trackDetails = usePlayerStore(state => state.trackDetails);
 
@@ -94,14 +89,20 @@ export default function TrackDetails({
   const addTrackToEndOfQueue = usePlayerStore(
     state => state.addTrackToEndOfQueue,
   );
-  const play = usePlayerStore(state => state.play);
+  const closeTrackDetails = usePlayerStore(state => state.closeTrackDetails);
   const next = usePlayerStore(state => state.next);
+  const play = usePlayerStore(state => state.play);
   const setTrackRating = usePlayerStore(state => state.setTrackRating);
   const setQueue = usePlayerStore(state => state.setQueue);
-  const closeTrackDetails = usePlayerStore(state => state.closeTrackDetails);
+
+  // ? Mutations
+  const { mutate: addPlaylistTrack } = useMutation({
+    mutationFn: (body: AddToPlaylistProps) =>
+      axios.post(`${API_URL}addPlaylistTrack`, body),
+  });
 
   // ? Callbacks
-  const renderBackdrop = useCallback(
+  const RenderBackdrop = useCallback(
     (
       props: React.JSX.IntrinsicAttributes & BottomSheetDefaultBackdropProps,
     ) => (
@@ -136,9 +137,7 @@ export default function TrackDetails({
                   flexDirection: 'row',
                   flexWrap: 'wrap',
                   gap: 10,
-                  justifyContent: 'flex-end',
-                  padding: 20,
-                  width: WIDTH,
+                  paddingVertical: 20,
                 }}
               >
                 {[
@@ -182,6 +181,7 @@ export default function TrackDetails({
                       closeTrackDetails();
                       navigation.navigate('AddToPlaylist', {
                         id: trackDetails?.id,
+                        name: 'Add to playlist',
                       });
                     },
                   },
@@ -230,134 +230,151 @@ export default function TrackDetails({
           },
           {
             grid: true,
-            text: (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  gap: 10,
-                  justifyContent: 'flex-end',
-                  paddingHorizontal: 20,
-                  width: WIDTH,
-                }}
-              >
-                {[
-                  {
-                    text: `Add to ${lastPlaylist?.name}`,
-                    icon: 'render-image',
-                    action: () => {
-                      closeTrackDetails();
-                      addPlaylistTrack(lastPlaylist, trackDetails?.id!);
-                      setSnackbarMessage('Track added to playlist!');
-                      setSnackbarVisible(true);
+            text: [
+              {
+                text: `Add to ${trackDetails?.lastModifiedPlaylist?.name}`,
+                icon: 'render-image',
+                action: () => {
+                  Vibration.vibrate(100);
+                  closeTrackDetails();
+                  addPlaylistTrack(
+                    {
+                      playlistId: trackDetails?.lastModifiedPlaylist
+                        ?.id as number,
+                      trackId: trackDetails?.id as number,
                     },
-                  },
-                ].map((item, key) =>
-                  item ? (
-                    <Pressable
-                      onPress={item.action}
-                      key={key}
-                      style={{
-                        alignItems: 'center',
-                        backgroundColor: 'rgba(241, 185, 242, 0.33)',
-                        borderColor: '#fff8',
-                        borderWidth: 1,
-                        borderRadius: 10,
-                        flexBasis: key === 0 ? `65%` : '30%',
-                        flexGrow: 1,
-                        flexDirection: 'row',
-                        gap: 15,
-                        paddingHorizontal: 10,
-                        paddingVertical: 5,
-                      }}
-                    >
-                      {item.icon === 'render-image' ? (
-                        lastPlaylist && lastPlaylist?.tracks >= 4 ? (
-                          <View
-                            style={{
-                              borderRadius: 5,
-                              flexDirection: 'row',
-                              flexWrap: 'wrap',
-                              marginVertical: 0.5,
-                              width: 40,
-                              height: 40,
-                              overflow: 'hidden',
-                            }}
-                          >
-                            {lastPlaylist?.artworks.map(
+                    {
+                      onSuccess: () => {
+                        ToastAndroid.showWithGravity(
+                          'Track added!',
+                          ToastAndroid.SHORT,
+                          ToastAndroid.CENTER,
+                        );
+                        queryClient.refetchQueries({
+                          queryKey: ['dashboard'],
+                        });
+                        queryClient.refetchQueries({
+                          queryKey: ['playlists'],
+                        });
+                      },
+                      onError: handleAxiosError,
+                    },
+                  );
+                },
+              },
+            ].map((item, key) =>
+              item ? (
+                <Pressable
+                  key={key}
+                  onPress={item.action}
+                  style={{
+                    alignItems: 'center',
+                    backgroundColor: 'rgba(241, 185, 242, 0.33)',
+                    borderColor: '#fff5',
+                    borderWidth: 1,
+                    borderRadius: 10,
+                    flexDirection: 'row',
+                    gap: 15,
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                  }}
+                >
+                  {item.icon === 'render-image' ? (
+                    trackDetails?.lastModifiedPlaylist &&
+                    trackDetails?.lastModifiedPlaylist?.tracks >= 4 ? (
+                      <View
+                        style={{
+                          borderRadius: 5,
+                          flexDirection: 'row',
+                          flexWrap: 'wrap',
+                          marginVertical: 0.5,
+                          width: 40,
+                          height: 40,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {trackDetails?.lastModifiedPlaylist?.artworks.length >=
+                        4 ? (
+                          <>
+                            {trackDetails?.lastModifiedPlaylist.artworks.map(
                               (artwork: string, i: number) =>
                                 i <= 4 && (
                                   <Image
                                     key={i}
                                     source={{ uri: artwork }}
-                                    defaultSource={imageFiller}
                                     style={{ width: 20, height: 20 }}
                                     resizeMode="cover"
-                                    onError={() =>
-                                      console.log(
-                                        'track details playlist image could not load',
-                                      )
-                                    }
                                   />
                                 ),
                             )}
-                          </View>
+                          </>
                         ) : (
                           <Image
-                            source={
-                              imageFiller
-                              // lastPlaylistImageError
-                              //   ? imageFiller
-                              //   : {uri: lastPlaylist?.artworks[0]}
-                            }
-                            defaultSource={imageFiller}
-                            onError={() => setLastPlaylistImageError(true)}
+                            source={{
+                              uri: trackDetails?.lastModifiedPlaylist
+                                .artworks?.[0],
+                            }}
                             style={{
+                              width: 40,
+                              height: 40,
                               borderRadius: 10,
-                              height: 30,
-                              width: 30,
                             }}
                           />
-                        )
-                      ) : (
-                        <MaterialIcons
-                          color="#fff"
-                          name={item.icon}
-                          size={30}
-                        />
-                      )}
-                      <View>
-                        <Text
-                          style={{ color: '#fff', fontSize: 14, marginTop: 3 }}
-                        >
-                          Last playlist
-                        </Text>
-                        <Text
-                          style={{
-                            color: '#fff',
-                            fontSize: 16,
-                            fontWeight: '600',
-                            marginTop: -2,
-                            overflow: 'hidden',
-                          }}
-                        >
-                          {item?.text}
-                        </Text>
+                        )}
                       </View>
-                    </Pressable>
+                    ) : (
+                      <Image
+                        source={{
+                          uri: trackDetails?.lastModifiedPlaylist
+                            ?.artworks?.[0],
+                        }}
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 10,
+                        }}
+                      />
+                    )
                   ) : (
-                    <View key={key} style={{ flexBasis: `30%`, flexGrow: 1 }} />
-                  ),
-                )}
-              </View>
+                    <MaterialIcons color="#fff" name={item.icon} size={30} />
+                  )}
+
+                  <View>
+                    <Text
+                      style={{
+                        color: '#fff',
+                        fontSize: 14,
+                        marginTop: 3,
+                      }}
+                    >
+                      Last playlist
+                    </Text>
+                    <Text
+                      numberOfLines={1}
+                      style={{
+                        color: '#fff',
+                        fontFamily: fontFamilyBold,
+                        fontSize: 16,
+                        marginTop: -2,
+                        width: '68%',
+                      }}
+                    >
+                      {item?.text}{' '}
+                      fwefjhwufhfiu3ffui4fhweufoifufuwfhuifuhifuiwefhuie
+                    </Text>
+                  </View>
+                </Pressable>
+              ) : (
+                <View key={key} />
+              ),
             ),
           },
           {
             text: (
-              <View style={{ gap: 5 }}>
+              <>
                 <Text
                   style={{
-                    color: '#ffffff0',
+                    color: '#fff',
                     fontSize: 16.5,
                     textDecorationLine: 'underline',
                   }}
@@ -365,167 +382,85 @@ export default function TrackDetails({
                   Go to artist
                 </Text>
 
-                <FlatList
-                  data={trackDetails?.artists.split('/')}
-                  horizontal
-                  scrollEnabled
-                  showsHorizontalScrollIndicator={false}
-                  renderItem={({ item: artist }) => (
-                    <Chip
-                      style={{
-                        backgroundColor: 'transparent',
-                        borderColor: '#fff',
-                        borderRadius: 5,
-                        borderWidth: 1,
-                        height: 33,
-                        margin: 5,
-                      }}
-                      textStyle={{ color: '#fff' }}
-                      onPress={() => {
-                        closeTrackDetails();
-                        Vibration.vibrate(100);
-                        navigation.navigate('Artist', {
-                          albumArtist: trackDetails?.albumArtist!,
-                          artworks: trackDetails?.artworks,
-                          path: trackDetails?.path!,
-                          tracks: trackDetails?.tracks,
-                          url: trackDetails?.url!,
-                        });
-                      }}
-                    >
-                      {artist?.trim()}
-                    </Chip>
-                  )}
-                  keyExtractor={(_, index) => index.toString()}
-                  style={{ height: 55, width: WIDTH }}
-                />
-              </View>
+                <View>
+                  <FlashList
+                    data={trackDetails?.artists.split('/')}
+                    keyExtractor={(_, index) => index.toString()}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    renderItem={({ item: artist }) => (
+                      <Chip
+                        style={{
+                          backgroundColor: 'transparent',
+                          borderColor: '#fff',
+                          borderRadius: 5,
+                          borderWidth: 1,
+                          margin: 10,
+                        }}
+                        textStyle={{ color: '#fff' }}
+                        onPress={() => {
+                          Vibration.vibrate(100);
+                          closeTrackDetails();
+                          navigation.navigate('Artist', {
+                            albumArtist: trackDetails?.albumArtist!,
+                            artworks: trackDetails?.artworks,
+                            path: trackDetails?.path!,
+                            tracks: trackDetails?.tracks,
+                            url: trackDetails?.url!,
+                          });
+                        }}
+                      >
+                        {artist?.trim()}
+                      </Chip>
+                    )}
+                  />
+                </View>
+              </>
             ),
           },
           {
             grid: true,
             text: (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  gap: 10,
-                  justifyContent: 'flex-end',
-                  paddingHorizontal: 20,
-                  width: WIDTH,
-                }}
-              >
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>
                 {[
                   {
-                    text: 'Download track',
+                    text: 'Download',
                     icon: 'progress-download',
-                    action: () => {
-                      downloadFile({
-                        fromUrl: trackDetails?.url!,
-                        toFile: `${DOWNLOADS_PATH}/${trackDetails?.path.replaceAll(
-                          '/',
-                          '_',
-                        )}`,
-                        background: true,
-                        progress({ bytesWritten, contentLength }) {
-                          setIsDownloading(true);
-                          setDownloadProgress(bytesWritten);
-                          setDownloadSize(contentLength);
-                        },
-                      })
-                        .promise.then(() => {
-                          setIsDownloading(false);
-                          setSnackbarMessage(
-                            `${trackDetails?.title} downloaded!`,
-                          );
-                          setSnackbarVisible(!snackbarVisible);
-                        })
-                        .catch(error => {
-                          setIsDownloading(false);
-                          setSnackbarMessage(
-                            'Download failed. An error occurrred',
-                          );
-                          setSnackbarVisible(!snackbarVisible);
-                        });
-                    },
+                    action: handleDownloadTrack,
                   },
                   {
-                    text: 'View Metadata',
+                    text: 'Metadata',
                     icon: 'database-refresh-outline',
                     iconSource: 'material-community-icons',
                     action: () =>
                       navigation.navigate('TrackMetadata', trackDetails),
                   },
                   {
-                    text: 'Delete from library',
+                    text: 'Remove',
                     icon: 'delete-variant',
                     iconSource: 'material-community-icons',
-                    action: () => {
-                      closeTrackDetails();
-                      Alert.alert(
-                        'Confirm deletion',
-                        `This will delete ${trackDetails?.title} permanently. `,
-                        [
-                          {
-                            text: 'Cancel',
-                            onPress: () => {},
-                            style: 'cancel',
-                          },
-                          {
-                            text: 'OK',
-                            onPress: () => {
-                              TrackPlayer.skipToNext();
-                              axios
-                                .delete(`deleteTrack/${trackDetails?.id}`)
-                                .then(() => {
-                                  // ? Show the snackbar to indicate that the operation was successful
-                                  setSnackbarMessage(
-                                    `${trackDetails?.title} deleted!`,
-                                  );
-                                  setSnackbarVisible(!snackbarVisible);
-                                  // ? Remove the deleted track from the queue and reset the queue
-                                  setQueue(
-                                    queue.filter(
-                                      _track =>
-                                        _track.id !== trackDetails?.id &&
-                                        trackDetails,
-                                    ),
-                                  );
-                                  // ? Refresh screens to remove occurences of deleted track
-                                  refreshScreens(activeTrack);
-                                })
-                                .catch((err: AxiosError) => {
-                                  setSnackbarMessage(err.message);
-                                  setSnackbarVisible(true);
-                                });
-                            },
-                          },
-                        ],
-                      );
-                    },
+                    action: handleDeleteTrack,
                   },
                 ].map((item, key) =>
                   item ? (
                     <Pressable
-                      onPress={item.action}
                       key={key}
+                      onPress={item.action}
                       style={{
                         alignItems: 'center',
-                        backgroundColor: '#fff5',
-                        borderColor: '#fff8',
+                        backgroundColor: '#fff1',
+                        borderColor: '#fff4',
                         borderWidth: 1,
                         borderRadius: 10,
-                        flexGrow: 1,
-                        paddingHorizontal: 10,
+                        flex: 1,
+                        gap: 3,
                         paddingVertical: 5,
                       }}
                     >
-                      {item.text === 'Download track' && isDownloading ? (
+                      {item.text === 'Download' && isDownloading ? (
                         <Progress.Circle
                           color="#fff"
-                          showsText
-                          textStyle={{ fontSize: 10 }}
-                          formatText={_ =>
+                          formatText={() =>
                             `${(
                               (downloadProgress / downloadSize) *
                               100
@@ -534,7 +469,9 @@ export default function TrackDetails({
                           progress={
                             downloadProgress / downloadSize || downloadSize
                           }
+                          showsText
                           size={30}
+                          textStyle={{ fontSize: 10 }}
                         />
                       ) : (
                         <MaterialCommunityIcons
@@ -544,18 +481,16 @@ export default function TrackDetails({
                         />
                       )}
                       <Text
-                        style={{
-                          color: '#fff',
-                          fontSize: 14,
-                          marginTop: 3,
-                          overflow: 'hidden',
-                        }}
+                        numberOfLines={1}
+                        style={{ color: '#fff', overflow: 'hidden' }}
                       >
-                        {item?.text}
+                        {item.text === 'Download' && isDownloading
+                          ? 'Downloading...'
+                          : item?.text}
                       </Text>
                     </Pressable>
                   ) : (
-                    <View key={key} style={{ flexBasis: `30%`, flexGrow: 1 }} />
+                    <View key={key} />
                   ),
                 )}
               </View>
@@ -563,30 +498,22 @@ export default function TrackDetails({
           },
         ]}
         keyExtractor={(_: number, i: number) => i.toString()}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 5 }}
         ListHeaderComponent={
-          <View
-            style={{
-              flexDirection: 'row',
-              marginTop: 5,
-              marginHorizontal: 20,
-            }}
-          >
-            {trackDetails && (
-              <Image
-                source={{ uri: trackDetails?.artwork }}
-                style={{
-                  borderRadius: 10,
-                  marginRight: 10,
-                  height: 45,
-                  width: 45,
-                }}
-              />
-            )}
-            <View style={{ justifyContent: 'center', marginLeft: 5 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
+          <View style={{ flexDirection: 'row', gap: 15 }}>
+            <Image
+              source={{ uri: trackDetails?.artwork }}
+              style={{ borderRadius: 10, height: 45, width: 45 }}
+            />
+
+            <View style={{ justifyContent: 'center', width: '85%' }}>
+              <Text
+                numberOfLines={1}
+                style={{ fontFamily: fontFamilyBold, fontSize: 18 }}
+              >
                 {trackDetails?.title}
               </Text>
-              <Text>{trackDetails?.artists}</Text>
+              <Text numberOfLines={1}>{trackDetails?.artists}</Text>
             </View>
           </View>
         }
@@ -595,7 +522,7 @@ export default function TrackDetails({
             rating={trackRating ?? 0}
             style={{ alignSelf: 'center' }}
             onChange={rating => {
-              Vibration.vibrate(50);
+              Vibration.vibrate(100);
               setTrackRating(rating);
               TrackPlayer.updateMetadataForTrack(activeTrackIndex!, {
                 ...activeTrack,
@@ -605,13 +532,13 @@ export default function TrackDetails({
                 { id: trackDetails?.id, rating },
                 {
                   onSuccess: () => refreshScreens(activeTrack, activePlaylist), // ? Refresh screens to apply changes of rated track
-                  onError: error => console.log(error),
+                  onError: handleAxiosError,
                 },
               );
             }}
           />
         }
-        ListFooterComponentStyle={{ marginTop: 30, marginBottom: 70 }}
+        ListFooterComponentStyle={{ marginTop: 30, marginBottom: 40 }}
         renderItem={({
           item,
         }: {
@@ -631,25 +558,16 @@ export default function TrackDetails({
                 item.action && item.action(trackDetails!);
               }}
             >
-              <View
-                style={{
-                  alignItems: 'center',
-                  flexDirection: 'row',
-                  gap: 10,
-                  padding: 15,
-                }}
-              >
-                {item.iconSource === 'material-community-icons' ? (
-                  <MaterialCommunityIcons
-                    color="#fff"
-                    name={item.icon}
-                    size={24}
-                  />
-                ) : (
-                  <MaterialIcons color="#fff" name={item.icon} size={24} />
-                )}
-                <Text style={{ color: '#fff', fontSize: 16 }}>{item.text}</Text>
-              </View>
+              {item.iconSource === 'material-community-icons' ? (
+                <MaterialCommunityIcons
+                  color="#fff"
+                  name={item.icon}
+                  size={24}
+                />
+              ) : (
+                <MaterialIcons color="#fff" name={item.icon} size={24} />
+              )}
+              {item.text}
             </Pressable>
           )
         }
@@ -658,29 +576,93 @@ export default function TrackDetails({
     [trackDetails, trackRating, downloadProgress],
   );
 
-  return (
-    <>
-      <BottomSheet
-        ref={trackDetailsRef}
-        index={-1}
-        enableDynamicSizing
-        enablePanDownToClose
-        backdropComponent={renderBackdrop}
-        handleIndicatorStyle={{ backgroundColor: '#fff' }}
-        backgroundStyle={{
-          backgroundColor: 'rgba(0, 0, 0, .85)',
-          borderRadius: 20,
-        }}
-      >
-        <RenderedBottomSheet />
-      </BottomSheet>
+  // ? Functions
+  const handleDeleteTrack = () => {
+    closeTrackDetails();
+    Alert.alert(
+      'Confirm deletion',
+      `This will delete ${trackDetails?.title} permanently. `,
+      [
+        {
+          text: 'Cancel',
+          onPress: () => {},
+          style: 'cancel',
+        },
+        {
+          text: 'OK',
+          onPress: () => {
+            activeTrack?.id === trackDetails?.id && next(); // ? Skip to next track to avoid buffering errors
 
-      <Snackbar
-        visible={snackbarVisible}
-        onDismiss={() => setSnackbarVisible(false)}
-      >
-        {snackbarMessage}
-      </Snackbar>
-    </>
+            deleteTrack(
+              {},
+              {
+                onSuccess: () => {
+                  // ? Show the snackbar to indicate that the operation was successful
+                  ToastAndroid.showWithGravity(
+                    `${trackDetails?.title} deleted!`,
+                    ToastAndroid.SHORT,
+                    ToastAndroid.CENTER,
+                  );
+                  // ? Remove the deleted track from the queue and reset the queue
+                  setQueue(
+                    queue.filter(
+                      _track => _track.id !== trackDetails?.id && trackDetails,
+                    ),
+                  );
+                  // ? Refresh screens to remove occurences of deleted track
+                  refreshScreens(activeTrack);
+                },
+                onError: handleAxiosError,
+              },
+            );
+          },
+        },
+      ],
+    );
+  };
+
+  const handleDownloadTrack = () =>
+    downloadFile({
+      fromUrl: trackDetails?.url!,
+      toFile: `${DOWNLOADS_PATH}/${trackDetails?.path.replaceAll('/', '_')}`,
+      background: true,
+      progress({ bytesWritten, contentLength }) {
+        setIsDownloading(true);
+        setDownloadProgress(bytesWritten);
+        setDownloadSize(contentLength);
+      },
+    })
+      .promise.then(() => {
+        setIsDownloading(false);
+        ToastAndroid.showWithGravity(
+          `${trackDetails?.title} downloaded!`,
+          ToastAndroid.SHORT,
+          ToastAndroid.CENTER,
+        );
+      })
+      .catch(() => {
+        setIsDownloading(false);
+        ToastAndroid.showWithGravity(
+          'Download failed. An error occurrred',
+          ToastAndroid.SHORT,
+          ToastAndroid.CENTER,
+        );
+      });
+
+  return (
+    <BottomSheet
+      ref={trackDetailsRef}
+      index={-1}
+      enableDynamicSizing
+      enablePanDownToClose
+      backdropComponent={RenderBackdrop}
+      handleIndicatorStyle={{ backgroundColor: '#fff' }}
+      backgroundStyle={{
+        backgroundColor: 'rgba(0, 0, 0, .85)',
+        borderRadius: 20,
+      }}
+    >
+      <RenderedBottomSheet />
+    </BottomSheet>
   );
 }

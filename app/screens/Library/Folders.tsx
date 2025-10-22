@@ -207,17 +207,7 @@ export default function Folders({ navigation }: any) {
                   </View>
                 </Pressable>
               ) : (
-                <Pressable
-                  onPress={() => play(data, item)}
-                  onLongPress={() => {
-                    Vibration.vibrate(100);
-                    setTrackDetails(item);
-                    openTrackDetails();
-                    setTrackRating(item.rating);
-                  }}
-                >
-                  <ListItem item={item} display="size" />
-                </Pressable>
+                <ListItem tracks={data!} item={item} display="size" />
               )}
             </>
           )}

@@ -97,17 +97,7 @@ export default function Album({
               .then(() => setRefreshing(false));
           }}
           renderItem={({ item }: { item: TrackProps }) => (
-            <Pressable
-              onPress={() => play(tracks, item)}
-              onLongPress={() => {
-                Vibration.vibrate(100);
-                setTrackDetails(item);
-                openTrackDetails();
-                setTrackRating(item.rating);
-              }}
-            >
-              <ListItem item={item} display="bitrate" />
-            </Pressable>
+            <ListItem display="bitrate" item={item} tracks={tracks} />
           )}
         />
       )}

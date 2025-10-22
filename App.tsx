@@ -504,38 +504,68 @@ export default function App(): React.JSX.Element {
     },
   );
 
-  const RenderApp = useCallback(
-    () => (
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <StatusBar
-          animated
-          backgroundColor="transparent"
-          barStyle="light-content"
-          translucent
-        />
+  // const RenderApp = useCallback(
+  //   () => (
+  //     <GestureHandlerRootView style={{ flex: 1 }}>
+  //       <StatusBar
+  //         animated
+  //         backgroundColor="transparent"
+  //         barStyle="light-content"
+  //         translucent
+  //       />
 
-        <QueryClientProvider client={queryClient}>
-          <PaperProvider theme={darkTheme}>
-            <SafeAreaProvider>
-              <NavigationContainer theme={ReactNavigationDarkTheme}>
-                <Stack.Navigator>
-                  <Stack.Screen
-                    name="TabNavigator"
-                    component={TabNavigator}
-                    options={{ headerShown: false }}
-                  />
-                </Stack.Navigator>
-                <PlaylistDetails playlistDetailsRef={playlistDetailsRef} />
-                <TrackDetails trackDetailsRef={trackDetailsRef} />
-                <NowPlaying />
-              </NavigationContainer>
-            </SafeAreaProvider>
-          </PaperProvider>
-        </QueryClientProvider>
-      </GestureHandlerRootView>
-    ),
-    [],
+  //       <QueryClientProvider client={queryClient}>
+  //         <PaperProvider theme={darkTheme}>
+  //           <SafeAreaProvider>
+  //             <NavigationContainer theme={ReactNavigationDarkTheme}>
+  //               <Stack.Navigator>
+  //                 <Stack.Screen
+  //                   name="TabNavigator"
+  //                   component={TabNavigator}
+  //                   options={{ headerShown: false }}
+  //                 />
+  //               </Stack.Navigator>
+  //               <PlaylistDetails playlistDetailsRef={playlistDetailsRef} />
+  //               <TrackDetails trackDetailsRef={trackDetailsRef} />
+  //               <NowPlaying />
+  //             </NavigationContainer>
+  //           </SafeAreaProvider>
+  //         </PaperProvider>
+  //       </QueryClientProvider>
+  //     </GestureHandlerRootView>
+  //   ),
+  //   [],
+  // );
+
+  // return RenderApp();
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <StatusBar
+        animated
+        backgroundColor="transparent"
+        barStyle="light-content"
+        translucent
+      />
+
+      <QueryClientProvider client={queryClient}>
+        <PaperProvider theme={darkTheme}>
+          <SafeAreaProvider>
+            <NavigationContainer theme={ReactNavigationDarkTheme}>
+              <Stack.Navigator>
+                <Stack.Screen
+                  name="TabNavigator"
+                  component={TabNavigator}
+                  options={{ headerShown: false }}
+                />
+              </Stack.Navigator>
+              <PlaylistDetails playlistDetailsRef={playlistDetailsRef} />
+              <TrackDetails trackDetailsRef={trackDetailsRef} />
+              <NowPlaying />
+            </NavigationContainer>
+          </SafeAreaProvider>
+        </PaperProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
-
-  return RenderApp();
 }

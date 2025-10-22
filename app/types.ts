@@ -3,12 +3,12 @@
  * https://reactnavigation.org/docs/typescript/
  */
 
-import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import {
   CompositeScreenProps,
   NavigatorScreenParams,
 } from '@react-navigation/native';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 declare global {
   namespace ReactNavigation {
@@ -16,21 +16,27 @@ declare global {
   }
 }
 
+export type AddToPlaylistProps = {
+  playlistId: number;
+  trackId: number;
+};
+
 export type Playlist = {
   id: number;
   name: string;
+  description: string;
+  artwork: string;
+  artworks: string[];
+  tracks: number;
+  size: string;
+  duration: string;
   createdOn: string;
   modifiedOn: string;
-  tracks: number;
-  artworks: string[];
-  artwork: string;
-  duration: string;
-  size: string;
 };
 
 export type RootStackParamList = {
-  Home: {queryKey: string; title: string};
-  History: {queryKey: string; title: string};
+  Home: { queryKey: string; title: string };
+  History: { queryKey: string; title: string };
   Playlist: Playlist;
   Playlists: Playlist[];
   Folders: undefined;
@@ -45,7 +51,7 @@ export type RootStackParamList = {
     url: string;
     path: string;
   };
-  Album: {albumArtist: string; album: string};
+  Album: { albumArtist: string; album: string };
   Root: NavigatorScreenParams<RootTabParamList> | undefined;
   Modal: undefined;
   NotFound: undefined;
@@ -120,7 +126,7 @@ export type TrackProps = {
   contentType?: string;
   /** (iOS only) The pitch algorithm to apply to the sound. */
   pitchAlgorithm?: any; //PitchAlgorithm;
-  headers?: {[key: string]: any};
+  headers?: { [key: string]: any };
   [key: string]: any;
   artist?: string;
   description?: string;
@@ -134,4 +140,4 @@ export type TrackProps = {
 
 export type TracksProps = TrackProps[];
 
-export type QueueProps = {queue: any};
+export type QueueProps = { queue: any };

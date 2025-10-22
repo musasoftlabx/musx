@@ -2,15 +2,15 @@
 import React from 'react';
 
 // * React Native
-import {FlatList} from 'react-native';
+import { FlatList } from 'react-native';
 
 // * Components
 import ListItem from '../../../components/ListItem';
 import VerticalListItem from '../../../components/Skeletons/VerticalListItem';
 
 // * Types
-import {SectionProps} from '..';
-import {TrackProps, TracksProps} from '../../../types';
+import { SectionProps } from '..';
+import { TrackProps, TracksProps } from '../../../types';
 
 export default function MostPlayed({
   loading,
@@ -24,8 +24,12 @@ export default function MostPlayed({
   ) : (
     <FlatList
       data={dataset as TracksProps}
-      renderItem={({item}: {item: TrackProps}) => (
-        <ListItem data={dataset as TracksProps} item={item} display="bitrate" />
+      renderItem={({ item }: { item: TrackProps }) => (
+        <ListItem
+          tracks={dataset as TracksProps}
+          item={item}
+          display="bitrate"
+        />
       )}
       keyExtractor={(_, index) => index.toString()}
       scrollEnabled={false}

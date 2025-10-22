@@ -199,7 +199,7 @@ export default function Queue() {
                 activationThreshold={0}
                 snapPointsLeft={[150]}
               >
-                <ListItem item={item} />
+                <ListItem item={item} isPressable={false} />
               </SwipeableItem>
             </Pressable>
           </OpacityDecorator>

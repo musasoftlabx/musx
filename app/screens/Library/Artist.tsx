@@ -306,17 +306,11 @@ export default function Artist({
                     data={artist.singles}
                     keyExtractor={(_, index) => index.toString()}
                     renderItem={({ item }: { item: TrackProps }) => (
-                      <Pressable
-                        onPress={() => play(artist.singles, item)}
-                        onLongPress={() => {
-                          Vibration.vibrate(100);
-                          setTrackDetails(item);
-                          openTrackDetails();
-                          setTrackRating(item.rating);
-                        }}
-                      >
-                        <ListItem item={item} display="bitrate" />
-                      </Pressable>
+                      <ListItem
+                        tracks={artist.singles}
+                        item={item}
+                        display="bitrate"
+                      />
                     )}
                   />
                 )}

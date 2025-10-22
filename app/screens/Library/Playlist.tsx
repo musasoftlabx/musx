@@ -11,12 +11,9 @@ import {
   View,
 } from 'react-native';
 
-// * Libraries
+// * NPM
 import * as Progress from 'react-native-progress';
-import {
-  useBackHandler,
-  useDeviceOrientation,
-} from '@react-native-community/hooks';
+import { useDeviceOrientation } from '@react-native-community/hooks';
 import DraggableFlatList, {
   RenderItemParams,
   ScaleDecorator,
@@ -61,7 +58,9 @@ import Feather from 'react-native-vector-icons/Feather';
 import { fontFamilyBold } from '../../utils';
 
 // * Types
-import { TrackProps, TracksProps } from '../../types';
+import { RootStackParamList, TrackProps, TracksProps } from '../../types';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { handleAxiosError } from '../../functions';
 
 dayjs.extend(duration);
 
@@ -78,7 +77,7 @@ export default function Playlist({
       size,
     },
   },
-}: any) {
+}: NativeStackScreenProps<RootStackParamList, 'Playlist', ''>) {
   // ? Refs
   const flashListRef = useRef<any>(null);
   const swipeableItemRef = useRef<SwipeableItemImperativeRef>(null);
@@ -87,10 +86,6 @@ export default function Playlist({
   const navigation = useNavigation();
   const orientation = useDeviceOrientation();
   const theme = useTheme();
-  useBackHandler(() => {
-    navigation.goBack();
-    return true;
-  });
 
   // ? Store States
   const activePlaylist = usePlayerStore(state => state.activePlaylist);
@@ -117,16 +112,6 @@ export default function Playlist({
   const [tracksDownloaded, setTracksDownloaded] = useState(0);
   const [totalTracksProgressBar, setTotalTracksProgressBar] = useState(false);
 
-  useEffect(() => {
-    if (flashListRef.current) {
-      flashListRef.current.scrollToIndex({
-        index: activeTrackIndex,
-        animated: true,
-        viewPosition: 0.5,
-      });
-    }
-  }, [activeTrackIndex]);
-
   // ? Queries
   const { isSuccess } = useQuery({
     queryKey: ['playlist', id],
@@ -151,7 +136,21 @@ export default function Playlist({
       ),
   });
 
+  const { mutate: retrieveLastModifiedPlaylist } = useMutation({
+    mutationFn: (body: unknown) => axios(`${API_URL}lastModifiedPlaylist`),
+  });
+
   // ? Effects
+  useEffect(() => {
+    if (flashListRef.current && playlistTracks.length > 0) {
+      flashListRef.current.scrollToIndex({
+        index: activeTrackIndex,
+        animated: true,
+        viewPosition: 0.5,
+      });
+    }
+  }, [activeTrackIndex]);
+
   useEffect(() => {
     navigation.setOptions({
       header: () => (
@@ -328,10 +327,21 @@ export default function Playlist({
                   <TouchableOpacity
                     onPress={() => {
                       swipeableItemRef.current?.close({ animated: true });
+
                       Vibration.vibrate(100);
-                      setTrackDetails(item);
                       openTrackDetails();
                       setTrackRating(item.rating);
+                      retrieveLastModifiedPlaylist(
+                        {},
+                        {
+                          onSuccess: ({ data }) =>
+                            setTrackDetails({
+                              ...item,
+                              lastModifiedPlaylist: data,
+                            }),
+                          onError: handleAxiosError,
+                        },
+                      );
                     }}
                     style={{
                       backgroundColor: '#8442f5',
@@ -391,7 +401,7 @@ export default function Playlist({
                   </TouchableOpacity>
                 )}
               >
-                <ListItem item={item} display="position" />
+                <ListItem display="position" isPressable={false} item={item} />
               </SwipeableItem>
             </TouchableOpacity>
           </ScaleDecorator>
@@ -769,17 +779,11 @@ export default function Playlist({
                 refreshing={refreshing}
                 onRefresh={() => (setRefreshing(true), refetch())}
                 renderItem={({ item }: { item: TrackProps }) => (
-                  <Pressable
-                    onPress={() => play(playlistTracks, item)}
-                    onLongPress={() => {
-                      Vibration.vibrate(100);
-                      setTrackDetails(item);
-                      openTrackDetails();
-                      setTrackRating(item.rating);
-                    }}
-                  >
-                    <ListItem item={item} display="position" />
-                  </Pressable>
+                  <ListItem
+                    display="position"
+                    item={item}
+                    tracks={playlistTracks}
+                  />
                 )}
               />
             )}

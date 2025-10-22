@@ -29,7 +29,7 @@ export default function TrackInfo({ bottomSheetRef }: any) {
         bottomSheetRef.current?.snapToIndex(0);
       }}
     >
-      <View style={{ maxWidth: '50%' }}>
+      <View style={{ maxWidth: orientation === 'portrait' ? 'auto' : '50%' }}>
         <TextTicker
           style={{
             color: '#fff',
@@ -48,7 +48,7 @@ export default function TrackInfo({ bottomSheetRef }: any) {
         </TextTicker>
       </View>
 
-      <View style={{ maxWidth: '50%' }}>
+      <View style={{ maxWidth: orientation === 'portrait' ? 'auto' : '50%' }}>
         <TextTicker
           style={{
             color: '#ffffffa2',

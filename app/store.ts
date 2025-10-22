@@ -100,7 +100,7 @@ interface IPlayerStore {
   palette: string[];
   nowPlayingRef: BottomSheet | null;
   trackDetailsRef: BottomSheet | null;
-  trackDetails: TrackProps | null;
+  trackDetails: (TrackProps & { lastModifiedPlaylist: Playlist }) | null;
   playlistDetailsRef: BottomSheet | null;
   playlistDetails: Playlist | null;
   castState: any;
@@ -126,7 +126,9 @@ interface IPlayerStore {
   openNowPlaying: (nowPlayingRef: BottomSheet | {}) => void;
   closeNowPlaying: (nowPlayingRef: BottomSheet | {}) => void;
   setTrackDetailsRef: (trackDetailsRef: BottomSheet | {}) => void;
-  setTrackDetails: (trackDetails: TrackProps) => void;
+  setTrackDetails: (
+    trackDetails: TrackProps & { lastModifiedPlaylist: Playlist },
+  ) => void;
   setPlaylistDetailsRef: (playlistDetailsRef: BottomSheet | {}) => void;
   setPlaylistDetails: (playlistDetails: Playlist) => void;
   openTrackDetails: () => void;
@@ -224,8 +226,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
   },
   setTrackDetailsRef: (trackDetailsRef: any) =>
     set(state => ({ ...state, trackDetailsRef })),
-  setTrackDetails: (trackDetails: TrackProps) =>
-    set(state => ({ ...state, trackDetails })),
+  setTrackDetails: trackDetails => set(state => ({ ...state, trackDetails })),
   setPlaylistDetailsRef: (playlistDetailsRef: any) =>
     set(state => ({ ...state, playlistDetailsRef })),
   setPlaylistDetails: (playlistDetails: Playlist) =>

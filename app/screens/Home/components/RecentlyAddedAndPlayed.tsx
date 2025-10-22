@@ -16,11 +16,14 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import HorizontalListItem from '../../../components/Skeletons/HorizontalListItem';
 
 // * Store
-import { usePlayerStore } from '../../../store';
+import { API_URL, usePlayerStore } from '../../../store';
 
 // * Types
 import { SectionProps } from '..';
 import { TrackProps, TracksProps } from '../../../types';
+import { handleAxiosError } from '../../../functions';
+import { useMutation } from '@tanstack/react-query';
+import axios from 'axios';
 
 dayjs.extend(relativeTime);
 
@@ -40,6 +43,11 @@ export default function RecentlyAddedAndPlayed({
   const setTrackDetails = usePlayerStore(state => state.setTrackDetails);
   const setTrackRating = usePlayerStore(state => state.setTrackRating);
 
+  // ? Mutations
+  const { mutate: retrieveLastModifiedPlaylist } = useMutation({
+    mutationFn: (body: unknown) => axios(`${API_URL}lastModifiedPlaylist`),
+  });
+
   return (
     <>
       {loading ? (
@@ -55,9 +63,19 @@ export default function RecentlyAddedAndPlayed({
                 onPress={() => play([item], item)}
                 onLongPress={() => {
                   Vibration.vibrate(100);
-                  setTrackDetails(item);
-                  setTrackRating(item.rating);
                   openTrackDetails();
+                  setTrackRating(item.rating);
+                  retrieveLastModifiedPlaylist(
+                    {},
+                    {
+                      onSuccess: ({ data }) =>
+                        setTrackDetails({
+                          ...item,
+                          lastModifiedPlaylist: data,
+                        }),
+                      onError: handleAxiosError,
+                    },
+                  );
                 }}
                 style={{
                   margin: 10,

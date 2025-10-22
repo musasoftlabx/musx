@@ -111,6 +111,7 @@ export default function Search({ navigation }: any) {
               style={{
                 borderBottomColor: '#fff5',
                 borderBottomWidth: 0.5,
+                color: '#fff',
                 flexGrow: 1,
                 fontSize: 18,
               }}
@@ -277,17 +278,11 @@ export default function Search({ navigation }: any) {
                     //estimatedItemSize={10}
                     //estimatedListSize={{ height: HEIGHT / 2, width: WIDTH }}
                     renderItem={({ item }: { item: TrackProps }) => (
-                      <Pressable
-                        onPress={() => play(data.tracks, item)}
-                        onLongPress={() => {
-                          Vibration.vibrate(100);
-                          setTrackDetails(item);
-                          openTrackDetails();
-                          setTrackRating(item.rating);
-                        }}
-                      >
-                        <ListItem item={item} display="bitrate" />
-                      </Pressable>
+                      <ListItem
+                        display="bitrate"
+                        item={item}
+                        tracks={data.tracks}
+                      />
                     )}
                   />
                 )}

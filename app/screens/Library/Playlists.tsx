@@ -29,6 +29,7 @@ import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 
 // * Components
 import CreatePlaylist from '../../components/CreatePlaylist';
+import EmptyRecords from '../../components/EmptyRecords';
 import LinearGradientX from '../../components/LinearGradientX';
 import StatusBarX from '../../components/StatusBarX';
 
@@ -41,16 +42,19 @@ import { queryClient } from '../../../App';
 // * Types
 import { Playlist, RootStackParamList } from '../../types';
 
+// * Assets
+import PlaylistImage from '../../assets/images/Playlists.png';
+
 export default function Playlists({
   navigation,
 }: NativeStackScreenProps<RootStackParamList, 'Playlist', ''>) {
   // ? States
-  const [isAddPlaylistVisible, setIsAddPlaylistVisible] =
-    useState<boolean>(false);
+  const [isAddPlaylistVisible, setIsAddPlaylistVisible] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSortMenuVisible, setIsSortMenuVisible] = useState(false);
   const [filter, setFilter] = useState<Playlist[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchWord, setSearchWord] = useState('');
   const [showSearch, setShowSearch] = useState(false);
 
@@ -74,8 +78,8 @@ export default function Playlists({
   // ? Queries
   const { isFetching, isSuccess } = useQuery({
     queryKey: ['playlists'],
-    queryFn: () => {
-      axios<Playlist[]>(`${API_URL}playlists`).then(({ data }) => {
+    queryFn: ({ queryKey }) => {
+      axios<Playlist[]>(`${API_URL}${queryKey[0]}`).then(({ data }) => {
         setFilter(data);
         setPlaylists(data);
       });
@@ -288,7 +292,54 @@ export default function Playlists({
     setIsSortMenuVisible(false);
   };
 
+  const refetch = () =>
+    queryClient
+      .refetchQueries({ queryKey: ['playlists'] })
+      .then(() => setIsRefreshing(false));
+
   const columns = orientation === 'portrait' ? 150 : 200;
+
+  const Skeleton = useCallback(
+    () => (
+      <FlatList
+        data={new Array(
+          Number((HEIGHT / 150).toFixed(0)) * Number((WIDTH / 150).toFixed(0)),
+        ).fill(0)}
+        scrollEnabled={false}
+        numColumns={Number((WIDTH / 150).toFixed(0))}
+        keyExtractor={(_, index) => index.toString()}
+        contentContainerStyle={{ alignItems: 'center' }}
+        renderItem={() => (
+          <View style={{ paddingHorizontal: 20 }}>
+            <SkeletonPlaceholder highlightColor="#fff5" backgroundColor="#fff5">
+              <View style={{ alignItems: 'center', paddingTop: 20 }}>
+                <View
+                  style={{
+                    borderRadius: 10,
+                    marginBottom: 10,
+                    height: 100,
+                    width: 100,
+                  }}
+                />
+                <View style={{ alignItems: 'center', borderRadius: 5, gap: 8 }}>
+                  <Text style={{ fontSize: 14, lineHeight: 16, width: 100 }}>
+                    {''}
+                  </Text>
+                  <Text style={{ fontSize: 14, lineHeight: 10, width: 80 }}>
+                    {''}
+                  </Text>
+                  <Text style={{ fontSize: 14, lineHeight: 8, width: 50 }}>
+                    {''}
+                  </Text>
+                </View>
+              </View>
+            </SkeletonPlaceholder>
+          </View>
+        )}
+      />
+    ),
+    [],
+  );
 
   return (
     <>
@@ -300,50 +351,6 @@ export default function Playlists({
         isAddPlaylistVisible={isAddPlaylistVisible}
         setIsAddPlaylistVisible={setIsAddPlaylistVisible}
       />
-
-      {isFetching && (
-        <FlatList
-          data={new Array(
-            Number((HEIGHT / 150).toFixed(0)) *
-              Number((WIDTH / 150).toFixed(0)),
-          ).fill(0)}
-          numColumns={Number((WIDTH / 150).toFixed(0))}
-          keyExtractor={(_, index) => index.toString()}
-          contentContainerStyle={{ alignItems: 'center' }}
-          renderItem={() => (
-            <View style={{ paddingHorizontal: 20 }}>
-              <SkeletonPlaceholder
-                highlightColor="#fff5"
-                backgroundColor="#fff5"
-              >
-                <View style={{ alignItems: 'center', paddingTop: 20 }}>
-                  <View
-                    style={{
-                      borderRadius: 10,
-                      marginBottom: 10,
-                      height: 100,
-                      width: 100,
-                    }}
-                  />
-                  <View
-                    style={{ alignItems: 'center', borderRadius: 5, gap: 8 }}
-                  >
-                    <Text style={{ fontSize: 14, lineHeight: 16, width: 100 }}>
-                      {''}
-                    </Text>
-                    <Text style={{ fontSize: 14, lineHeight: 10, width: 80 }}>
-                      {''}
-                    </Text>
-                    <Text style={{ fontSize: 14, lineHeight: 8, width: 50 }}>
-                      {''}
-                    </Text>
-                  </View>
-                </View>
-              </SkeletonPlaceholder>
-            </View>
-          )}
-        />
-      )}
 
       {(isSuccess || playlists.length === 0) && (
         <FlashList
@@ -457,9 +464,15 @@ export default function Playlists({
             </Pressable>
           )}
           ListEmptyComponent={
-            <View style={{ alignItems: 'center', flex: 1 }}>
-              <Text>Empty</Text>
-            </View>
+            !isFetching ? (
+              <Skeleton />
+            ) : (
+              <EmptyRecords
+                image={PlaylistImage}
+                context="playlists"
+                reload={refetch}
+              />
+            )
           }
           contentContainerStyle={{ paddingHorizontal: 5 }}
         />

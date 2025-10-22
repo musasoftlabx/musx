@@ -164,25 +164,11 @@ export default function MostPlayed({
         }
         ListFooterComponentStyle={{ height: isFetchingNextPage ? 80 : 0 }}
         renderItem={({ item }: { item: TrackProps }) => (
-          <Pressable
-            onPress={() =>
-              play(data?.pages.map(page => page.data.plays).flat(), item)
-            }
-            onLongPress={() => {
-              Vibration.vibrate(100);
-              setTrackDetails(item);
-              openTrackDetails();
-              setTrackRating(item.rating);
-            }}
-          >
-            <ListItem
-              item={item}
-              display="bitrate"
-              // bottomSheetRef={bottomSheetRef}
-              // setTrack={setTrack}
-              // setBottomSheetVisible={setBottomSheetVisible}
-            />
-          </Pressable>
+          <ListItem
+            tracks={data?.pages.map(page => page.data.plays).flat()!}
+            item={item}
+            display="bitrate"
+          />
         )}
         ListEmptyComponent={() =>
           isFetching ? (

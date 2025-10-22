@@ -2,38 +2,65 @@
 import React from 'react';
 
 // * React Native
-import { Image, View } from 'react-native';
+import {
+  Image,
+  Pressable,
+  StyleProp,
+  ToastAndroid,
+  Vibration,
+  View,
+} from 'react-native';
 
-// * Libraries
-import Animated from 'react-native-reanimated';
+// * NPM
 import { StarRatingDisplay } from 'react-native-star-rating-widget';
 import { State } from 'react-native-track-player';
 import { Text } from 'react-native-paper';
 import { useDeviceOrientation } from '@react-native-community/hooks';
+import { useMutation } from '@tanstack/react-query';
+import Animated from 'react-native-reanimated';
+import axios, { AxiosError } from 'axios';
 
 // * Store
-import { usePlayerStore, WIDTH } from '../store';
+import { API_URL, usePlayerStore, WIDTH } from '../store';
 
 // * Types
 import { TrackProps } from '../types';
 
 // * Functions
 import { formatTrackTime } from '../functions';
+import { handleAxiosError } from '../functions';
+
+// * Hooks
+import useRotate360Animation from '../shared/hooks/useRotate360Animation';
 
 // * Icons
 import Icon from 'react-native-vector-icons/FontAwesome';
-import useRotate360Animation from '../shared/hooks/useRotate360Animation';
 
 export default function ListItem({
+  isPressable = true,
   display,
   item,
+  tracks,
 }: {
+  isPressable?: boolean;
   display?: 'size' | 'bitrate' | 'duration' | 'position';
   item: TrackProps;
+  tracks?: TrackProps[];
 }) {
   // ? Store States
   const { state } = usePlayerStore(state => state.playbackState);
   const activeTrack = usePlayerStore(state => state.activeTrack);
+
+  // ? Store Actions
+  const openTrackDetails = usePlayerStore(state => state.openTrackDetails);
+  const play = usePlayerStore(state => state.play);
+  const setTrackDetails = usePlayerStore(state => state.setTrackDetails);
+  const setTrackRating = usePlayerStore(state => state.setTrackRating);
+
+  // ? Mutations
+  const { mutate: retrieveLastModifiedPlaylist } = useMutation({
+    mutationFn: (body: unknown) => axios(`${API_URL}lastModifiedPlaylist`),
+  });
 
   // ? Constants
   const isActive = activeTrack?.id === item.id;
@@ -43,20 +70,20 @@ export default function ListItem({
   const orientation = useDeviceOrientation();
   const rotate = useRotate360Animation();
 
-  return (
-    <View
-      style={[
-        isActive
-          ? {
-              backgroundColor: '#ffffff4d',
-              borderRadius: 10,
-              marginHorizontal: 6,
-              paddingHorizontal: 5,
-            }
-          : { marginHorizontal: 10 },
-        { alignItems: 'center', flexDirection: 'row', paddingVertical: 7 },
-      ]}
-    >
+  const itemStyle: StyleProp<Object> = [
+    isActive
+      ? {
+          backgroundColor: '#ffffff4d',
+          borderRadius: 10,
+          marginHorizontal: 6,
+          paddingHorizontal: 5,
+        }
+      : { marginHorizontal: 10 },
+    { alignItems: 'center', flexDirection: 'row', paddingVertical: 7 },
+  ];
+
+  const Item = () => (
+    <>
       {/* Track details */}
       <View style={{ alignItems: 'center', flexDirection: 'row', gap: 10 }}>
         {isActive ? (
@@ -83,12 +110,20 @@ export default function ListItem({
                 <Icon
                   name="circle-thin"
                   size={26}
-                  style={{ position: 'absolute', color: '#fff', opacity: 0.7 }}
+                  style={{
+                    position: 'absolute',
+                    color: '#fff',
+                    opacity: 0.7,
+                  }}
                 />
                 <Icon
                   name="circle"
                   size={18}
-                  style={{ position: 'absolute', color: '#fff', opacity: 0.5 }}
+                  style={{
+                    position: 'absolute',
+                    color: '#fff',
+                    opacity: 0.5,
+                  }}
                 />
                 <Icon
                   name="circle"
@@ -195,6 +230,32 @@ export default function ListItem({
           </Text>
         </View>
       </View>
+    </>
+  );
+
+  return isPressable ? (
+    <View style={itemStyle}>
+      <Item />
     </View>
+  ) : (
+    <Pressable
+      onPress={() => play(tracks, item)}
+      onLongPress={() => {
+        Vibration.vibrate(100);
+        openTrackDetails();
+        setTrackRating(item.rating);
+        retrieveLastModifiedPlaylist(
+          {},
+          {
+            onSuccess: ({ data }) =>
+              setTrackDetails({ ...item, lastModifiedPlaylist: data }),
+            onError: handleAxiosError,
+          },
+        );
+      }}
+      style={itemStyle}
+    >
+      <Item />
+    </Pressable>
   );
 }

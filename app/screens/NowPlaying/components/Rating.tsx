@@ -2,11 +2,11 @@
 import React, { useCallback } from 'react';
 
 // * React Native
-import { Vibration } from 'react-native';
+import { ToastAndroid, Vibration } from 'react-native';
 
 // * Libraries
 import { useMutation } from '@tanstack/react-query';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import StarRating from 'react-native-star-rating-widget';
 import TrackPlayer from 'react-native-track-player';
 
@@ -45,7 +45,15 @@ export default function Rating() {
             { id: activeTrack?.id, rating },
             {
               onSuccess: () => refreshScreens(activeTrack, activePlaylist), // ? Refresh screens to apply changes of rated track
-              onError: error => console.log(error),
+              onError: error => {
+                if (error instanceof AxiosError) {
+                  ToastAndroid.showWithGravity(
+                    error.response?.data.body,
+                    ToastAndroid.SHORT,
+                    ToastAndroid.CENTER,
+                  );
+                }
+              },
             },
           );
         }}

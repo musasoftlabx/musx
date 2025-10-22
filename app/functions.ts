@@ -1,8 +1,9 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { IAxiosError, Playlist, TrackProps } from './types';
 import { API_URL, DOWNLOADS_PATH } from './store';
 import { queryClient } from '../App';
 import { downloadFile } from '@dr.pogodin/react-native-fs';
+import { ToastAndroid } from 'react-native';
 
 export const formatTrackTime = (secs: number) => {
   secs = Math.round(secs);
@@ -95,5 +96,15 @@ export const downloadMultipleFiles = async (tracks: TrackProps[]) => {
     console.log('All files downloaded successfully!');
   } catch (error) {
     console.error('One or more downloads failed:', error);
+  }
+};
+
+export const handleAxiosError = (error: unknown) => {
+  if (error instanceof AxiosError) {
+    ToastAndroid.showWithGravity(
+      error.response?.data.body,
+      ToastAndroid.SHORT,
+      ToastAndroid.CENTER,
+    );
   }
 };

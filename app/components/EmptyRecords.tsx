@@ -1,47 +1,41 @@
 // * React Native
-import {Image, useWindowDimensions, View} from 'react-native';
+import { Image, ImageSourcePropType, Vibration, View } from 'react-native';
 
-// * React Native Libraries
-import {Button, useTheme} from 'react-native-paper';
+// * NPM
+import { Button, Text } from 'react-native-paper';
 
-// * Components
-import TextX from './TextX';
+// * Store
+import { HEIGHT, WIDTH } from '../store';
 
-// * Assets
-import _404 from '../assets/images/404.png';
-
-// * Interfaces
-interface IAttributes {
+// * Types
+type Attributes = {
+  image: ImageSourcePropType;
   context?: String | 'records';
   reload: () => void;
-}
+};
 
-const EmptyRecords = ({context, reload}: IAttributes) => {
-  // ? Hooks
-  const layout = useWindowDimensions();
-
+const EmptyRecords = ({ image, context, reload }: Attributes) => {
   return (
     <View
       style={{
         alignItems: 'center',
         justifyContent: 'center',
-        height: layout.height * 0.44,
-        width: layout.width,
-        transform: [{scale: 0.9}],
-      }}>
+        height: HEIGHT * 0.7,
+        width: WIDTH,
+        transform: [{ scale: 0.9 }],
+      }}
+    >
       <Image
         resizeMode="contain"
-        source={_404}
-        style={{
-          height: layout.height * 0.25,
-          marginLeft: 50,
-          opacity: 0.7,
-        }}
+        source={image}
+        style={{ height: HEIGHT * 0.08 }}
       />
-      <TextX font="Montez" scale={4.5} opacity={0.5}>
-        No {context} were found.
-      </TextX>
-      <Button mode="elevated" onPress={reload} style={{marginTop: 10}}>
+      <Text style={{ fontSize: 22 }}>No {context} were found.</Text>
+      <Button
+        mode="elevated"
+        onPress={() => (Vibration.vibrate(100), reload())}
+        style={{ marginTop: 30 }}
+      >
         RELOAD
       </Button>
     </View>
