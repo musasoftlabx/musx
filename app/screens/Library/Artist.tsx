@@ -307,9 +307,10 @@ export default function Artist({
                     keyExtractor={(_, index) => index.toString()}
                     renderItem={({ item }: { item: TrackProps }) => (
                       <ListItem
-                        tracks={artist.singles}
-                        item={item}
                         display="bitrate"
+                        isPressable
+                        item={item}
+                        tracks={artist.singles}
                       />
                     )}
                   />

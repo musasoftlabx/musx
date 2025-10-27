@@ -74,7 +74,7 @@ axios.defaults.headers.post['Accept'] = 'application/json';
 setThemePreference('dark'); // 'light', 'dark', or 'system'
 
 // ? Setup Track Player
-TrackPlayer.setupPlayer({ autoHandleInterruptions: true });
+//TrackPlayer.setupPlayer({ autoHandleInterruptions: true });
 
 // ? Remove track items in storage
 //AsyncStorage.removeItem('queue');
@@ -167,6 +167,7 @@ export default function App(): React.JSX.Element {
         android: {
           appKilledPlaybackBehavior:
             AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
+          stopForegroundGracePeriod: 60 * 60,
           alwaysPauseOnInterruption: true,
         },
         progressUpdateEventInterval: 1,
@@ -179,14 +180,6 @@ export default function App(): React.JSX.Element {
           Capability.Stop,
           Capability.SeekTo,
         ],
-        // compactCapabilities: [
-        //   Capability.Play,
-        //   Capability.Pause,
-        //   Capability.SkipToNext,
-        //   Capability.SkipToPrevious,
-        //   Capability.Stop,
-        //   Capability.SeekTo,
-        // ],
         notificationCapabilities: [
           Capability.Play,
           Capability.Pause,

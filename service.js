@@ -1,4 +1,4 @@
-//import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import TrackPlayer, { Event } from 'react-native-track-player';
 
 module.exports = async function () {
@@ -17,8 +17,11 @@ module.exports = async function () {
   TrackPlayer.addEventListener(Event.RemoteSeek, ({ position }) =>
     TrackPlayer.seekTo(position),
   );
-  // TrackPlayer.addEventListener(Event.PlaybackProgressUpdated, ({position}) => {
-  //   playPosition = position;
-  //   AsyncStorage.setItem('playPosition', position.toString());
-  // });
+  TrackPlayer.addEventListener(
+    Event.PlaybackProgressUpdated,
+    ({ position }) => {
+      playPosition = position;
+      AsyncStorage.setItem('playPosition', position.toString());
+    },
+  );
 };

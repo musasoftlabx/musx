@@ -97,7 +97,12 @@ export default function Album({
               .then(() => setRefreshing(false));
           }}
           renderItem={({ item }: { item: TrackProps }) => (
-            <ListItem display="bitrate" item={item} tracks={tracks} />
+            <ListItem
+              display="bitrate"
+              isPressable
+              item={item}
+              tracks={tracks}
+            />
           )}
         />
       )}

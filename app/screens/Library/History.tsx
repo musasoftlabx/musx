@@ -116,9 +116,10 @@ export default function RecentlyPlayed({
         ListFooterComponentStyle={{ height: isFetchingNextPage ? 80 : 0 }}
         renderItem={({ item }: { item: TrackProps }) => (
           <ListItem
-            tracks={data?.pages.map(page => page.data.plays).flat()!}
-            item={item}
             display="bitrate"
+            isPressable
+            item={item}
+            tracks={data?.pages.map(page => page.data.plays).flat()!}
           />
         )}
         ListEmptyComponent={() =>

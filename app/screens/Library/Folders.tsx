@@ -207,7 +207,7 @@ export default function Folders({ navigation }: any) {
                   </View>
                 </Pressable>
               ) : (
-                <ListItem tracks={data!} item={item} display="size" />
+                <ListItem display="size" item={item} tracks={data!} />
               )}
             </>
           )}

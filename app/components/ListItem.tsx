@@ -37,7 +37,7 @@ import useRotate360Animation from '../shared/hooks/useRotate360Animation';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 export default function ListItem({
-  isPressable = true,
+  isPressable,
   display,
   item,
   tracks,
@@ -254,8 +254,6 @@ export default function ListItem({
       <Item />
     </Pressable>
   ) : (
-    <View style={itemStyle}>
-      <Item />
-    </View>
+    <Item />
   );
 }

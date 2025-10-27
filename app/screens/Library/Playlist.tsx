@@ -282,7 +282,7 @@ export default function Playlist({
       <DraggableFlatList
         ref={flashListRef}
         data={playlistTracks}
-        onDragBegin={() => Vibration.vibrate(50)}
+        onDragBegin={() => Vibration.vibrate(100)}
         onDragEnd={({ data }) => {
           setPlaylistTracks([]);
           setTimeout(() => setPlaylistTracks(data), 1);
@@ -303,8 +303,8 @@ export default function Playlist({
           <ScaleDecorator>
             <TouchableOpacity
               onPress={() => {
-                setActivePlaylist(id);
                 play(playlistTracks, item);
+                setActivePlaylist(id);
               }}
               onLongPress={drag}
               disabled={isActive}
@@ -400,7 +400,7 @@ export default function Playlist({
                   </TouchableOpacity>
                 )}
               >
-                <ListItem display="position" isPressable={false} item={item} />
+                <ListItem display="position" item={item} />
               </SwipeableItem>
             </TouchableOpacity>
           </ScaleDecorator>
