@@ -60,11 +60,7 @@ export default function QueueHorizontal() {
           <View style={{ width: WIDTH * 0.12 }}>
             <Text
               numberOfLines={1}
-              style={{
-                fontFamily: fontFamilyBold,
-                fontSize: 16,
-                width: '97%',
-              }}
+              style={{ fontFamily: fontFamilyBold, fontSize: 16, width: '97%' }}
             >
               {item?.title}
             </Text>

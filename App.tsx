@@ -36,6 +36,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomSheet from '@gorhom/bottom-sheet';
 import axios, { AxiosError } from 'axios';
 import Sound from 'react-native-sound';
+import tinycolor from 'tinycolor2';
 
 // * Navigators
 import TabNavigator from './app/navigators/TabNavigator';
@@ -53,12 +54,11 @@ import { TrackProps } from './app/types';
 import { refreshScreens } from './app/functions';
 
 // * Components
+import PlaylistDetails from './app/components/PlaylistDetails';
 import TrackDetails from './app/components/TrackDetails';
 
 // * Screens
 import NowPlaying from './app/screens/NowPlaying';
-import tinycolor from 'tinycolor2';
-import PlaylistDetails from './app/components/PlaylistDetails';
 
 // * Constants
 export const queryClient = new QueryClient();
@@ -72,9 +72,6 @@ axios.defaults.headers.post['Accept'] = 'application/json';
 
 // ? Always force dark mode
 setThemePreference('dark'); // 'light', 'dark', or 'system'
-
-// ? Setup Track Player
-//TrackPlayer.setupPlayer({ autoHandleInterruptions: true });
 
 // ? Remove track items in storage
 //AsyncStorage.removeItem('queue');
@@ -167,7 +164,7 @@ export default function App(): React.JSX.Element {
         android: {
           appKilledPlaybackBehavior:
             AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
-          stopForegroundGracePeriod: 60 * 60,
+          //stopForegroundGracePeriod: 60 * 60,
           alwaysPauseOnInterruption: true,
         },
         progressUpdateEventInterval: 1,

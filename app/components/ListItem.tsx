@@ -2,14 +2,7 @@
 import React from 'react';
 
 // * React Native
-import {
-  Image,
-  Pressable,
-  StyleProp,
-  ToastAndroid,
-  Vibration,
-  View,
-} from 'react-native';
+import { Image, Pressable, StyleProp, Vibration, View } from 'react-native';
 
 // * NPM
 import { StarRatingDisplay } from 'react-native-star-rating-widget';
@@ -18,7 +11,7 @@ import { Text } from 'react-native-paper';
 import { useDeviceOrientation } from '@react-native-community/hooks';
 import { useMutation } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 
 // * Store
 import { API_URL, usePlayerStore, WIDTH } from '../store';
@@ -27,8 +20,7 @@ import { API_URL, usePlayerStore, WIDTH } from '../store';
 import { TrackProps } from '../types';
 
 // * Functions
-import { formatTrackTime } from '../functions';
-import { handleAxiosError } from '../functions';
+import { handleAxiosError, formatTrackTime } from '../functions';
 
 // * Hooks
 import useRotate360Animation from '../shared/hooks/useRotate360Animation';
@@ -254,6 +246,8 @@ export default function ListItem({
       <Item />
     </Pressable>
   ) : (
-    <Item />
+    <View style={itemStyle}>
+      <Item />
+    </View>
   );
 }

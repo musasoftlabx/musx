@@ -368,23 +368,24 @@ export default function NowPlaying() {
 
                     <View
                       style={{
-                        flexDirection: 'row',
                         alignItems: 'center',
+                        flexDirection: 'row',
+                        gap: 10,
                         justifyContent: 'space-between',
                         marginTop: WIDTH,
-                        gap: 20,
+                        paddingHorizontal: 20,
                       }}
                     >
-                      <View style={{ flexDirection: 'row', gap: 5 }}>
-                        <Ionicons
-                          color="#fff"
-                          name="musical-notes-sharp"
-                          size={21}
-                        />
-
-                        <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
-                          {trackPlayCount} play
-                          {`${trackPlayCount === 1 ? '' : 's'}`}
+                      <View style={{ flex: 1 }}>
+                        <Text
+                          numberOfLines={1}
+                          style={{
+                            fontFamily: fontFamilyBold,
+                            fontSize: 18,
+                            textDecorationLine: 'underline',
+                          }}
+                        >
+                          {`${activeTrackIndex! + 1}/${queue.length}`} enQ
                         </Text>
                       </View>
 
@@ -395,25 +396,27 @@ export default function NowPlaying() {
                           backgroundColor: 'rgba(255, 255, 255, .3)',
                           borderColor: 'rgba(255, 255, 255, .3)',
                           borderRadius: 7,
+                          flex: 2.5,
                           flexDirection: 'row',
+                          justifyContent: 'center',
                           opacity: 0.7,
-                          paddingHorizontal: 10,
                           paddingVertical: 5,
+                          overflow: 'hidden',
                         }}
                       >
                         {!streamViaHLS || bitrate === 'Max' ? (
                           <>
-                            <Text style={{ fontWeight: 'bold' }}>
+                            <Text style={{ fontFamily: fontFamilyBold }}>
                               {`${activeTrack?.format?.toLocaleUpperCase()} ${
                                 activeTrack?.sampleRate! / 1000
                               } Khz`}
                             </Text>
 
-                            <Text style={{ fontWeight: 'bold' }}>
-                              &nbsp;&nbsp;/&nbsp;&nbsp;
+                            <Text style={{ fontFamily: fontFamilyBold }}>
+                              &nbsp;&nbsp;◎&nbsp;&nbsp;
                             </Text>
 
-                            <Text style={{ fontWeight: 'bold' }}>
+                            <Text style={{ fontFamily: fontFamilyBold }}>
                               {(activeTrack?.bitrate! / 1000).toFixed(2)} Kbps
                             </Text>
                           </>
@@ -432,22 +435,28 @@ export default function NowPlaying() {
                         )}
                       </View>
 
-                      <View style={{ flexDirection: 'row', gap: 5 }}>
-                        <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
-                          {`${activeTrackIndex! + 1} / ${queue.length}`}
+                      <View style={{ alignItems: 'flex-end', flex: 1 }}>
+                        <Text
+                          numberOfLines={1}
+                          style={{
+                            fontFamily: fontFamilyBold,
+                            fontSize: 18,
+                            textDecorationLine: 'underline',
+                          }}
+                        >
+                          {trackPlayCount} play
+                          {`${trackPlayCount === 1 ? '' : 's'}`}
                         </Text>
-
-                        <Ionicons color="#fff" name="disc" size={21} />
                       </View>
                     </View>
 
                     <View
                       style={{
-                        flexDirection: 'row',
                         alignItems: 'center',
+                        flexDirection: 'row',
+                        gap: 10,
                         justifyContent: 'space-between',
                         marginTop: 20,
-                        gap: 10,
                       }}
                     >
                       <Pressable
@@ -500,7 +509,7 @@ export default function NowPlaying() {
 
                     <WaveformSlider />
 
-                    <TrackInfo bottomSheetRef={bottomSheetRef} />
+                    <TrackInfo />
 
                     <Controls />
                   </View>
@@ -553,7 +562,7 @@ export default function NowPlaying() {
                         paddingTop: 30,
                       }}
                     >
-                      <TrackInfo bottomSheetRef={bottomSheetRef} />
+                      <TrackInfo />
 
                       <View
                         style={{

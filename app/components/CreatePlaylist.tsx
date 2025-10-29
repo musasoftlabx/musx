@@ -21,7 +21,7 @@ import { InferType, object } from 'yup';
 import axios from 'axios';
 
 // * Store
-import { WIDTH, usePlayerStore } from '../store';
+import { WIDTH } from '../store';
 
 // * Constants
 import { yupString, yupStringOptional } from '../constants/yup';
@@ -32,6 +32,7 @@ import { styles } from '../styles';
 // * Components
 import ButtonX from './ButtonX';
 import { queryClient } from '../../App';
+import LinearGradientX from './LinearGradientX';
 
 // * Schema
 const schema = object({
@@ -51,9 +52,6 @@ export default function CreatePlaylist({
 }) {
   // ? States
   const [isSubmitFormLoading, setIsSubmitFormLoading] = useState(false);
-
-  // ? Store States
-  const palette = usePlayerStore(state => state.palette);
 
   // ? Hooks
   const navigation = useNavigation();
@@ -97,7 +95,10 @@ export default function CreatePlaylist({
           },
         ],
       );
-    } else setIsAddPlaylistVisible(false);
+    } else {
+      Vibration.vibrate(100);
+      setIsAddPlaylistVisible(false);
+    }
   };
 
   return (
@@ -116,11 +117,11 @@ export default function CreatePlaylist({
       >
         <View
           style={{
-            backgroundColor: palette?.[1] ?? '#000',
             borderColor: '#777777ff',
-            borderRadius: 30,
+            borderRadius: 20,
             borderWidth: 1,
             elevation: 5,
+            overflow: 'scroll',
             paddingHorizontal: 30,
             paddingVertical: 30,
             shadowColor: '#000',
@@ -128,9 +129,10 @@ export default function CreatePlaylist({
             shadowOpacity: 0.25,
             shadowRadius: 4,
             width: WIDTH * 0.9,
-            overflow: 'scroll',
           }}
         >
+          <LinearGradientX />
+
           <Text
             style={{
               fontFamily: 'Laila-Bold',

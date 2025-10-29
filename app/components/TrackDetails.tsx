@@ -339,14 +339,8 @@ export default function TrackDetails({
                     <MaterialIcons color="#fff" name={item.icon} size={30} />
                   )}
 
-                  <View>
-                    <Text
-                      style={{
-                        color: '#fff',
-                        fontSize: 14,
-                        marginTop: 3,
-                      }}
-                    >
+                  <View style={{ width: '83%' }}>
+                    <Text style={{ color: '#fff', fontSize: 14, marginTop: 3 }}>
                       Last playlist
                     </Text>
                     <Text
@@ -356,11 +350,9 @@ export default function TrackDetails({
                         fontFamily: fontFamilyBold,
                         fontSize: 16,
                         marginTop: -2,
-                        width: '68%',
                       }}
                     >
-                      {item?.text}{' '}
-                      fwefjhwufhfiu3ffui4fhweufoifufuwfhuifuhifuiwefhuie
+                      {item?.text}
                     </Text>
                   </View>
                 </Pressable>

@@ -4,30 +4,57 @@ import React from 'react';
 // * React Native
 import { Pressable, Vibration, View } from 'react-native';
 
-// * Libraries
+// * NPM
+import { useDeviceOrientation } from '@react-native-community/hooks';
+import { useMutation } from '@tanstack/react-query';
+import axios from 'axios';
 import TextTicker from 'react-native-text-ticker';
 
 // * Store
-import { usePlayerStore } from '../../../store';
-import { fontFamily, fontFamilyBold } from '../../../utils';
-import { useDeviceOrientation } from '@react-native-community/hooks';
+import { API_URL, usePlayerStore } from '../../../store';
 
-export default function TrackInfo({ bottomSheetRef }: any) {
+// * Functions
+import { handleAxiosError, formatTrackTime } from '../../../functions';
+
+// * Utils
+import { fontFamily, fontFamilyBold } from '../../../utils';
+
+export default function TrackInfo() {
   // ? Store States
   const activeTrack = usePlayerStore(state => state.activeTrack);
   const orientation = useDeviceOrientation();
+
+  // ? Store Actions
+  const openTrackDetails = usePlayerStore(state => state.openTrackDetails);
+  const setTrackDetails = usePlayerStore(state => state.setTrackDetails);
+  const setTrackRating = usePlayerStore(state => state.setTrackRating);
 
   const extraInfo = ` (${
     activeTrack?.year ? activeTrack?.year.slice(0, 4) : activeTrack?.encoder
   })`;
 
+  // ? Mutations
+  const { mutate: retrieveLastModifiedPlaylist } = useMutation({
+    mutationFn: (body: unknown) => axios(`${API_URL}lastModifiedPlaylist`),
+  });
+
   return (
     <Pressable
-      style={{ alignItems: 'center', marginBottom: 5, marginHorizontal: 10 }}
       onPress={() => {
         Vibration.vibrate(100);
-        bottomSheetRef.current?.snapToIndex(0);
+        openTrackDetails();
+        setTrackRating(activeTrack.rating);
+        retrieveLastModifiedPlaylist(
+          {},
+          {
+            onSuccess: ({ data }) =>
+              setTrackDetails({ ...activeTrack, lastModifiedPlaylist: data }),
+            onError: handleAxiosError,
+          },
+        );
+        //bottomSheetRef.current?.snapToIndex(0);
       }}
+      style={{ alignItems: 'center', marginBottom: 5 }}
     >
       <View style={{ maxWidth: orientation === 'portrait' ? 'auto' : '50%' }}>
         <TextTicker

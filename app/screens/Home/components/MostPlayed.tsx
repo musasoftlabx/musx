@@ -26,9 +26,10 @@ export default function MostPlayed({
       data={dataset as TracksProps}
       renderItem={({ item }: { item: TrackProps }) => (
         <ListItem
-          tracks={dataset as TracksProps}
-          item={item}
           display="bitrate"
+          isPressable
+          item={item}
+          tracks={dataset as TracksProps}
         />
       )}
       keyExtractor={(_, index) => index.toString()}

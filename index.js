@@ -9,6 +9,7 @@ import TrackPlayer from 'react-native-track-player';
 
 AppRegistry.registerComponent(appName, () => App);
 TrackPlayer.registerPlaybackService(() => require('./service'));
+TrackPlayer.setupPlayer({ autoHandleInterruptions: true, playBuffer: 10 });
 
 if (__DEV__) {
   require('./ReactotronConfig');
