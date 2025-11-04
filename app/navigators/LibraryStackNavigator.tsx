@@ -54,15 +54,6 @@ export default function LibraryStackNavigator() {
           options={{
             title: '',
             headerBackVisible: true,
-            headerRight: () => (
-              <>
-                <MaterialIcons
-                  name="sort"
-                  style={{ color: '#fff', fontSize: 24, marginRight: 50 }}
-                />
-                <CastButton style={{ height: 24, width: 24, marginRight: 5 }} />
-              </>
-            ),
           }}
         />
 

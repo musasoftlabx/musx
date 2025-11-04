@@ -2,12 +2,11 @@
 import React, { useState, useEffect } from 'react';
 
 // * React Native
-import { Pressable, Vibration, View } from 'react-native';
+import { Vibration, View } from 'react-native';
 
 // * Libraries
 import { FlashList } from '@shopify/flash-list';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useBackHandler } from '@react-native-community/hooks';
 import { useQuery } from '@tanstack/react-query';
 import { Text } from 'react-native-paper';
 import axios from 'axios';
@@ -27,6 +26,11 @@ import { queryClient } from '../../../App';
 // * Types
 import { RootStackParamList, TrackProps } from '../../types';
 
+// * Icons
+import PlayIcon from 'react-native-vector-icons/Ionicons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { CastButton } from 'react-native-google-cast';
+
 export default function Album({
   navigation,
   route: {
@@ -41,9 +45,6 @@ export default function Album({
 
   // ? Store Actions
   const play = usePlayerStore(state => state.play);
-  const openTrackDetails = usePlayerStore(state => state.openTrackDetails);
-  const setTrackDetails = usePlayerStore(state => state.setTrackDetails);
-  const setTrackRating = usePlayerStore(state => state.setTrackRating);
 
   const {
     data: tracks,
@@ -72,6 +73,23 @@ export default function Album({
         <View style={{ justifyContent: 'center' }}>
           <Text style={{ color: '#fff', fontSize: 20 }}>{album}</Text>
           <Text>{tracks?.length ?? 0} tracks</Text>
+        </View>
+      ),
+      headerRight: () => (
+        <View style={{ alignItems: 'center', flexDirection: 'row', gap: 40 }}>
+          <PlayIcon
+            color="#fff"
+            name="play-circle-outline"
+            size={30}
+            onPress={() => {
+              Vibration.vibrate(100);
+              play(tracks, tracks[0]);
+            }}
+          />
+
+          <MaterialIcons name="sort" style={{ color: '#fff', fontSize: 24 }} />
+
+          <CastButton style={{ height: 24, width: 24, marginRight: 5 }} />
         </View>
       ),
     });

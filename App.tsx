@@ -158,34 +158,33 @@ export default function App(): React.JSX.Element {
     setTrackDetailsRef(trackDetailsRef); // ? Set Track Details Ref
     setPlaylistDetailsRef(playlistDetailsRef); // ? Set Playlist Details Ref
 
-    (async () => {
-      // ? Update Track Player options
-      TrackPlayer.updateOptions({
-        android: {
-          appKilledPlaybackBehavior:
-            AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
-          //stopForegroundGracePeriod: 60 * 60,
-          alwaysPauseOnInterruption: true,
-        },
-        progressUpdateEventInterval: 1,
-        ratingType: RatingType.FiveStars,
-        capabilities: [
-          Capability.Play,
-          Capability.Pause,
-          Capability.SkipToNext,
-          Capability.SkipToPrevious,
-          Capability.Stop,
-          Capability.SeekTo,
-        ],
-        notificationCapabilities: [
-          Capability.Play,
-          Capability.Pause,
-          Capability.SkipToNext,
-          Capability.SkipToPrevious,
-          Capability.SeekTo,
-        ],
-      });
+    // ? Update Track Player options
+    TrackPlayer.updateOptions({
+      android: {
+        appKilledPlaybackBehavior:
+          AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
+        alwaysPauseOnInterruption: true,
+      },
+      progressUpdateEventInterval: 1,
+      ratingType: RatingType.FiveStars,
+      capabilities: [
+        Capability.Play,
+        Capability.Pause,
+        Capability.SkipToNext,
+        Capability.SkipToPrevious,
+        Capability.Stop,
+        Capability.SeekTo,
+      ],
+      notificationCapabilities: [
+        Capability.Play,
+        Capability.Pause,
+        Capability.SkipToNext,
+        Capability.SkipToPrevious,
+        Capability.SeekTo,
+      ],
+    });
 
+    (async () => {
       //await sessionManager.endCurrentSession();
 
       // ? Retrieve streamViaHLS
@@ -223,6 +222,10 @@ export default function App(): React.JSX.Element {
       if (storedActiveTrack)
         setPalette(JSON.parse(JSON.parse(storedActiveTrack).palette));
     })();
+
+    return () => {
+      TrackPlayer.reset();
+    };
   }, []);
 
   useEffect(() => {

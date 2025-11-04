@@ -14,11 +14,11 @@ import axios from 'axios';
 import LinearGradientX from '../../components/LinearGradientX';
 import StatusBarX from '../../components/StatusBarX';
 
-// * Components
-import { queryClient } from '../../../App';
-
 // * Store
-import { API_URL, HEIGHT, WIDTH } from '../../store';
+import { API_URL, HEIGHT, usePlayerStore, WIDTH } from '../../store';
+
+// * Functions
+import { refreshScreens } from '../../functions';
 
 export default function Scan({ navigation }: any) {
   // ? Hooks
@@ -33,8 +33,10 @@ export default function Scan({ navigation }: any) {
     select: ({ data }) => data,
   });
 
+  const activeTrack = usePlayerStore(state => state.activeTrack);
+
   useEffect(() => {
-    queryClient.refetchQueries({ queryKey: ['libraryCount'] });
+    refreshScreens(activeTrack);
   }, [data]);
 
   return (

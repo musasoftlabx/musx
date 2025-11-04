@@ -243,6 +243,7 @@ export const usePlayerStore = create<IPlayerStore>((set, get) => ({
 
   // ? Player actions
   play: async (data: TracksProps, selected: TrackProps, position?: number) => {
+    //TrackPlayer.reset();
     // ? Load from local files
     // const tracks = data.map((track: TrackProps) => {
     //   if (track.hasOwnProperty('format')) {
